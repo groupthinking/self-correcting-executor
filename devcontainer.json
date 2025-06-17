@@ -1,0 +1,17 @@
+{
+  "name": "MCP Unified DevContainer",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "mcp",
+  "workspaceFolder": "/app",
+  "forwardPorts": [8080],
+  "postCreateCommand": "pip install -r requirements.txt",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash",
+    "python.defaultInterpreterPath": "/usr/local/bin/python"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-azuretools.vscode-docker",
+    "esbenp.prettier-vscode"
+  ]
+} 
