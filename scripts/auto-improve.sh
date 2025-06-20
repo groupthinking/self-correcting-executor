@@ -10,7 +10,9 @@ if [ $? -ne 0 ]; then
     echo "❌ Error: Failed to add files to Git. Exiting..."
     exit 1
 fi
-git commit -m "feat: prepare for CodeRabbit auto-improvements"
+if ! git diff --cached --quiet; then
+  git commit -m "feat: prepare for CodeRabbit auto-improvements"
+fi
 if [ $? -ne 0 ]; then
     echo "❌ Error: Failed to commit changes. Exiting..."
     exit 1
