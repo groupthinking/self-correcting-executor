@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Auto-improve with CodeRabbit - Bulk Apply All
 echo "🚀 Starting CodeRabbit auto-improvement..."
