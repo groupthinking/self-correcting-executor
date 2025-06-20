@@ -1,0 +1,39 @@
+reviews:
+  # Auto-apply safe improvements
+  auto_apply: true
+  
+  # Generate improvements automatically
+  auto_improve: true
+  
+  # Batch process all files
+  batch_mode: true
+  
+  # Auto-fix common issues
+  auto_fix:
+    - style
+    - performance
+    - security
+    - maintainability
+  
+  # Skip manual review for safe changes
+  skip_review:
+    - formatting
+    - imports
+    - dead_code
+  
+  # Language-specific settings
+  python:
+    auto_apply: true
+    auto_fix: ["black", "isort", "flake8"]
+  
+  typescript:
+    auto_apply: true
+    auto_fix: ["eslint", "prettier"]
+  
+  # Improvement categories to auto-apply
+  improvements:
+    - code_quality
+    - performance
+    - security
+    - maintainability
+    - readability 
