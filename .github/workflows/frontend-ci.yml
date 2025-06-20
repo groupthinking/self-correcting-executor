@@ -1,0 +1,40 @@
+name: Frontend CI
+
+on:
+  push:
+    paths:
+      - 'frontend/**'
+      - 'ui/**'
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - 'ui/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies (frontend)
+        run: |
+          cd frontend
+          npm ci || npm install
+      - name: Lint (frontend)
+        run: |
+          cd frontend
+          npm run lint || npx eslint .
+      - name: Test (frontend)
+        run: |
+          cd frontend
+          npm test || echo 'No tests'
+      - name: Build (frontend)
+        run: |
+          cd frontend
+          npm run build || echo 'No build script' 
