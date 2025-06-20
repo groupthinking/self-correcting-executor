@@ -1,0 +1,107 @@
+# Multi-stage Dockerfile for Quantum Development with D-Wave Ocean SDK
+FROM python:3.11-slim as base
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    git \
+    build-essential \
+    libffi-dev \
+    libssl-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create working directory
+WORKDIR /app
+
+# Copy requirements first for better Docker layer caching
+COPY requirements.txt .
+
+# Install Python dependencies including D-Wave Ocean SDK
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir \
+    dwave-ocean-sdk>=7.0.0 \
+    dwave-system \
+    dwave-hybrid \
+    dwave-preprocessing \
+    dwave-inspectorapp \
+    networkx \
+    matplotlib \
+    scipy \
+    numpy
+
+# Development stage
+FROM base as development
+
+# Install development tools
+RUN pip install --no-cache-dir \
+    pytest \
+    pytest-asyncio \
+    pytest-cov \
+    black \
+    flake8 \
+    mypy \
+    jupyter \
+    ipython
+
+# Copy application code
+COPY . .
+
+# Create directories for quantum operations
+RUN mkdir -p /app/.dwave \
+    /app/quantum_results \
+    /app/logs \
+    /app/checkpoints
+
+# Set proper permissions
+RUN chmod +x entrypoint.sh
+
+# Expose ports
+EXPOSE 8000 8001 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import dwave.ocean; print('Quantum system ready')" || exit 1
+
+# Production stage
+FROM base as production
+
+# Copy only necessary files
+COPY connectors/ ./connectors/
+COPY agents/ ./agents/
+COPY mcp_server/ ./mcp_server/
+COPY fabric/ ./fabric/
+COPY protocols/ ./protocols/
+COPY utils/ ./utils/
+COPY main.py orchestrator.py entrypoint.sh ./
+
+# Create minimal directories
+RUN mkdir -p /app/.dwave /app/quantum_results /app/logs
+
+# Set proper permissions
+RUN chmod +x entrypoint.sh && \
+    useradd -m -u 1000 quantum && \
+    chown -R quantum:quantum /app
+
+USER quantum
+
+EXPOSE 8000
+
+# Health check for production
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import dwave.ocean; print('Production quantum ready')" || exit 1
+
+# Default to development
+FROM development as final
+
+# Entry point script
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["quantum-dev"] 

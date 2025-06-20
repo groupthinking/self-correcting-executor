@@ -1,0 +1,91 @@
+# Component Type Definitions for Self-Correcting Executor
+# Not everything is a protocol - different components serve different purposes
+
+component_types:
+  protocols:
+    description: "Executable tasks with defined inputs/outputs"
+    characteristics:
+      - "Has task() function"
+      - "Returns success/failure"
+      - "Can be mutated"
+    examples:
+      - "file_validator"
+      - "api_health_checker"
+  
+  agents:
+    description: "Autonomous entities that make decisions and coordinate work"
+    characteristics:
+      - "Has reasoning capability"
+      - "Can communicate with other agents (A2A)"
+      - "Maintains state"
+      - "Makes decisions"
+    examples:
+      - "executor"
+      - "mutator"
+      - "orchestrator"
+  
+  connectors:
+    description: "MCP-compliant interfaces to external systems"
+    characteristics:
+      - "Implements MCP protocol"
+      - "Provides context bridging"
+      - "Handles authentication"
+    examples:
+      - "github_connector"
+      - "claude_connector"
+      - "sap_connector"
+  
+  analyzers:
+    description: "Data processing and insight generation components"
+    characteristics:
+      - "Processes large datasets"
+      - "Generates insights"
+      - "Feeds mutation engine"
+    examples:
+      - "execution_analytics"
+      - "pattern_detector"
+      - "anomaly_finder"
+  
+  services:
+    description: "Background services and daemons"
+    characteristics:
+      - "Long-running processes"
+      - "Provides infrastructure"
+      - "Manages resources"
+    examples:
+      - "cache_manager"
+      - "queue_processor"
+      - "metric_collector"
+  
+  workflows:
+    description: "Multi-step orchestrated processes"
+    characteristics:
+      - "Coordinates multiple components"
+      - "Has decision trees"
+      - "Manages complex flows"
+    examples:
+      - "rag_pipeline"
+      - "a2a_negotiation"
+      - "quantum_optimization"
+
+# Component Interaction Matrix
+interactions:
+  agent_to_agent:
+    protocol: "A2A"
+    transport: "message_bus"
+    format: "json_rpc"
+    
+  agent_to_protocol:
+    protocol: "direct_invocation"
+    transport: "function_call"
+    format: "native"
+    
+  connector_to_external:
+    protocol: "MCP"
+    transport: "https"
+    format: "mcp_standard"
+    
+  analyzer_to_storage:
+    protocol: "database"
+    transport: "sql"
+    format: "structured_data" 

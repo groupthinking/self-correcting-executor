@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  quantum-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.quantum
+    container_name: quantum_executor_dev
+    environment:
+      - PYTHONPATH=/app
+      - DWAVE_CONFIG_FILE=/app/.dwave/dwave.conf
+      - ENVIRONMENT=development
+    volumes:
+      - .:/app
+      - ~/.dwave:/app/.dwave:ro  # Mount D-Wave config (read-only)
+      - quantum_data:/app/quantum_results
+    ports:
+      - "8000:8000"  # Main application
+      - "8001:8001"  # MCP server
+      - "3000:3000"  # Frontend
+    networks:
+      - quantum_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import dwave.ocean; print('Quantum ready')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - redis
+      - postgres
+
+  mcp-quantum-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.quantum
+    container_name: mcp_quantum_server
+    command: ["python", "mcp_server/main.py", "--quantum-enabled"]
+    environment:
+      - PYTHONPATH=/app
+      - DWAVE_CONFIG_FILE=/app/.dwave/dwave.conf
+      - MCP_SERVER_PORT=8001
+    volumes:
+      - .:/app
+      - ~/.dwave:/app/.dwave:ro
+      - quantum_data:/app/quantum_results
+    ports:
+      - "8001:8001"
+    networks:
+      - quantum_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: quantum_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - quantum_net
+    command: redis-server --appendonly yes
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: quantum_postgres
+    environment:
+      - POSTGRES_DB=quantum_executor
+      - POSTGRES_USER=quantum_user
+      - POSTGRES_PASSWORD=quantum_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_quantum_db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - quantum_net
+
+  frontend-quantum:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: quantum_frontend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_MCP_URL=http://localhost:8001
+      - REACT_APP_QUANTUM_ENABLED=true
+    ports:
+      - "3000:3000"
+    networks:
+      - quantum_net
+    depends_on:
+      - quantum-dev
+      - mcp-quantum-server
+
+volumes:
+  quantum_data:
+    driver: local
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  quantum_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 

@@ -1,0 +1,109 @@
+# Security Configuration for Self-Correcting Executor Hub
+
+# API Security
+api:
+  authentication:
+    enabled: false  # TODO: Enable in production
+    type: "jwt"
+    secret_key: "${API_SECRET_KEY}"
+  
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 60
+    burst: 100
+  
+  cors:
+    allowed_origins:
+      - "http://localhost:3000"  # Future UI
+      - "http://localhost:8080"
+    allowed_methods: ["GET", "POST", "PUT", "DELETE"]
+
+# Protocol Execution Security
+protocols:
+  sandboxing:
+    enabled: false  # TODO: Implement sandboxing
+    type: "docker"  # or "firecracker", "gvisor"
+    
+  resource_limits:
+    max_execution_time: 300  # seconds
+    max_memory: "512MB"
+    max_cpu: "1.0"
+  
+  allowed_imports:
+    - "os"
+    - "json"
+    - "datetime"
+    - "hashlib"
+    - "psycopg2"
+    - "redis"
+    - "requests"
+    # Add more as needed
+  
+  forbidden_operations:
+    - "eval"
+    - "exec"
+    - "__import__"
+    - "compile"
+
+# Data Security
+data:
+  encryption:
+    at_rest: false  # TODO: Enable encryption
+    in_transit: true
+    algorithm: "AES-256-GCM"
+  
+  retention:
+    execution_logs: 30  # days
+    protocol_mutations: 90  # days
+    cache_data: 1  # days
+
+# Network Security
+network:
+  internal_only:
+    - "postgresql"
+    - "redis"
+  
+  exposed_ports:
+    - port: 8080
+      service: "api"
+      public: true
+    - port: 5432
+      service: "postgresql"
+      public: false
+    - port: 6379
+      service: "redis"
+      public: false
+
+# Access Control
+access_control:
+  roles:
+    admin:
+      permissions:
+        - "protocol:create"
+        - "protocol:read"
+        - "protocol:update"
+        - "protocol:delete"
+        - "protocol:execute"
+        - "system:manage"
+    
+    developer:
+      permissions:
+        - "protocol:create"
+        - "protocol:read"
+        - "protocol:update"
+        - "protocol:execute"
+    
+    viewer:
+      permissions:
+        - "protocol:read"
+        - "protocol:execute"
+
+# Audit & Compliance
+audit:
+  enabled: true
+  log_level: "INFO"
+  destinations:
+    - type: "database"
+      table: "audit_logs"
+    - type: "file"
+      path: "/logs/audit.log" 

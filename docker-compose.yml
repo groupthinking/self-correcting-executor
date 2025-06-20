@@ -1,5 +1,27 @@
 services:
-  mcp:
+  mcp_db:
+    image: postgres:15
+    container_name: mcp_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mcp_redis:
+    image: redis:7
+    container_name: mcp_redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mcp_core:
     build: .
     container_name: mcp_core
     env_file:
@@ -7,37 +29,17 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./:/app
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOME}/Desktop:/data/desktop:ro
+      - ${HOME}/Documents:/data/documents:ro
+      - ${HOME}/GPTDATA:/data/gptdata:ro
     depends_on:
-      db:
+      mcp_db:
         condition: service_healthy
-      redis:
-        condition: service_started
-
-  db:
-    image: postgres:15-alpine
-    container_name: mcp_db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-mcp}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mcp}
-      POSTGRES_DB: ${POSTGRES_DB:-mcp}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-mcp}"]
-      interval: 10s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: mcp_redis
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - redisdata:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      retries: 3
+      mcp_redis:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   pgdata:

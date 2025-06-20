@@ -1,0 +1,23 @@
+# Directories and files to ignore during Cursor indexing
+node_modules/
+.git/
+__pycache__/
+venv/
+env/
+.env
+dist/
+build/
+coverage/
+*.log
+.DS_Store
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+ui/Build a Website Guide/
+logs/
+memory/
+cursor_installing_docker_and_integratin.md
+*.pyc
+.pytest_cache/
+.coverage
+.mypy_cache/
