@@ -1,39 +1,79 @@
+# CodeRabbit Configuration for Auto-Improvements
+language: "en-US"
+early_access: true
+enable_free_tier: true
+
 reviews:
-  # Auto-apply safe improvements
-  auto_apply: true
+  profile: "assertive"  # More feedback and suggestions
+  request_changes_workflow: false
+  high_level_summary: true
+  auto_title_placeholder: "@coderabbitai"
+  review_status: true
+  commit_status: true
+  collapse_walkthrough: false
+  changed_files_summary: true
+  sequence_diagrams: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  auto_apply_labels: true  # Auto-apply suggested labels
+  suggested_reviewers: true
+  auto_assign_reviewers: true  # Auto-assign reviewers
+  poem: true
   
-  # Generate improvements automatically
-  auto_improve: true
-  
-  # Batch process all files
-  batch_mode: true
-  
-  # Auto-fix common issues
-  auto_fix:
-    - style
-    - performance
-    - security
-    - maintainability
-  
-  # Skip manual review for safe changes
-  skip_review:
-    - formatting
-    - imports
-    - dead_code
-  
-  # Language-specific settings
-  python:
-    auto_apply: true
-    auto_fix: ["black", "isort", "flake8"]
-  
-  typescript:
-    auto_apply: true
-    auto_fix: ["eslint", "prettier"]
-  
-  # Improvement categories to auto-apply
-  improvements:
-    - code_quality
-    - performance
-    - security
-    - maintainability
-    - readability 
+  # Path-specific instructions for auto-improvements
+  path_instructions:
+    - path: "**/*.py"
+      instructions: "Apply black formatting, optimize imports with isort, fix flake8 issues, improve type hints, add docstrings to all public functions and classes, optimize performance, and ensure security best practices."
+    - path: "**/*.ts"
+      instructions: "Apply ESLint and Prettier formatting, optimize imports, add proper TypeScript types, improve error handling, and ensure modern JavaScript practices."
+    - path: "**/*.tsx"
+      instructions: "Optimize React components, improve prop types, enhance accessibility, apply React best practices, and ensure proper state management."
+    - path: "**/test_*.py"
+      instructions: "Improve test coverage, add missing assertions, optimize test performance, and ensure proper mocking."
+    - path: "**/*.md"
+      instructions: "Fix formatting, improve readability, add missing sections, and ensure proper markdown syntax."
+
+  # Enable auto-reviews for all changes
+  auto_review:
+    enabled: true
+    drafts: false
+
+knowledge_base:
+  opt_out: false
+  web_search:
+    enabled: true
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "**/.cursorrules"
+      - ".github/copilot-instructions.md"
+      - "**/CLAUDE.md"
+      - "**/.cursor/rules/*"
+      - "**/.windsurfrules"
+      - "**/.clinerules/*"
+      - "**/.rules/*"
+      - "PROJECT_STANDARDS.md"
+      - "CONTRIBUTING.md"
+  learnings:
+    scope: "auto"
+  issues:
+    scope: "auto"
+  pull_requests:
+    scope: "auto"
+
+code_generation:
+  docstrings:
+    language: "en-US"
+    path_instructions:
+      - path: "**/*.py"
+        instructions: "Generate comprehensive docstrings with parameters, return values, examples, and type hints following Google style."
+      - path: "**/*.ts"
+        instructions: "Generate JSDoc comments with parameter types, return types, and usage examples."
+  unit_tests:
+    path_instructions:
+      - path: "**/*.py"
+        instructions: "Generate comprehensive pytest tests with fixtures, mocks, edge cases, and proper assertions."
+      - path: "**/*.ts"
+        instructions: "Generate Jest/Vitest tests with proper mocking, edge cases, and TypeScript types." 
