@@ -95,7 +95,6 @@ class ContinuousLearningLLM:
         """Initialize the continuous learning system"""
         try:
             logger.info("Initializing Continuous Learning LLM System...")
-            
             # Initialize LLM connector
             llm_config = config.get('llm', {}) if config else {}
             llm_connected = await self.llm_connector.connect(llm_config)
