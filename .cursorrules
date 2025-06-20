@@ -1,0 +1,92 @@
+# Cursor Rules for Self-Correcting Executor
+# CodeRabbit will read this file to understand our coding standards
+
+## Python Standards
+- Use black for formatting (line length 88)
+- Use isort for import sorting
+- Use flake8 for linting (ignore E501, W503)
+- Add type hints to all function parameters and return types
+- Add comprehensive docstrings to all public functions and classes
+- Use pytest for testing with fixtures and mocks
+- Follow PEP 8 naming conventions
+- Use dataclasses for simple data structures
+- Prefer async/await over callbacks
+- Use pathlib instead of os.path
+- Always handle exceptions appropriately
+- Use f-strings for string formatting
+- Remove unused imports and variables
+- Add logging for important operations
+
+## TypeScript/JavaScript Standards
+- Use ESLint with strict rules
+- Use Prettier for formatting
+- Add proper TypeScript types for all variables and functions
+- Use JSDoc comments for public APIs
+- Prefer const over let, never use var
+- Use modern ES6+ features (arrow functions, destructuring, async/await)
+- Handle errors properly with try/catch
+- Use strict null checks
+- Prefer interfaces over type aliases for object shapes
+- Use proper React hooks patterns
+- Optimize component re-renders
+- Use proper accessibility attributes
+
+## React/TSX Standards
+- Use functional components with hooks
+- Proper prop types with TypeScript interfaces
+- Use memo() for performance optimization
+- Handle loading and error states
+- Use proper event handlers
+- Implement proper accessibility (a11y)
+- Use semantic HTML elements
+- Optimize bundle size
+
+## General Standards
+- No console.log in production code
+- Remove TODO comments in main branch
+- Add comprehensive error handling
+- Use meaningful variable and function names
+- Keep functions small and focused (max 20 lines)
+- Add unit tests for all public functions
+- Use dependency injection for better testing
+- Follow SOLID principles
+- Optimize for performance and memory usage
+- Use proper security practices (no hardcoded secrets)
+- Add proper documentation
+- Use consistent indentation (2 spaces for JS/TS, 4 for Python)
+
+## MCP Integration Standards
+- All MCP connectors must implement proper error handling
+- Use structured logging for MCP operations
+- Add timeout handling for external calls
+- Implement proper retry logic with exponential backoff
+- Use async patterns for all I/O operations
+- Add comprehensive type definitions for MCP schemas
+- Implement proper connection pooling
+- Add health check endpoints
+- Use proper authentication and authorization
+- Add rate limiting where appropriate
+
+## Quantum Computing Standards
+- Use proper error handling for quantum operations
+- Add timeout handling for quantum circuits
+- Implement proper noise mitigation
+- Use efficient circuit compilation
+- Add proper documentation for quantum algorithms
+- Use consistent naming for qubits and classical registers
+- Implement proper measurement strategies
+- Add circuit optimization techniques
+- Use proper error correction when available
+- Add benchmarking for quantum algorithms
+
+## Auto-Fix Priorities
+1. Security vulnerabilities (highest priority)
+2. Type errors and missing type hints
+3. Linting errors (flake8, ESLint)
+4. Formatting issues (black, prettier)
+5. Import optimization
+6. Missing docstrings/comments
+7. Performance optimizations
+8. Code style improvements
+9. Test coverage improvements
+10. Documentation updates 
