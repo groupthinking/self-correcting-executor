@@ -92,7 +92,21 @@ class ContinuousLearningLLM:
         self.performance_history = []
         
     async def initialize(self, config: Dict[str, Any] = None) -> bool:
-        """Initialize the continuous learning system"""
+        """
+        Initializes the continuous learning system by connecting to LLM and quantum resources, loading or creating the initial model, and starting the background training loop.
+        
+        Args:
+            config (Optional[Dict[str, Any]]): Configuration dictionary containing connection parameters for LLM and quantum resources. If not provided, defaults are used.
+        
+        Returns:
+            bool: True if initialization succeeds, False otherwise.
+        
+        Example:
+            success = await continuous_learner.initialize({
+                "llm": {"api_key": "your-llm-key"},
+                "quantum": {"token": "your-quantum-token"}
+            })
+        """
         try:
             logger.info("Initializing Continuous Learning LLM System...")
             # Initialize LLM connector
