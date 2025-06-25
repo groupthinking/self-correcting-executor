@@ -516,3 +516,936 @@ class TestHelpersIntegration:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+# Additional Enhanced Test Classes for Comprehensive Coverage
+class TestSafeJsonParseAdvanced:
+    """Advanced edge cases and stress tests for safe_json_parse"""
+    
+    def test_deeply_nested_json_performance(self):
+        """Test parsing very deeply nested JSON structures"""
+        # Create deeply nested structure
+        nested_data = "value"
+        for i in range(100):
+            nested_data = {"level": nested_data}
+        
+        json_str = json.dumps(nested_data)
+        result = safe_json_parse(json_str)
+        
+        # Navigate to verify correct parsing
+        current = result
+        for i in range(100):
+            assert "level" in current
+            current = current["level"]
+        assert current == "value"
+    
+    def test_unicode_and_escape_sequences(self):
+        """Test parsing JSON with various unicode and escape sequences"""
+        test_cases = [
+            r'{"unicode": "\u0048\u0065\u006C\u006C\u006F"}',  # "Hello" in unicode
+            r'{"escaped": "line1\nline2\ttab"}',               # Newlines and tabs
+            r'{"quotes": "He said \"Hello\""}',                # Escaped quotes
+            '{"emoji": "🚀 \ud83c\udf1f"}',                   # Mixed emoji encoding
+        ]
+        
+        for json_str in test_cases:
+            result = safe_json_parse(json_str)
+            assert result is not None
+            assert isinstance(result, dict)
+    
+    def test_json_with_large_numbers(self):
+        """Test parsing JSON with very large numbers"""
+        large_numbers = [
+            '{"big_int": 9223372036854775807}',      # Max 64-bit signed int
+            '{"big_float": 1.7976931348623157e+308}', # Near max float
+            '{"small_float": 2.2250738585072014e-308}', # Near min positive float
+            '{"scientific": 1.23e100}',               # Scientific notation
+        ]
+        
+        for json_str in large_numbers:
+            result = safe_json_parse(json_str)
+            assert result is not None
+            assert isinstance(result, dict)
+    
+    @pytest.mark.parametrize("malformed_json", [
+        '{"key": }',              # Missing value
+        '{"key": "value",}',      # Trailing comma
+        '{key: "value"}',         # Unquoted key
+        "{'key': 'value'}",       # Single quotes
+        '{"key": "value"',        # Missing closing brace
+        '{"key": undefined}',     # JavaScript undefined
+        '{"key": /*comment*/ "value"}',  # Comment in JSON
+    ])
+    def test_malformed_json_variations(self, malformed_json):
+        """Test various malformed JSON inputs"""
+        result = safe_json_parse(malformed_json)
+        assert result is None
+
+
+class TestSafeJsonDumpsAdvanced:
+    """Advanced tests for safe_json_dumps with complex scenarios"""
+    
+    def test_circular_reference_detection(self):
+        """Test detection and handling of circular references"""
+        # Create circular reference
+        obj_a = {"name": "A"}
+        obj_b = {"name": "B", "ref": obj_a}
+        obj_a["ref"] = obj_b
+        
+        result = safe_json_dumps(obj_a)
+        assert result == ""  # Should return empty string due to circular reference
+    
+    def test_custom_objects_with_str_method(self):
+        """Test serialization of custom objects with __str__ method"""
+        class CustomObject:
+            def __init__(self, value):
+                self.value = value
+            
+            def __str__(self):
+                return f"CustomObject(value={self.value})"
+        
+        data = {"custom": CustomObject(42), "normal": "value"}
+        result = safe_json_dumps(data)
+        
+        assert result != ""
+        assert "CustomObject" in result
+        assert "42" in result
+    
+    def test_mixed_data_types_edge_cases(self):
+        """Test serialization with edge case data types"""
+        from decimal import Decimal
+        import uuid
+        
+        data = {
+            "decimal": Decimal("123.456"),
+            "uuid": uuid.uuid4(),
+            "complex": complex(1, 2),
+            "frozenset": frozenset([1, 2, 3]),
+            "bytes": b"hello world",
+            "range": range(5),
+        }
+        
+        result = safe_json_dumps(data)
+        assert result != ""  # Should handle all types via default=str
+    
+    def test_performance_large_object(self):
+        """Test performance with large objects"""
+        large_data = {
+            f"key_{i}": {
+                "value": i,
+                "data": "x" * 1000,  # 1KB per entry
+                "nested": {"sub_key": f"sub_value_{i}"}
+            }
+            for i in range(1000)  # ~1MB total
+        }
+        
+        import time
+        start_time = time.time()
+        result = safe_json_dumps(large_data)
+        end_time = time.time()
+        
+        assert result != ""
+        assert end_time - start_time < 5.0  # Should complete within 5 seconds
+
+
+class TestGenerateHashAdvanced:
+    """Advanced hash generation tests"""
+    
+    def test_hash_distribution(self):
+        """Test hash distribution to ensure no obvious patterns"""
+        inputs = [f"test_{i}" for i in range(1000)]
+        hashes = [generate_hash(inp) for inp in inputs]
+        
+        # Check that hashes are well distributed
+        first_chars = [h[0] for h in hashes]
+        char_counts = {}
+        for char in first_chars:
+            char_counts[char] = char_counts.get(char, 0) + 1
+        
+        # No single character should dominate (rough distribution check)
+        max_count = max(char_counts.values())
+        assert max_count < len(hashes) * 0.2  # No more than 20% should start with same char
+    
+    def test_avalanche_effect(self):
+        """Test avalanche effect - small input changes cause large hash changes"""
+        base_string = "test_string_for_avalanche"
+        base_hash = generate_hash(base_string)
+        
+        # Change one character
+        modified_string = base_string[:-1] + 'X'
+        modified_hash = generate_hash(modified_string)
+        
+        # Count different bits (simplified check)
+        base_int = int(base_hash, 16)
+        modified_int = int(modified_hash, 16)
+        xor_result = base_int ^ modified_int
+        different_bits = bin(xor_result).count('1')
+        
+        # Should have significant bit differences (roughly 50% for good hash)
+        assert different_bits > 50  # Out of 256 bits, expect substantial difference
+    
+    def test_hash_consistency_across_runs(self):
+        """Test that hash function is deterministic across multiple runs"""
+        test_string = "consistency_test_string"
+        hashes = [generate_hash(test_string) for _ in range(10)]
+        
+        # All hashes should be identical
+        assert len(set(hashes)) == 1
+        assert all(h == hashes[0] for h in hashes)
+    
+    def test_empty_and_whitespace_inputs(self):
+        """Test hashing of empty and whitespace-only inputs"""
+        test_cases = ["", " ", "\t", "\n", "   ", "\t\n "]
+        hashes = [generate_hash(case) for case in test_cases]
+        
+        # All should produce valid hashes
+        assert all(len(h) == 64 for h in hashes)
+        # All should be different (even whitespace variations)
+        assert len(set(hashes)) == len(hashes)
+
+
+class TestRetryWithBackoffAdvanced:
+    """Advanced retry mechanism tests"""
+    
+    def test_retry_with_different_exception_types(self):
+        """Test retry behavior with mixed exception types"""
+        exceptions_to_raise = [
+            ConnectionError("Connection failed"),
+            TimeoutError("Request timed out"), 
+            ValueError("Invalid value"),
+        ]
+        
+        call_count = [0]
+        
+        def failing_function():
+            if call_count[0] < len(exceptions_to_raise):
+                exc = exceptions_to_raise[call_count[0]]
+                call_count[0] += 1
+                raise exc
+            return "success"
+        
+        result = retry_with_backoff(failing_function, max_retries=5)
+        assert result == "success"
+        assert call_count[0] == len(exceptions_to_raise)
+    
+    @patch('time.sleep')
+    def test_exponential_backoff_progression(self, mock_sleep):
+        """Test that backoff follows exponential progression"""
+        call_count = [0]
+        
+        def always_fails():
+            call_count[0] += 1
+            if call_count[0] <= 4:  # Fail first 4 times
+                raise RuntimeError("Temporary failure")
+            return "success"
+        
+        result = retry_with_backoff(always_fails, max_retries=5, base_delay=1.0)
+        assert result == "success"
+        
+        # Check exponential progression: 1, 2, 4, 8
+        expected_delays = [1.0, 2.0, 4.0, 8.0]
+        actual_delays = [call[0][0] for call in mock_sleep.call_args_list]
+        assert actual_delays == expected_delays
+    
+    def test_retry_with_return_values(self):
+        """Test retry with functions returning different values"""
+        return_values = [None, False, 0, "", "success"]
+        call_count = [0]
+        
+        def function_with_varying_returns():
+            if call_count[0] < len(return_values) - 1:
+                value = return_values[call_count[0]]
+                call_count[0] += 1
+                if value is None:
+                    raise ValueError("None result")
+                return value
+            call_count[0] += 1
+            return return_values[-1]
+        
+        result = retry_with_backoff(function_with_varying_returns, max_retries=3)
+        assert result == "success"
+    
+    def test_retry_timeout_simulation(self):
+        """Test retry with simulated timeout scenarios"""
+        import time
+        
+        start_time = time.time()
+        call_times = []
+        
+        def time_tracking_function():
+            call_times.append(time.time())
+            if len(call_times) < 3:
+                raise TimeoutError("Simulated timeout")
+            return "completed"
+        
+        result = retry_with_backoff(time_tracking_function, max_retries=3, base_delay=0.1)
+        
+        assert result == "completed"
+        assert len(call_times) == 3
+        
+        # Verify timing progression
+        for i in range(1, len(call_times)):
+            time_diff = call_times[i] - call_times[i-1]
+            expected_min_delay = 0.1 * (2 ** (i-1))
+            assert time_diff >= expected_min_delay * 0.9  # Allow 10% tolerance
+
+
+class TestFlattenDictAdvanced:
+    """Advanced dictionary flattening tests"""
+    
+    def test_flatten_with_complex_nested_structures(self):
+        """Test flattening complex nested structures with mixed types"""
+        complex_data = {
+            "api": {
+                "v1": {
+                    "endpoints": ["users", "posts", "comments"],
+                    "auth": {"required": True, "methods": ["jwt", "oauth"]},
+                    "rate_limits": {"per_hour": 1000, "burst": 10}
+                },
+                "v2": {
+                    "endpoints": ["users", "posts"],
+                    "auth": {"required": True, "methods": ["jwt"]},
+                    "features": {"pagination": True, "filtering": True}
+                }
+            },
+            "database": {
+                "primary": {"host": "db1.local", "port": 5432},
+                "replicas": [
+                    {"host": "db2.local", "port": 5432},
+                    {"host": "db3.local", "port": 5432}
+                ]
+            }
+        }
+        
+        result = flatten_dict(complex_data)
+        
+        # Verify specific flattened keys exist
+        expected_keys = [
+            "api.v1.endpoints",
+            "api.v1.auth.required",
+            "api.v1.auth.methods",
+            "api.v1.rate_limits.per_hour",
+            "api.v2.features.pagination",
+            "database.primary.host",
+            "database.replicas"
+        ]
+        
+        for key in expected_keys:
+            assert key in result
+    
+    def test_flatten_with_numeric_and_boolean_keys(self):
+        """Test flattening with non-string keys"""
+        data = {
+            "config": {
+                1: "first_item",
+                2: {"nested": "second_nested"},
+                True: "boolean_key",
+                False: {"deep": "boolean_nested"}
+            }
+        }
+        
+        result = flatten_dict(data)
+        
+        expected_flattened = {
+            "config.1": "first_item",
+            "config.2.nested": "second_nested", 
+            "config.True": "boolean_key",
+            "config.False.deep": "boolean_nested"
+        }
+        
+        assert result == expected_flattened
+    
+    def test_flatten_with_custom_separator(self):
+        """Test flattening with custom separator (if supported)"""
+        data = {"a": {"b": {"c": "value"}}}
+        
+        # Test with default separator
+        result_dot = flatten_dict(data)
+        assert result_dot == {"a.b.c": "value"}
+        
+        # If function supports custom separator, test it
+        # Note: This might not be supported by the current implementation
+        try:
+            result_underscore = flatten_dict(data, separator="_")
+            if result_underscore != result_dot:  # If separator was actually used
+                assert result_underscore == {"a_b_c": "value"}
+        except TypeError:
+            # Function doesn't support custom separator - that's fine
+            pass
+    
+    def test_flatten_performance_large_dict(self):
+        """Test flattening performance with large dictionary"""
+        # Create large nested dictionary
+        large_dict = {}
+        for i in range(100):
+            large_dict[f"section_{i}"] = {
+                f"subsection_{j}": {
+                    f"item_{k}": f"value_{i}_{j}_{k}"
+                    for k in range(10)
+                }
+                for j in range(10)
+            }
+        
+        import time
+        start_time = time.time()
+        result = flatten_dict(large_dict)
+        end_time = time.time()
+        
+        # Should complete reasonably quickly
+        assert end_time - start_time < 1.0
+        
+        # Should have 100 * 10 * 10 = 10,000 flattened keys
+        assert len(result) == 10000
+
+
+class TestFileOperationsAdvanced:
+    """Advanced tests for file operation helpers"""
+    
+    def test_ensure_directory_concurrent_creation(self):
+        """Test concurrent directory creation"""
+        import threading
+        import tempfile
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            target_dir = Path(temp_dir) / "concurrent_test"
+            results = []
+            errors = []
+            
+            def create_directory(thread_id):
+                try:
+                    result = ensure_directory_exists(target_dir)
+                    results.append((thread_id, result))
+                except Exception as e:
+                    errors.append((thread_id, e))
+            
+            # Create multiple threads trying to create same directory
+            threads = []
+            for i in range(10):
+                thread = threading.Thread(target=create_directory, args=(i,))
+                threads.append(thread)
+                thread.start()
+            
+            # Wait for all threads
+            for thread in threads:
+                thread.join()
+            
+            # All should succeed without errors
+            assert len(errors) == 0
+            assert len(results) == 10
+            assert target_dir.exists()
+            assert target_dir.is_dir()
+    
+    def test_sanitize_filename_edge_cases(self):
+        """Test filename sanitization with edge cases"""
+        edge_cases = [
+            ("", "unnamed"),                    # Empty string
+            (".", "unnamed"),                   # Just dot
+            ("..", "unnamed"),                  # Double dot
+            ("...", "unnamed"),                 # Triple dot
+            ("   ", "unnamed"),                 # Only spaces
+            ("___", "unnamed"),                 # Only underscores after sanitization
+            ("CON", "CON"),                    # Windows reserved name (may vary by implementation)
+            ("file" + "x" * 300, None),        # Very long filename
+            ("file\x00name.txt", "file_name.txt"),  # Null character
+            ("file\r\nname.txt", "file__name.txt"), # Newline characters
+        ]
+        
+        for input_name, expected in edge_cases:
+            result = sanitize_filename(input_name)
+            if expected is not None:
+                assert result == expected
+            else:
+                # For very long filenames, just check it's not too long
+                assert len(result) <= 255
+                assert result != ""
+    
+    def test_sanitize_filename_preserves_extensions(self):
+        """Test that filename sanitization preserves valid extensions"""
+        test_cases = [
+            ("file<>.txt", "file__.txt"),
+            ("document?.pdf", "document_.pdf"),
+            ("image|photo.jpg", "image_photo.jpg"),
+            ("data*file.csv", "data_file.csv"),
+        ]
+        
+        for input_name, expected in test_cases:
+            result = sanitize_filename(input_name)
+            assert result == expected
+            # Verify extension is preserved
+            if "." in expected:
+                assert result.split(".")[-1] == expected.split(".")[-1]
+
+
+class TestMergeDictsAdvanced:
+    """Advanced dictionary merging tests"""
+    
+    def test_merge_with_conflicting_types(self):
+        """Test merging when same keys have different types"""
+        dict1 = {
+            "value": "string",
+            "config": {"setting": "old"},
+            "list_item": [1, 2, 3]
+        }
+        dict2 = {
+            "value": 42,  # String -> int
+            "config": "new_config",  # Dict -> string  
+            "list_item": {"new": "format"}  # List -> dict
+        }
+        
+        result = merge_dicts(dict1, dict2)
+        
+        # dict2 values should take precedence
+        assert result["value"] == 42
+        assert result["config"] == "new_config"
+        assert result["list_item"] == {"new": "format"}
+    
+    def test_merge_very_deep_nesting(self):
+        """Test merging with very deep nesting"""
+        dict1 = {"a": {"b": {"c": {"d": {"e": {"f": "deep1"}}}}}}
+        dict2 = {"a": {"b": {"c": {"d": {"e": {"g": "deep2"}}}}}}
+        
+        result = merge_dicts(dict1, dict2)
+        
+        # Both deep values should be present
+        assert result["a"]["b"]["c"]["d"]["e"]["f"] == "deep1"
+        assert result["a"]["b"]["c"]["d"]["e"]["g"] == "deep2"
+    
+    def test_merge_with_none_and_empty_values(self):
+        """Test merging with None and empty values"""
+        dict1 = {
+            "null_value": None,
+            "empty_dict": {},
+            "empty_list": [],
+            "normal": "value1"
+        }
+        dict2 = {
+            "null_value": "not_null",
+            "empty_dict": {"filled": True},
+            "empty_list": ["item"],
+            "normal": "value2"
+        }
+        
+        result = merge_dicts(dict1, dict2)
+        
+        assert result["null_value"] == "not_null"
+        assert result["empty_dict"] == {"filled": True}
+        assert result["empty_list"] == ["item"]
+        assert result["normal"] == "value2"
+    
+    def test_merge_preserves_original_dicts(self):
+        """Test that merge operation doesn't modify original dictionaries"""
+        dict1 = {"shared": {"a": 1}, "unique1": "value1"}
+        dict2 = {"shared": {"b": 2}, "unique2": "value2"}
+        
+        # Store original states
+        original_dict1 = {"shared": {"a": 1}, "unique1": "value1"}
+        original_dict2 = {"shared": {"b": 2}, "unique2": "value2"}
+        
+        result = merge_dicts(dict1, dict2)
+        
+        # Originals should be unchanged
+        assert dict1 == original_dict1
+        assert dict2 == original_dict2
+        
+        # Result should have merged content
+        assert result["shared"] == {"a": 1, "b": 2}
+        assert result["unique1"] == "value1"
+        assert result["unique2"] == "value2"
+
+
+class TestChunkListAdvanced:
+    """Advanced list chunking tests"""
+    
+    def test_chunk_with_large_lists(self):
+        """Test chunking very large lists"""
+        large_list = list(range(100000))  # 100k items
+        chunk_size = 1000
+        
+        import time
+        start_time = time.time()
+        result = chunk_list(large_list, chunk_size)
+        end_time = time.time()
+        
+        # Should complete quickly
+        assert end_time - start_time < 1.0
+        
+        # Verify correct chunking
+        assert len(result) == 100  # 100k / 1k = 100 chunks
+        assert all(len(chunk) == chunk_size for chunk in result[:-1])  # All but last chunk
+        assert len(result[-1]) <= chunk_size  # Last chunk may be smaller
+    
+    def test_chunk_memory_efficiency(self):
+        """Test that chunking doesn't create excessive memory overhead"""
+        # Create list with large objects
+        large_objects = [{"data": "x" * 1000, "id": i} for i in range(1000)]
+        
+        result = chunk_list(large_objects, 100)
+        
+        # Verify structure
+        assert len(result) == 10
+        assert all(len(chunk) == 100 for chunk in result)
+        
+        # Verify objects are the same instances (not copied)
+        assert result[0][0] is large_objects[0]
+        assert result[5][50] is large_objects[550]
+    
+    def test_chunk_with_various_data_types(self):
+        """Test chunking lists with various data types"""
+        mixed_list = [
+            "string", 42, 3.14, True, None, 
+            [1, 2, 3], {"key": "value"}, 
+            lambda x: x, set([1, 2, 3])
+        ]
+        
+        result = chunk_list(mixed_list, 3)
+        
+        # Verify chunking preserves all types
+        assert len(result) == 3  # 9 items / 3 = 3 chunks
+        assert len(result[0]) == 3
+        assert len(result[1]) == 3
+        assert len(result[2]) == 3
+        
+        # Verify types are preserved
+        flattened = [item for chunk in result for item in chunk]
+        assert flattened == mixed_list
+    
+    def test_chunk_edge_cases_comprehensive(self):
+        """Test comprehensive edge cases for chunking"""
+        # Test with chunk size equal to list length
+        data = [1, 2, 3, 4, 5]
+        result = chunk_list(data, 5)
+        assert result == [[1, 2, 3, 4, 5]]
+        
+        # Test with chunk size larger than list
+        result = chunk_list(data, 10)
+        assert result == [[1, 2, 3, 4, 5]]
+        
+        # Test with single item chunks
+        result = chunk_list(data, 1)
+        assert result == [[1], [2], [3], [4], [5]]
+        
+        # Test with empty list
+        result = chunk_list([], 5)
+        assert result == []
+
+
+class TestFormatDurationAdvanced:
+    """Advanced duration formatting tests"""
+    
+    def test_duration_precision_requirements(self):
+        """Test duration formatting meets precision requirements"""
+        test_cases = [
+            (0.001, "0.00s"),      # Very small duration
+            (0.999, "1.00s"),      # Just under 1 second
+            (59.999, "60.00s"),    # Just under 1 minute
+            (60.001, "1.0m"),      # Just over 1 minute
+            (3599.999, "60.0m"),   # Just under 1 hour
+            (3600.001, "1.0h"),    # Just over 1 hour
+        ]
+        
+        for duration, expected in test_cases:
+            result = format_duration(duration)
+            # Allow some variation in implementation
+            if expected.endswith("s"):
+                assert result.endswith("s")
+                assert abs(float(result[:-1]) - float(expected[:-1])) < 0.01
+            elif expected.endswith("m"):
+                assert result.endswith("m")
+                assert abs(float(result[:-1]) - float(expected[:-1])) < 0.1
+            elif expected.endswith("h"):
+                assert result.endswith("h")
+                assert abs(float(result[:-1]) - float(expected[:-1])) < 0.1
+    
+    def test_duration_format_consistency(self):
+        """Test duration format consistency across ranges"""
+        # Test seconds range
+        for i in range(60):
+            result = format_duration(i)
+            assert result.endswith("s")
+            assert float(result[:-1]) == i
+        
+        # Test minutes range
+        for i in range(1, 60):
+            duration = i * 60
+            result = format_duration(duration)
+            assert result.endswith("m")
+            assert float(result[:-1]) == i
+        
+        # Test hours range
+        for i in range(1, 24):
+            duration = i * 3600
+            result = format_duration(duration)
+            assert result.endswith("h")
+            assert float(result[:-1]) == i
+    
+    def test_duration_extreme_values(self):
+        """Test duration formatting with extreme values"""
+        extreme_cases = [
+            1e-10,     # Very tiny duration
+            1e10,      # Very large duration (over 300 years)
+            float('inf'),  # Infinity
+        ]
+        
+        for duration in extreme_cases:
+            try:
+                result = format_duration(duration)
+                assert isinstance(result, str)
+                assert len(result) > 0
+                assert any(unit in result for unit in ["s", "m", "h"])
+            except (ValueError, OverflowError):
+                # Acceptable to raise exception for extreme values
+                pass
+
+
+class TestIntegrationAndWorkflows:
+    """Integration tests simulating real-world workflows"""
+    
+    def test_configuration_management_workflow(self):
+        """Test complete configuration management workflow"""
+        # Simulate loading configuration from multiple sources
+        base_config = {
+            "app": {"name": "MyApp", "version": "1.0"},
+            "database": {"host": "localhost", "port": 5432},
+            "features": {"auth": True, "logging": {"level": "INFO"}}
+        }
+        
+        user_config = {
+            "database": {"host": "prod.db.com", "ssl": True},
+            "features": {"logging": {"level": "DEBUG", "file": "app.log"}}
+        }
+        
+        env_config = {
+            "database": {"password": "secret"},
+            "features": {"rate_limiting": True}
+        }
+        
+        # Merge configurations
+        merged_config = merge_dicts(base_config, user_config)
+        final_config = merge_dicts(merged_config, env_config)
+        
+        # Serialize for storage
+        config_json = safe_json_dumps(final_config)
+        assert config_json != ""
+        
+        # Create hash for versioning
+        config_hash = generate_hash(config_json)
+        assert len(config_hash) == 64
+        
+        # Flatten for environment variable export
+        flat_config = flatten_dict(final_config)
+        
+        # Verify expected merged values
+        assert final_config["database"]["host"] == "prod.db.com"
+        assert final_config["database"]["ssl"] is True
+        assert final_config["database"]["password"] == "secret"
+        assert final_config["features"]["logging"]["level"] == "DEBUG"
+        assert final_config["features"]["rate_limiting"] is True
+        
+        # Verify flattened structure
+        assert "database.host" in flat_config
+        assert "features.logging.level" in flat_config
+        assert flat_config["features.logging.level"] == "DEBUG"
+    
+    def test_data_processing_pipeline_with_retry(self):
+        """Test data processing pipeline with retry mechanisms"""
+        # Simulate processing data in chunks with potential failures
+        raw_data = [{"id": i, "value": f"item_{i}"} for i in range(100)]
+        chunks = chunk_list(raw_data, 10)
+        
+        processed_results = []
+        failure_count = [0]
+        
+        def process_chunk_with_failure(chunk):
+            # Simulate intermittent failures
+            failure_count[0] += 1
+            if failure_count[0] % 3 == 0:  # Fail every 3rd attempt
+                raise ConnectionError("Simulated processing failure")
+            
+            # Process chunk
+            processed = {
+                "chunk_id": generate_hash(safe_json_dumps(chunk))[:8],
+                "items": len(chunk),
+                "data": chunk
+            }
+            return processed
+        
+        # Process each chunk with retry
+        for chunk in chunks:
+            try:
+                result = retry_with_backoff(
+                    lambda: process_chunk_with_failure(chunk),
+                    max_retries=3,
+                    base_delay=0.1
+                )
+                processed_results.append(result)
+            except Exception as e:
+                # Log failure and continue (in real scenario)
+                print(f"Failed to process chunk after retries: {e}")
+        
+        # Verify processing completed for most chunks
+        assert len(processed_results) >= 8  # At least 80% success rate
+        
+        # Verify each result has expected structure
+        for result in processed_results:
+            assert "chunk_id" in result
+            assert len(result["chunk_id"]) == 8
+            assert result["items"] == 10
+            assert len(result["data"]) == 10
+    
+    def test_file_management_workflow(self):
+        """Test file management workflow with sanitization and directory creation"""
+        import tempfile
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Simulate organizing files from various sources
+            file_specs = [
+                {"name": "report<2023>.pdf", "category": "reports", "subcategory": "annual"},
+                {"name": "data|backup.csv", "category": "data", "subcategory": "backups"},
+                {"name": "config?.yaml", "category": "config", "subcategory": "environments"},
+                {"name": "  .hidden_file  ", "category": "misc", "subcategory": "temp"},
+            ]
+            
+            organized_files = []
+            
+            for spec in file_specs:
+                # Create directory structure
+                category_dir = ensure_directory_exists(
+                    Path(temp_dir) / spec["category"] / spec["subcategory"]
+                )
+                
+                # Sanitize filename
+                safe_name = sanitize_filename(spec["name"])
+                
+                # Create file path
+                file_path = category_dir / safe_name
+                
+                # Simulate file creation with metadata
+                file_metadata = {
+                    "original_name": spec["name"],
+                    "safe_name": safe_name,
+                    "category": spec["category"],
+                    "subcategory": spec["subcategory"],
+                    "path": str(file_path),
+                    "created": time.time()
+                }
+                
+                # Write metadata as JSON
+                metadata_json = safe_json_dumps(file_metadata)
+                file_path.write_text(metadata_json)
+                
+                organized_files.append(file_metadata)
+            
+            # Verify all files were created successfully
+            assert len(organized_files) == 4
+            
+            for file_info in organized_files:
+                file_path = Path(file_info["path"])
+                assert file_path.exists()
+                assert file_path.is_file()
+                
+                # Verify content can be read back
+                content = file_path.read_text()
+                parsed_metadata = safe_json_parse(content)
+                assert parsed_metadata is not None
+                assert parsed_metadata["original_name"] == file_info["original_name"]
+
+
+# Performance and stress testing
+class TestPerformanceAndStress:
+    """Performance and stress tests for all utility functions"""
+    
+    @pytest.mark.slow
+    def test_concurrent_mixed_operations(self):
+        """Test concurrent execution of mixed utility operations"""
+        import threading
+        import random
+        
+        results = []
+        errors = []
+        
+        def worker_thread(thread_id):
+            try:
+                # Perform random mix of operations
+                operations = [
+                    lambda: safe_json_dumps({"thread": thread_id, "data": list(range(100))}),
+                    lambda: generate_hash(f"thread_{thread_id}_data"),
+                    lambda: flatten_dict({"thread": thread_id, "nested": {"value": thread_id}}),
+                    lambda: chunk_list(list(range(50)), 10),
+                    lambda: format_duration(thread_id * 10.5),
+                ]
+                
+                thread_results = []
+                for _ in range(10):  # 10 operations per thread
+                    op = random.choice(operations)
+                    result = op()
+                    thread_results.append(result)
+                
+                results.append((thread_id, thread_results))
+                
+            except Exception as e:
+                errors.append((thread_id, str(e)))
+        
+        # Run 20 concurrent threads
+        threads = []
+        for i in range(20):
+            thread = threading.Thread(target=worker_thread, args=(i,))
+            threads.append(thread)
+            thread.start()
+        
+        # Wait for completion
+        for thread in threads:
+            thread.join()
+        
+        # Verify results
+        assert len(errors) == 0, f"Errors occurred: {errors}"
+        assert len(results) == 20
+        assert all(len(thread_results) == 10 for _, thread_results in results)
+    
+    @pytest.mark.slow
+    def test_memory_usage_large_operations(self):
+        """Test memory usage with large data operations"""
+        # Test with large data structures
+        large_nested_dict = {}
+        current_level = large_nested_dict
+        
+        # Create 50 levels of nesting with data at each level
+        for i in range(50):
+            current_level[f"level_{i}"] = {
+                "data": [f"item_{j}" for j in range(100)],  # 100 items per level
+                "metadata": {"level": i, "timestamp": time.time()},
+                "next": {}
+            }
+            current_level = current_level[f"level_{i}"]["next"]
+        
+        import time
+        
+        # Test JSON serialization performance
+        start_time = time.time()
+        json_result = safe_json_dumps(large_nested_dict)
+        json_time = time.time() - start_time
+        
+        # Test flattening performance
+        start_time = time.time()
+        flattened = flatten_dict(large_nested_dict)
+        flatten_time = time.time() - start_time
+        
+        # Test hash generation performance
+        start_time = time.time()
+        hash_result = generate_hash(json_result)
+        hash_time = time.time() - start_time
+        
+        # Verify operations completed
+        assert json_result != ""
+        assert len(flattened) > 100  # Should have many flattened keys
+        assert len(hash_result) == 64
+        
+        # Performance should be reasonable (adjust thresholds as needed)
+        assert json_time < 10.0, f"JSON serialization too slow: {json_time}s"
+        assert flatten_time < 10.0, f"Flattening too slow: {flatten_time}s"
+        assert hash_time < 5.0, f"Hashing too slow: {hash_time}s"
+
+
+# Add marker for slow tests
+pytest.mark.slow = pytest.mark.skipif(
+    not pytest.config.getoption("--run-slow", default=False),
+    reason="Slow tests skipped unless --run-slow option provided"
+)
