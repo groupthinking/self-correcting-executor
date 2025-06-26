@@ -1,82 +1,68 @@
-#!/usr/bin/env python3
-"""
-Guardian Agent: Linter Watchdog
-===============================
-
-This script continuously monitors the project for Python file changes
-and runs a linter to provide immediate feedback on code quality.
-
-This is the first component of the Guardian Agent Protocol.
-"""
-import asyncio
 import os
+import time
 import subprocess
-import logging
-from pathlib import Path
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
-# --- Configuration ---
-PROJECT_ROOT = Path(__file__).parent.resolve()
-WATCHED_EXTENSIONS = {".py"}
-LINT_COMMAND = ["pylint"]
-EXCLUDED_DIRS = {"__pycache__", ".git", "venv", "node_modules", ".cursor"}
-# ---------------------
+# Configuration
+WATCH_DIRECTORY = "."  # Watch the entire repository
+PYTHON_EXTENSIONS = ('.py',)
+PLACEHOLDER_STRINGS = ['TODO', 'FIXME', 'XXX', 'PLACEHOLDER']
+MIN_TEST_COVERAGE = 80  # Minimum test coverage percentage
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+class GuardianAgent(FileSystemEventHandler):
+    def on_modified(self, event):
+        if not event.is_directory and event.src_path.endswith(PYTHON_EXTENSIONS):
+            print(f"Guardian Agent: Detected change in {event.src_path}")
+            self.run_linter(event.src_path)
+            self.check_placeholders(event.src_path)
+            self.run_test_coverage_analysis()
 
-async def run_linter(file_path: Path):
-    """Run the linter on a specific file."""
-    if not any(part in EXCLUDED_DIRS for part in file_path.parts):
-        command = LINT_COMMAND + [str(file_path)]
-        logger.info(f"Guardian: Analyzing {file_path.relative_to(PROJECT_ROOT)}...")
-        
-        process = await asyncio.create_subprocess_exec(
-            *command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        stdout, stderr = await process.communicate()
+    def run_linter(self, file_path):
+        """Runs a linter on the specified file."""
+        print(f"Guardian Agent: Running linter on {file_path}...")
+        try:
+            subprocess.run(['pylint', file_path], check=True)
+            print(f"Guardian Agent: Linter passed for {file_path}")
+        except subprocess.CalledProcessError as e:
+            print(f"Guardian Agent: Linter failed for {file_path}: {e}")
+        except FileNotFoundError:
+            print("Guardian Agent: pylint not found. Please install it with 'pip install pylint'")
 
-        if process.returncode != 0:
-            logger.warning(f"Guardian: Found issues in {file_path.relative_to(PROJECT_ROOT)}")
-            if stdout:
-                print("\n--- LINT REPORT ---")
-                print(stdout.decode().strip())
-                print("--- END REPORT ---\n")
-            if stderr:
-                logger.error(f"Linter error on {file_path.relative_to(PROJECT_ROOT)}:\n{stderr.decode().strip()}")
-        else:
-            logger.info(f"Guardian: {file_path.relative_to(PROJECT_ROOT)} looks clean!")
+    def check_placeholders(self, file_path):
+        """Checks for placeholder strings in the specified file."""
+        print(f"Guardian Agent: Checking for placeholders in {file_path}...")
+        with open(file_path, 'r') as f:
+            for i, line in enumerate(f):
+                for placeholder in PLACEHOLDER_STRINGS:
+                    if placeholder in line:
+                        print(f"Guardian Agent: Found placeholder '{placeholder}' in {file_path} at line {i+1}")
 
-async def watch_directory():
-    """Watch the project directory for file changes."""
-    logger.info("Guardian Agent (Linter Watchdog) is now active.")
-    logger.info(f"Watching for changes in: {PROJECT_ROOT}")
-    
-    # Simple polling-based watcher
-    last_mtimes = {}
-    
-    while True:
-        for file_path in PROJECT_ROOT.rglob('*'):
-            if file_path.is_file() and file_path.suffix in WATCHED_EXTENSIONS:
-                try:
-                    mtime = file_path.stat().st_mtime
-                    if file_path not in last_mtimes:
-                        last_mtimes[file_path] = mtime
-                        # Optionally lint on first discovery
-                        # await run_linter(file_path)
-                    elif last_mtimes[file_path] < mtime:
-                        last_mtimes[file_path] = mtime
-                        await run_linter(file_path)
-                except FileNotFoundError:
-                    # File might have been deleted
-                    if file_path in last_mtimes:
-                        del last_mtimes[file_path]
+    def run_test_coverage_analysis(self):
+        """Runs test coverage analysis for the entire project."""
+        print("Guardian Agent: Running test coverage analysis...")
+        try:
+            subprocess.run(['coverage', 'run', '-m', 'pytest'], check=True)
+            result = subprocess.run(['coverage', 'report', '--format=total'], capture_output=True, text=True, check=True)
+            coverage_percentage = int(float(result.stdout.strip()))
+            if coverage_percentage < MIN_TEST_COVERAGE:
+                print(f"Guardian Agent: Test coverage is {coverage_percentage}%, which is below the minimum of {MIN_TEST_COVERAGE}%")
+            else:
+                print(f"Guardian Agent: Test coverage is {coverage_percentage}%. Good job!")
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            print(f"Guardian Agent: Test coverage analysis failed: {e}")
+            print("Guardian Agent: Please ensure you have 'coverage' and 'pytest' installed ('pip install coverage pytest')")
 
-        await asyncio.sleep(2) # Check for changes every 2 seconds
 
 if __name__ == "__main__":
+    event_handler = GuardianAgent()
+    observer = Observer()
+    observer.schedule(event_handler, WATCH_DIRECTORY, recursive=True)
+    observer.start()
+    print(f"Guardian Agent started. Watching directory: {WATCH_DIRECTORY}")
     try:
-        asyncio.run(watch_directory())
+        while True:
+            time.sleep(1)
     except KeyboardInterrupt:
-        logger.info("Guardian Agent deactivated.") 
+        observer.stop()
+    observer.join()
