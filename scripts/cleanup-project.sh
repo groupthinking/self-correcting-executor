@@ -109,11 +109,10 @@ EOF
 
 # Merge with existing .gitignore
 if [ -f .gitignore ]; then
-    cat .gitignore >> .gitignore.tmp
-    sort -u .gitignore.tmp > .gitignore
-    rm .gitignore.tmp
+  grep -Fxvf .gitignore .gitignore.tmp >> .gitignore
+  rm .gitignore.tmp
 else
-    mv .gitignore.tmp .gitignore
+  mv .gitignore.tmp .gitignore
 fi
 
 # Summary report
