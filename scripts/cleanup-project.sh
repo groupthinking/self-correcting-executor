@@ -6,8 +6,9 @@ echo "🧹 Starting project cleanup..."
 
 # Backup important files first
 echo "📦 Creating backup..."
-mkdir -p .backup/$(date +%Y%m%d_%H%M%S)
-cp -r . .backup/$(date +%Y%m%d_%H%M%S)/ 2>/dev/null || true
+BACKUP_DIR=".backup/$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$BACKUP_DIR"
+find . -maxdepth 1 -mindepth 1 -not -path "$BACKUP_DIR" -exec cp -r {} "$BACKUP_DIR/" \; 2>/dev/null || true
 
 # Remove Python cache files
 echo "🗑️  Removing Python cache files..."
