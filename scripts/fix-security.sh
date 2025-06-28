@@ -280,14 +280,37 @@ class BasicAuth:
             return True
         return False
 
+    def enforce_password_reset(self, username: str) -> None:
+        """Enforce password reset for a user"""
+        if username in self.users:
+            self.users[username]['password_reset_required'] = True
+            self._save_users()
+
+# Initialize auth
+auth = BasicAuth()
+
+# Create default admin user if none exists
+if not auth.users:
+    import secrets
+    import string
+    secure_password = ''.join(secrets.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(16))
+    auth.create_user('admin', secure_password, 'admin')
+    auth.enforce_password_reset('admin')
+    print(f"⚠️  Default admin user created with a secure password: {secure_password}")
+    print("⚠️  You must change this password on first login!")
+
 # Initialize auth
 auth = BasicAuth()
 
 # Create default admin user if none exists
 if not auth.users:
     print("Creating default admin user...")
-    auth.create_user('admin', 'changeme123!', 'admin')
-    print("⚠️  Default admin user created with password 'changeme123!' - CHANGE THIS IMMEDIATELY!")
+    import secrets
+    import string
+    secure_password = ''.join(secrets.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(16))
+    auth.create_user('admin', secure_password, 'admin')
+    print(f"⚠️  Default admin user created with a secure password: {secure_password}")
+    print("⚠️  You must change this password on first login!")
 EOF
 
 # Update .gitignore to exclude sensitive files
