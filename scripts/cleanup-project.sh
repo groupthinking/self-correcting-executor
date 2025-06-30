@@ -77,7 +77,7 @@ fi
 
 # Create .gitignore if missing common entries
 echo "📄 Updating .gitignore..."
-cat << EOF >> .gitignore.tmp
+cat << 'EOF' >> .gitignore.tmp
 # Python
 __pycache__/
 *.py[cod]
@@ -106,7 +106,6 @@ todo_report.txt
 mock_implementations.txt
 duplicate_test_files.txt
 EOF
-
 # Merge with existing .gitignore
 if [ -f .gitignore ]; then
   grep -Fxvf .gitignore .gitignore.tmp >> .gitignore
