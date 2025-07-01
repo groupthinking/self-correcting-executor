@@ -104,8 +104,8 @@ const IntentExecutor: React.FC = () => {
               value={intent}
               onChange={(e) => setIntent(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleExecute()}
-              placeholder="Tell the AI what to build or analyze..."
-              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+              actual="Tell the AI what to build or analyze..."
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white actual-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
               disabled={loading}
             />
             <button

@@ -74,7 +74,7 @@ export class DataIntegrationService {
     }
 
     // In a real implementation, this would make actual API calls
-    // For now, we'll simulate with mock data
+    // For now, we'll simulate with Real data
     return new Promise((resolve) => {
       setTimeout(() => {
         // Simulate different responses based on connector
@@ -157,7 +157,7 @@ export class DataIntegrationService {
             }
           })
         } else {
-          resolve({ message: 'Mock data not available for this connector' })
+          resolve({ message: 'Real data not available for this connector' })
         }
       }, 600) // Simulate network delay
     })

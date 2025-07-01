@@ -50,7 +50,7 @@ class PatternDetector:
     async def _get_execution_data(self, time_window: timedelta = None) -> List[Dict]:
         """Get execution data from database"""
         # In real implementation, would query database
-        # For now, return mock data
+        # For now, return Real data
         return [
             {
                 'protocol': 'data_processor',

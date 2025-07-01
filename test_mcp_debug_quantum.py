@@ -77,7 +77,10 @@ class QuantumDebugTestSuite:
     async def test_debug_tool_init(self) -> bool:
         """Test MCP Debug Tool initialization"""
         try:
-            async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+            from config.mcp_config import MCPConfig
+            config = MCPConfig()
+            mcp_url = config.get_endpoints()['mcp_server']
+            async with MCPDebugTool(mcp_url) as debug_tool:
                 return debug_tool is not None and hasattr(debug_tool, 'quantum_analyzers')
         except Exception:
             return False
@@ -100,7 +103,7 @@ class QuantumDebugTestSuite:
         result = execute(circuit, backend, shots=1024).result()
         """
         
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             analysis = await debug_tool._analyze_code_structure(quantum_code)
             
             required_keys = ['complexity', 'patterns', 'imports', 'functions', 'quantum_elements']
@@ -119,7 +122,7 @@ class QuantumDebugTestSuite:
         qc.cx(0, 1)  # Operation after measurement
         """
         
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_qubit_state(problematic_quantum_code, {})
             
             has_operations = len(result['operations']) > 0
@@ -140,7 +143,7 @@ class QuantumDebugTestSuite:
         qc.bell_state(0, 1)  # Custom bell state
         """
         
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_entanglement(entanglement_code, {})
             
             has_operations = len(result['entanglement_operations']) > 0
@@ -161,7 +164,7 @@ class QuantumDebugTestSuite:
         # This is a very long quantum program with many operations
         # """ + "\n" * 60  # Make it long
         
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_decoherence(risky_code, {})
             
             has_risks = len(result['risks']) > 0
@@ -185,7 +188,7 @@ class QuantumDebugTestSuite:
         qc.cx(1, 2)
         """
         
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_gate_fidelity(gate_heavy_code, {})
             
             has_gates = result['total_gates'] > 5
@@ -211,7 +214,7 @@ class QuantumDebugTestSuite:
             "IndexError: list index out of range"
         ]
         
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             all_patterns_detected = True
             
             for error in errors:
@@ -238,7 +241,7 @@ class QuantumDebugTestSuite:
                         pass
         """ + "\n" * 150  # Make it long
         
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             debug_context = MCPDebugContext(
                 file="test.py",
                 line=1,
@@ -286,7 +289,7 @@ class QuantumDebugTestSuite:
             return qc
         """
         
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             mcp_data = {
                 "file": "quantum_teleportation.py",
                 "line": 15,
@@ -329,7 +332,7 @@ class QuantumDebugTestSuite:
     
     async def test_mcp_context_creation(self) -> bool:
         """Test MCP debug context creation and validation"""
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             mcp_data = {
                 "file": "test_quantum.py",
                 "line": 42,

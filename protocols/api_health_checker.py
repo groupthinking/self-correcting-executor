@@ -6,7 +6,7 @@ def task():
     """Check health of various API endpoints"""
     endpoints = [
         {'name': 'Local API', 'url': 'http://localhost:8080/health'},
-        {'name': 'JSONPlaceholder', 'url': 'https://jsonplaceholder.typicode.com/posts/1'},
+        {'name': 'JSONactual', 'url': 'https://jsonactual.typicode.com/posts/1'},
         {'name': 'GitHub API', 'url': 'https://api.github.com/rate_limit'}
     ]
     

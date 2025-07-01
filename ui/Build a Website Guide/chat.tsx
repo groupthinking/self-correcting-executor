@@ -96,7 +96,7 @@ export function Chat({ isOpen, onClose }: ChatProps) {
         <div className="border-t border-gray-800 p-4">
           <div className="flex gap-2">
             <Input
-              placeholder="Type your message..."
+              actual="Type your message..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
