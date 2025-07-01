@@ -39,20 +39,17 @@ WATCHED_EXTENSIONS = {".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".md"}
 EXCLUDED_DIRS = {"__pycache__", ".git", "venv", "node_modules", ".cursor", "target", "dist", "build"}
 
 # Business metrics
-COST_PER_TODO = 1000      # $1,000 per TODO
-COST_PER_FIXME = 2000     # $2,000 per FIXME  
-COST_PER_HACK = 5000      # $5,000 per HACK
+COST_PER_TODO = 1000  # $1,000 per TODO
+COST_PER_FIXME = 2000  # $2,000 per FIXME
+COST_PER_HACK = 5000  # $5,000 per HACK
 COST_PER_NOT_IMPLEMENTED = 10000  # $10,000 per NotImplementedError
 COST_PER_LINT_ISSUE = 1000  # $1,000 per lint issue
 
 # --- Setup Logging ---
 logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('guardian_agent.log'),
-        logging.StreamHandler()
-    ]
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("guardian_agent.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
