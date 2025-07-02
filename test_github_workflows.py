@@ -4,10 +4,8 @@ Testing framework: pytest with fixtures, mocks, and parametrized tests.
 """
 
 import pytest
-import json
 import yaml
-import os
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import patch
 from pathlib import Path
 from typing import Dict, List, Any
 
