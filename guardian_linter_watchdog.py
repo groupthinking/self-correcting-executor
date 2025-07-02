@@ -41,7 +41,7 @@ class GuardianAgent(FileSystemEventHandler):
     def check_placeholders(self, file_path):
         """Checks for placeholder strings in the specified file."""
         print(f"Guardian Agent: Checking for placeholders in {file_path}...")
-        with open(file_path, 'r') as f:
+with open(file_path, 'r', encoding='utf-8') as f:
             for i, line in enumerate(f):
                 for placeholder in PLACEHOLDER_STRINGS:
                     if placeholder in line:
