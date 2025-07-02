@@ -51,26 +51,14 @@ echo "🚀 Starting CodeRabbit auto-improvement..."
 
 # 1. Generate improvements for all files
 echo "📝 Generating improvements..."
-git add -A
-if [ $? -ne 0 ]; then
-    echo "❌ Error: Failed to add files to Git. Exiting..."
-    exit 1
-fi
+git add -A || { echo "❌ Error: Failed to add files to Git. Exiting..."; exit 1; }
 if ! git diff --cached --quiet; then
-  git commit -m "feat: prepare for CodeRabbit auto-improvements"
-fi
-if [ $? -ne 0 ]; then
-    echo "❌ Error: Failed to commit changes. Exiting..."
-    exit 1
+  git commit -m "feat: prepare for CodeRabbit auto-improvements" || { echo "❌ Error: Failed to commit changes. Exiting..."; exit 1; }
 fi
 
 # 2. Push to trigger CodeRabbit review
 echo "⬆️ Pushing to GitHub for CodeRabbit analysis..."
-git push
-if [ $? -ne 0 ]; then
-    echo "❌ Error: Failed to push changes to GitHub. Exiting..."
-    exit 1
-fi
+git push || { echo "❌ Error: Failed to push changes to GitHub. Exiting..."; exit 1; }
 
 # 3. Wait for CodeRabbit to process
 wait_for_coderabbit
