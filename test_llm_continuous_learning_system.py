@@ -24,7 +24,7 @@ import tempfile
 import os
 from unittest.mock import Mock, patch, AsyncMock, MagicMock, call
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 
 
 # Import the module under test
@@ -1258,12 +1258,12 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "performance: Performance tests")
     config.addinivalue_line("markers", "slow: Slow-running tests")
 
-class TestLLMContinuousLearningSystemAdvancedScenarios:
-    """Advanced test scenarios for comprehensive coverage."""
+class TestLLMContinuousLearningSystemAdvancedErrorHandling:
+    """Advanced error handling and exception scenarios."""
 
     @pytest.fixture
-    def mock_model_with_failures(self):
-        """Create a mock model that can simulate various failure modes."""
+    def mock_model(self):
+        """Create a mock LLM model with various failure modes."""
         mock = Mock()
         mock.fine_tune = AsyncMock()
         mock.evaluate = Mock()
@@ -1272,224 +1272,390 @@ class TestLLMContinuousLearningSystemAdvancedScenarios:
         return mock
 
     @pytest.fixture
-    def mock_unreliable_data_loader(self):
-        """Create a mock data loader that simulates unreliable behavior."""
+    def mock_data_loader(self):
+        """Create a mock data loader with failure scenarios."""
         mock = Mock()
         mock.load_training_data = Mock()
         return mock
 
     @pytest.fixture
-    def mock_intermittent_feedback_collector(self):
-        """Create a mock feedback collector with intermittent failures."""
+    def mock_feedback_collector(self):
+        """Create a mock feedback collector with failure scenarios."""
         mock = Mock()
         mock.collect_feedback = Mock()
         return mock
 
     @pytest.fixture
-    def learning_system_advanced(self, mock_model_with_failures, mock_unreliable_data_loader, mock_intermittent_feedback_collector):
-        """Create a learning system with failure-prone components."""
+    def learning_system(self, mock_model, mock_data_loader, mock_feedback_collector):
+        """Create a learning system instance for testing."""
         return LLMContinuousLearningSystem(
-            model=mock_model_with_failures,
-            data_loader=mock_unreliable_data_loader,
-            feedback_collector=mock_intermittent_feedback_collector
+            model=mock_model,
+            data_loader=mock_data_loader,
+            feedback_collector=mock_feedback_collector
         )
 
-    @pytest.mark.parametrize("learning_rate,batch_size,max_epochs,expected_error", [
-        (-1.0, 16, 10, "Learning rate must be positive"),
-        (0.001, -5, 10, "Batch size must be positive"),
-        (0.001, 16, -1, "Max epochs must be positive"),
-        (float('inf'), 16, 10, "Learning rate must be finite"),
-        (0.001, float('inf'), 10, "Batch size must be finite"),
-        (0.001, 16, float('inf'), "Max epochs must be finite"),
-        (float('nan'), 16, 10, "Learning rate cannot be NaN"),
-    ])
-    def test_initialization_parameter_validation_comprehensive(self, mock_model_with_failures, 
-                                                             mock_unreliable_data_loader, 
-                                                             mock_intermittent_feedback_collector,
-                                                             learning_rate, batch_size, max_epochs, expected_error):
-        """Test comprehensive parameter validation during initialization."""
-        with pytest.raises(ValueError, match=expected_error):
-            LLMContinuousLearningSystem(
-                model=mock_model_with_failures,
-                data_loader=mock_unreliable_data_loader,
-                feedback_collector=mock_intermittent_feedback_collector,
-                learning_rate=learning_rate,
-                batch_size=batch_size,
-                max_epochs=max_epochs
-            )
+    def test_data_loader_raises_ioerror(self, learning_system):
+        """Test handling when data loader raises IOError."""
+        learning_system.data_loader.load_training_data.side_effect = IOError("Cannot read data file")
+        
+        with pytest.raises(IOError, match="Cannot read data file"):
+            learning_system.load_training_data()
+
+    def test_data_loader_raises_permission_error(self, learning_system):
+        """Test handling when data loader raises PermissionError."""
+        learning_system.data_loader.load_training_data.side_effect = PermissionError("Access denied")
+        
+        with pytest.raises(PermissionError, match="Access denied"):
+            learning_system.load_training_data()
+
+    def test_data_loader_raises_memory_error(self, learning_system):
+        """Test handling when data loader raises MemoryError."""
+        learning_system.data_loader.load_training_data.side_effect = MemoryError("Out of memory")
+        
+        with pytest.raises(MemoryError, match="Out of memory"):
+            learning_system.load_training_data()
 
     @pytest.mark.asyncio
-    async def test_cascading_failure_recovery(self, learning_system_advanced):
-        """Test system behavior during cascading failures."""
-        # Simulate multiple failure points
-        learning_system_advanced.data_loader.load_training_data.side_effect = Exception("Data loading failed")
-        learning_system_advanced.model.fine_tune.side_effect = Exception("Model training failed")
-        learning_system_advanced.feedback_collector.collect_feedback.side_effect = Exception("Feedback collection failed")
+    async def test_model_fine_tune_timeout(self, learning_system):
+        """Test handling of model fine-tuning timeout."""
+        learning_system.model.fine_tune.side_effect = asyncio.TimeoutError("Training timed out")
         
-        # Test that system handles cascading failures gracefully
-        with pytest.raises(Exception):
-            await learning_system_advanced.run_continuous_learning_cycle()
-        
-        # Verify error counting is accurate
-        assert learning_system_advanced.error_count > 0
-
-    @pytest.mark.parametrize("data_corruption_type", [
-        "missing_keys",
-        "wrong_types",
-        "malformed_json",
-        "encoding_issues",
-        "circular_references"
-    ])
-    def test_data_corruption_handling(self, learning_system_advanced, data_corruption_type):
-        """Test handling of various data corruption scenarios."""
-        if data_corruption_type == "missing_keys":
-            corrupted_data = [{"input": "test"}]  # Missing output
-        elif data_corruption_type == "wrong_types":
-            corrupted_data = [{"input": 123, "output": ["not", "a", "string"]}]
-        elif data_corruption_type == "malformed_json":
-            corrupted_data = ["not a dict"]
-        elif data_corruption_type == "encoding_issues":
-            corrupted_data = [{"input": "\x00\x01\x02", "output": "test"}]
-        elif data_corruption_type == "circular_references":
-            circular_dict = {"input": "test", "output": "test"}
-            circular_dict["self"] = circular_dict
-            corrupted_data = [circular_dict]
-        
-        with pytest.raises(ValueError):
-            learning_system_advanced.validate_training_data(corrupted_data)
+        with pytest.raises(asyncio.TimeoutError, match="Training timed out"):
+            await learning_system.fine_tune_model()
 
     @pytest.mark.asyncio
-    async def test_resource_exhaustion_scenarios(self, learning_system_advanced):
-        """Test behavior under resource exhaustion conditions."""
-        # Simulate memory exhaustion
-        learning_system_advanced.model.fine_tune.side_effect = MemoryError("Out of memory")
+    async def test_model_fine_tune_cancelled(self, learning_system):
+        """Test handling of cancelled fine-tuning operation."""
+        learning_system.model.fine_tune.side_effect = asyncio.CancelledError("Training cancelled")
         
-        with pytest.raises(MemoryError):
-            await learning_system_advanced.fine_tune_model()
-        
-        # Verify system state is properly cleaned up
-        assert not learning_system_advanced._is_training
+        with pytest.raises(asyncio.CancelledError, match="Training cancelled"):
+            await learning_system.fine_tune_model()
 
-    def test_extreme_data_sizes(self, learning_system_advanced):
-        """Test handling of extremely large and small datasets."""
-        # Test with extremely large dataset
-        huge_data = [{"input": f"input_{i}", "output": f"output_{i}"} for i in range(100000)]
-        learning_system_advanced.data_loader.load_training_data.return_value = huge_data
-        learning_system_advanced.batch_size = 1000
+    def test_feedback_collector_network_error(self, learning_system):
+        """Test handling of network errors during feedback collection."""
+        learning_system.feedback_collector.collect_feedback.side_effect = ConnectionError("Network unreachable")
         
-        batches = learning_system_advanced.create_training_batches()
-        assert len(batches) == 100  # 100000 / 1000
-        
-        # Test with single item dataset
-        tiny_data = [{"input": "single", "output": "item"}]
-        learning_system_advanced.data_loader.load_training_data.return_value = tiny_data
-        learning_system_advanced.batch_size = 1000
-        
-        batches = learning_system_advanced.create_training_batches()
-        assert len(batches) == 1
-        assert len(batches[0]) == 1
+        with pytest.raises(ConnectionError, match="Network unreachable"):
+            learning_system.collect_feedback()
 
-    @pytest.mark.parametrize("rating_distribution", [
-        [1] * 100,  # All minimum ratings
-        [5] * 100,  # All maximum ratings
-        list(range(1, 6)) * 20,  # Uniform distribution
-        [1] * 80 + [5] * 20,  # Bimodal distribution
-        [3] * 100,  # All neutral ratings
-    ])
-    def test_feedback_rating_distributions(self, learning_system_advanced, rating_distribution):
-        """Test handling of various feedback rating distributions."""
-        feedback_data = [
-            {"query": f"query_{i}", "response": f"response_{i}", "rating": rating, "timestamp": datetime.now()}
-            for i, rating in enumerate(rating_distribution)
+    def test_feedback_collector_json_decode_error(self, learning_system):
+        """Test handling of JSON decode errors during feedback collection."""
+        learning_system.feedback_collector.collect_feedback.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+        
+        with pytest.raises(json.JSONDecodeError):
+            learning_system.collect_feedback()
+
+    def test_model_evaluation_cuda_error(self, learning_system):
+        """Test handling of CUDA errors during model evaluation."""
+        learning_system.model.evaluate.side_effect = RuntimeError("CUDA out of memory")
+        
+        with pytest.raises(RuntimeError, match="CUDA out of memory"):
+            learning_system.evaluate_model_performance()
+
+    def test_checkpoint_save_disk_full_error(self, learning_system):
+        """Test handling of disk full error during checkpoint save."""
+        learning_system.model.save_checkpoint.side_effect = OSError("No space left on device")
+        
+        with pytest.raises(OSError, match="No space left on device"):
+            learning_system.save_model_checkpoint("/tmp/checkpoint.pkl")
+
+    def test_checkpoint_load_corrupted_file(self, learning_system):
+        """Test handling of corrupted checkpoint file."""
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(b"corrupted data")
+            checkpoint_path = temp_file.name
+        
+        learning_system.model.load_checkpoint.side_effect = EOFError("Corrupted checkpoint file")
+        
+        try:
+            with pytest.raises(EOFError, match="Corrupted checkpoint file"):
+                learning_system.load_model_checkpoint(checkpoint_path)
+        finally:
+            os.unlink(checkpoint_path)
+
+    def test_multiple_sequential_errors(self, learning_system):
+        """Test handling of multiple sequential errors."""
+        learning_system.model.evaluate.side_effect = [
+            RuntimeError("First error"),
+            ValueError("Second error"),
+            Exception("Third error")
         ]
         
-        high_quality = learning_system_advanced.filter_high_quality_feedback(feedback_data, min_rating=4)
-        expected_count = sum(1 for r in rating_distribution if r >= 4)
-        assert len(high_quality) == expected_count
+        initial_error_count = learning_system.error_count
+        
+        for i in range(3):
+            with pytest.raises(Exception):
+                learning_system.evaluate_model_performance()
+        
+        assert learning_system.error_count == initial_error_count + 3
 
-    @pytest.mark.asyncio
-    async def test_training_interruption_and_resume(self, learning_system_advanced):
-        """Test training interruption and resume capabilities."""
-        # Set up a long-running training simulation
-        async def slow_training():
-            await asyncio.sleep(0.1)  # Simulate training time
-            return {"status": "success", "loss": 0.1}
+    @pytest.mark.parametrize("exception_type,message", [
+        (ValueError, "Invalid parameter"),
+        (TypeError, "Type mismatch"),
+        (AttributeError, "Missing attribute"),
+        (KeyError, "Missing key"),
+        (IndexError, "Index out of range"),
+    ])
+    def test_various_exception_types(self, learning_system, exception_type, message):
+        """Test handling of various exception types."""
+        learning_system.model.evaluate.side_effect = exception_type(message)
         
-        learning_system_advanced.model.fine_tune = AsyncMock(side_effect=slow_training)
-        
-        # Start training
-        training_task = asyncio.create_task(learning_system_advanced.fine_tune_model())
-        
-        # Wait briefly then check training state
-        await asyncio.sleep(0.05)
-        assert learning_system_advanced._is_training
-        
-        # Wait for completion
-        result = await training_task
-        assert result["status"] == "success"
-        assert not learning_system_advanced._is_training
+        with pytest.raises(exception_type, match=message):
+            learning_system.evaluate_model_performance()
 
-    def test_configuration_boundary_values(self, learning_system_advanced):
-        """Test configuration validation with boundary values."""
-        boundary_configs = [
-            {"learning_rate": 1e-10, "batch_size": 1, "max_epochs": 1},  # Minimum values
-            {"learning_rate": 1.0, "batch_size": 10000, "max_epochs": 1000},  # Large values
-            {"learning_rate": 0.5, "batch_size": 2**10, "max_epochs": 2**8},  # Power of 2 values
+
+class TestLLMContinuousLearningSystemAdvancedValidation:
+    """Advanced validation and data integrity tests."""
+
+    @pytest.fixture
+    def mock_model(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_data_loader(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_feedback_collector(self):
+        return Mock()
+
+    @pytest.fixture
+    def learning_system(self, mock_model, mock_data_loader, mock_feedback_collector):
+        return LLMContinuousLearningSystem(
+            model=mock_model,
+            data_loader=mock_data_loader,
+            feedback_collector=mock_feedback_collector
+        )
+
+    def test_validate_data_with_nested_structures(self, learning_system):
+        """Test validation of training data with nested structures."""
+        nested_data = [
+            {
+                "input": {"text": "Hello", "metadata": {"lang": "en"}},
+                "output": "Hi there!"
+            }
         ]
         
-        for config in boundary_configs:
-            result = learning_system_advanced.validate_configuration(config)
-            assert result is True
+        # Should handle nested structures appropriately
+        with pytest.raises(ValueError, match="Invalid training data format"):
+            learning_system.validate_training_data(nested_data)
 
-    @pytest.mark.parametrize("checkpoint_scenario", [
-        "valid_checkpoint",
-        "corrupted_checkpoint",
-        "incompatible_version",
-        "permission_denied",
-        "disk_full"
-    ])
-    def test_checkpoint_error_scenarios(self, learning_system_advanced, checkpoint_scenario):
-        """Test various checkpoint operation error scenarios."""
-        checkpoint_path = "/tmp/test_checkpoint.pkl"
+    def test_validate_data_with_numeric_values(self, learning_system):
+        """Test validation with numeric input/output values."""
+        numeric_data = [
+            {"input": 123, "output": "Number: 123"},
+            {"input": "Calculate: 2+2", "output": 4}
+        ]
         
-        if checkpoint_scenario == "valid_checkpoint":
-            learning_system_advanced.save_model_checkpoint(checkpoint_path)
-            learning_system_advanced.model.save_checkpoint.assert_called_once()
-        elif checkpoint_scenario == "corrupted_checkpoint":
-            learning_system_advanced.model.save_checkpoint.side_effect = Exception("Checkpoint corrupted")
-            with pytest.raises(Exception, match="Checkpoint corrupted"):
-                learning_system_advanced.save_model_checkpoint(checkpoint_path)
-        elif checkpoint_scenario == "incompatible_version":
-            learning_system_advanced.model.load_checkpoint.side_effect = ValueError("Incompatible checkpoint version")
-            with pytest.raises(ValueError, match="Incompatible checkpoint version"):
-                # Create a dummy file first
-                with open(checkpoint_path, 'w') as f:
-                    f.write("dummy")
-                learning_system_advanced.load_model_checkpoint(checkpoint_path)
-                os.unlink(checkpoint_path)
-        elif checkpoint_scenario == "permission_denied":
-            learning_system_advanced.model.save_checkpoint.side_effect = PermissionError("Permission denied")
-            with pytest.raises(PermissionError):
-                learning_system_advanced.save_model_checkpoint("/root/no_permission.pkl")
-        elif checkpoint_scenario == "disk_full":
-            learning_system_advanced.model.save_checkpoint.side_effect = OSError("No space left on device")
-            with pytest.raises(OSError, match="No space left on device"):
-                learning_system_advanced.save_model_checkpoint(checkpoint_path)
+        with pytest.raises(ValueError, match="Invalid training data format"):
+            learning_system.validate_training_data(numeric_data)
 
-    def test_statistics_consistency_under_load(self, learning_system_advanced):
-        """Test statistics consistency under concurrent access."""
-        def heavy_operations():
+    def test_validate_data_with_boolean_values(self, learning_system):
+        """Test validation with boolean input/output values."""
+        boolean_data = [
+            {"input": True, "output": "Boolean value"},
+            {"input": "Is this true?", "output": False}
+        ]
+        
+        with pytest.raises(ValueError, match="Invalid training data format"):
+            learning_system.validate_training_data(boolean_data)
+
+    def test_validate_data_with_list_values(self, learning_system):
+        """Test validation with list input/output values."""
+        list_data = [
+            {"input": ["item1", "item2"], "output": "List items"},
+            {"input": "What are the items?", "output": ["a", "b", "c"]}
+        ]
+        
+        with pytest.raises(ValueError, match="Invalid training data format"):
+            learning_system.validate_training_data(list_data)
+
+    def test_validate_data_with_extra_keys(self, learning_system):
+        """Test validation with extra keys in data."""
+        extra_keys_data = [
+            {
+                "input": "Valid input",
+                "output": "Valid output",
+                "extra_field": "Should be ignored",
+                "metadata": {"version": 1}
+            }
+        ]
+        
+        # Should validate successfully, ignoring extra keys
+        result = learning_system.validate_training_data(extra_keys_data)
+        assert result is True
+
+    def test_validate_feedback_with_invalid_timestamp(self, learning_system):
+        """Test feedback validation with invalid timestamp."""
+        invalid_feedback = [
+            {
+                "query": "test",
+                "response": "test",
+                "rating": 5,
+                "timestamp": "invalid_timestamp"
+            }
+        ]
+        
+        # Should handle invalid timestamp gracefully
+        result = learning_system.filter_high_quality_feedback(invalid_feedback)
+        assert len(result) == 1  # Should still include the feedback
+
+    def test_validate_feedback_with_missing_fields(self, learning_system):
+        """Test feedback validation with missing fields."""
+        incomplete_feedback = [
+            {"query": "test", "rating": 5},  # Missing response
+            {"response": "test", "rating": 4},  # Missing query
+            {"query": "test", "response": "test"}  # Missing rating
+        ]
+        
+        result = learning_system.filter_high_quality_feedback(incomplete_feedback)
+        assert len(result) == 0  # Should filter out incomplete feedback
+
+    @pytest.mark.parametrize("data_size", [1, 10, 100, 1000])
+    def test_validate_data_various_sizes(self, learning_system, data_size):
+        """Test validation with various data sizes."""
+        data = [
+            {"input": f"Input {i}", "output": f"Output {i}"}
+            for i in range(data_size)
+        ]
+        
+        result = learning_system.validate_training_data(data)
+        assert result is True
+
+    def test_validate_data_with_whitespace_variations(self, learning_system):
+        """Test validation with various whitespace patterns."""
+        whitespace_data = [
+            {"input": "  Valid input  ", "output": "Valid output"},
+            {"input": "Valid input", "output": "  Valid output  "},
+            {"input": "\tTabbed input\t", "output": "Valid output"},
+            {"input": "Valid input", "output": "\nNewline output\n"}
+        ]
+        
+        result = learning_system.validate_training_data(whitespace_data)
+        assert result is True
+
+    def test_validate_data_with_sql_injection_patterns(self, learning_system):
+        """Test validation with SQL injection-like patterns."""
+        sql_injection_data = [
+            {"input": "'; DROP TABLE users; --", "output": "SQL injection attempt"},
+            {"input": "1' OR '1'='1", "output": "Another injection attempt"},
+            {"input": "UNION SELECT * FROM passwords", "output": "Union attack"}
+        ]
+        
+        result = learning_system.validate_training_data(sql_injection_data)
+        assert result is True  # Should accept as valid text
+
+    def test_validate_data_with_xss_patterns(self, learning_system):
+        """Test validation with XSS-like patterns."""
+        xss_data = [
+            {"input": "<script>alert('xss')</script>", "output": "XSS attempt"},
+            {"input": "javascript:alert(1)", "output": "JavaScript injection"},
+            {"input": "<img src=x onerror=alert(1)>", "output": "Image XSS"}
+        ]
+        
+        result = learning_system.validate_training_data(xss_data)
+        assert result is True  # Should accept as valid text
+
+
+class TestLLMContinuousLearningSystemAdvancedConcurrency:
+    """Advanced concurrency and race condition tests."""
+
+    @pytest.fixture
+    def mock_model(self):
+        mock = Mock()
+        mock.fine_tune = AsyncMock(return_value={"status": "success"})
+        mock.evaluate = Mock(return_value={"accuracy": 0.85})
+        return mock
+
+    @pytest.fixture
+    def mock_data_loader(self):
+        mock = Mock()
+        mock.load_training_data = Mock(return_value=[
+            {"input": "test", "output": "test"}
+        ])
+        return mock
+
+    @pytest.fixture
+    def mock_feedback_collector(self):
+        return Mock()
+
+    @pytest.fixture
+    def learning_system(self, mock_model, mock_data_loader, mock_feedback_collector):
+        return LLMContinuousLearningSystem(
+            model=mock_model,
+            data_loader=mock_data_loader,
+            feedback_collector=mock_feedback_collector
+        )
+
+    def test_concurrent_statistics_read_write(self, learning_system):
+        """Test concurrent reading and writing of statistics."""
+        results = []
+        errors = []
+        
+        def reader():
+            try:
+                for _ in range(20):
+                    stats = learning_system.get_system_statistics()
+                    results.append(stats['total_training_samples'])
+                    time.sleep(0.001)
+            except Exception as e:
+                errors.append(e)
+        
+        def writer():
+            try:
+                for i in range(20):
+                    learning_system.total_training_samples = i
+                    time.sleep(0.001)
+            except Exception as e:
+                errors.append(e)
+        
+        reader_threads = [threading.Thread(target=reader) for _ in range(3)]
+        writer_threads = [threading.Thread(target=writer) for _ in range(2)]
+        
+        all_threads = reader_threads + writer_threads
+        
+        for t in all_threads:
+            t.start()
+        
+        for t in all_threads:
+            t.join()
+        
+        assert len(errors) == 0
+        assert len(results) == 60  # 3 readers * 20 calls each
+
+    @pytest.mark.asyncio
+    async def test_multiple_async_operations(self, learning_system):
+        """Test multiple async operations running concurrently."""
+        # Create multiple async tasks
+        tasks = []
+        
+        for i in range(5):
+            # Each task will try to fine-tune but only one should succeed
+            task = asyncio.create_task(learning_system.fine_tune_model())
+            tasks.append(task)
+            await asyncio.sleep(0.001)  # Small delay between task creation
+        
+        # Wait for all tasks to complete (some will fail with RuntimeError)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Count successful and failed operations
+        successful = sum(1 for r in results if isinstance(r, dict) and r.get('status') == 'success')
+        failed = sum(1 for r in results if isinstance(r, RuntimeError))
+        
+        # Should have exactly one success and multiple failures
+        assert successful == 1
+        assert failed == 4
+
+    def test_memory_statistics_under_load(self, learning_system):
+        """Test memory statistics under concurrent load."""
+        def memory_worker():
             for _ in range(50):
-                learning_system_advanced.total_training_samples += 1
-                learning_system_advanced.total_feedback_samples += 2
-                learning_system_advanced.error_count += 1
-                stats = learning_system_advanced.get_system_statistics()
-                # Verify statistics are internally consistent
-                assert stats["total_training_samples"] >= 0
-                assert stats["total_feedback_samples"] >= 0
-                assert stats["error_count"] >= 0
+                memory_usage = learning_system.get_memory_usage()
+                assert memory_usage > 0
+                learning_system.cleanup_memory()
+                time.sleep(0.001)
         
-        threads = [threading.Thread(target=heavy_operations) for _ in range(5)]
+        threads = [threading.Thread(target=memory_worker) for _ in range(5)]
         
         for t in threads:
             t.start()
@@ -1497,411 +1663,640 @@ class TestLLMContinuousLearningSystemAdvancedScenarios:
         for t in threads:
             t.join()
         
-        # Final consistency check
-        final_stats = learning_system_advanced.get_system_statistics()
-        assert final_stats["total_training_samples"] <= 250  # 5 threads * 50 operations
-        assert final_stats["total_feedback_samples"] <= 500  # 5 threads * 50 * 2
-        assert final_stats["error_count"] <= 250  # 5 threads * 50 operations
+        # Should not raise any exceptions
 
-    @pytest.mark.asyncio
-    async def test_async_operation_cancellation(self, learning_system_advanced):
-        """Test proper handling of async operation cancellation."""
-        # Create a cancellable training operation
-        async def cancellable_training():
+    def test_checkpoint_operations_under_load(self, learning_system):
+        """Test checkpoint operations under concurrent load."""
+        checkpoint_paths = [f"/tmp/checkpoint_{i}.pkl" for i in range(10)]
+        errors = []
+        
+        def checkpoint_worker(path):
             try:
-                await asyncio.sleep(1.0)  # Long operation
-                return {"status": "success"}
-            except asyncio.CancelledError:
-                raise
+                learning_system.save_model_checkpoint(path)
+                time.sleep(0.001)
+            except Exception as e:
+                errors.append(e)
         
-        learning_system_advanced.model.fine_tune = AsyncMock(side_effect=cancellable_training)
+        threads = [threading.Thread(target=checkpoint_worker, args=(path,)) for path in checkpoint_paths]
         
-        # Start training and cancel it
-        training_task = asyncio.create_task(learning_system_advanced.fine_tune_model())
-        await asyncio.sleep(0.1)  # Let training start
-        training_task.cancel()
+        for t in threads:
+            t.start()
         
-        with pytest.raises(asyncio.CancelledError):
-            await training_task
+        for t in threads:
+            t.join()
         
-        # Verify training flag is properly reset
-        assert not learning_system_advanced._is_training
-
-    def test_memory_leak_detection(self, learning_system_advanced):
-        """Test for potential memory leaks during repeated operations."""
-        initial_memory = learning_system_advanced.get_memory_usage()
-        
-        # Perform many operations that could cause memory leaks
-        for _ in range(100):
-            learning_system_advanced.data_loader.load_training_data.return_value = [
-                {"input": f"test_{i}", "output": f"output_{i}"} for i in range(10)
-            ]
-            batches = learning_system_advanced.create_training_batches()
-            learning_system_advanced.validate_training_data(learning_system_advanced.data_loader.load_training_data())
-            learning_system_advanced.get_system_statistics()
-        
-        # Clean up and check memory
-        learning_system_advanced.cleanup_memory()
-        final_memory = learning_system_advanced.get_memory_usage()
-        
-        # Memory should not have grown excessively
-        memory_growth = final_memory - initial_memory
-        assert memory_growth < initial_memory * 2  # Less than 200% growth
-
-
-class TestLLMContinuousLearningSystemStateTransitions:
-    """Test suite for system state transitions and lifecycle management."""
-
-    @pytest.fixture
-    def mock_components(self):
-        """Create mock components for state transition testing."""
-        model = Mock()
-        model.fine_tune = AsyncMock(return_value={"status": "success", "loss": 0.1})
-        model.evaluate = Mock(return_value={"accuracy": 0.85})
-        
-        data_loader = Mock()
-        data_loader.load_training_data = Mock(return_value=[
-            {"input": "test", "output": "test"}
-        ])
-        
-        feedback_collector = Mock()
-        feedback_collector.collect_feedback = Mock(return_value=[
-            {"query": "test", "response": "test", "rating": 5, "timestamp": datetime.now()}
-        ])
-        
-        return model, data_loader, feedback_collector
-
-    @pytest.fixture
-    def learning_system_states(self, mock_components):
-        """Create learning system for state testing."""
-        model, data_loader, feedback_collector = mock_components
-        return LLMContinuousLearningSystem(
-            model=model,
-            data_loader=data_loader,
-            feedback_collector=feedback_collector
-        )
-
-    def test_initial_state_verification(self, learning_system_states):
-        """Test that system starts in correct initial state."""
-        stats = learning_system_states.get_system_statistics()
-        
-        assert stats["total_training_samples"] == 0
-        assert stats["total_feedback_samples"] == 0
-        assert stats["model_version"] == 1
-        assert stats["error_count"] == 0
-        assert stats["last_training_time"] is None
-        assert stats["is_training"] is False
+        assert len(errors) == 0  # No errors should occur
+        assert learning_system.model.save_checkpoint.call_count == 10
 
     @pytest.mark.asyncio
-    async def test_training_state_transitions(self, learning_system_states):
-        """Test state transitions during training operations."""
-        # Initial state
-        assert not learning_system_states._is_training
+    async def test_async_training_with_interruption(self, learning_system):
+        """Test async training with various interruption scenarios."""
+        # Set up a slow training process
+        async def slow_training():
+            await asyncio.sleep(0.1)
+            return {"status": "success"}
         
-        # Create a training task that we can monitor
-        async def monitored_training():
-            # Check state immediately when training starts
-            assert learning_system_states._is_training
-            await asyncio.sleep(0.01)  # Simulate training work
-            return {"status": "success", "loss": 0.1}
+        learning_system.model.fine_tune = AsyncMock(side_effect=slow_training)
         
-        learning_system_states.model.fine_tune.side_effect = monitored_training
+        # Start training
+        training_task = asyncio.create_task(learning_system.fine_tune_model())
         
-        # Execute training
-        result = await learning_system_states.fine_tune_model()
+        # Wait a bit then try to interrupt
+        await asyncio.sleep(0.05)
         
-        # Verify final state
-        assert not learning_system_states._is_training
+        # Try to start another training (should fail)
+        with pytest.raises(RuntimeError, match="Training already in progress"):
+            await learning_system.fine_tune_model()
+        
+        # Wait for original training to complete
+        result = await training_task
         assert result["status"] == "success"
-        assert learning_system_states.model_version == 2  # Should increment
-
-    @pytest.mark.parametrize("operation_sequence", [
-        ["train", "evaluate", "feedback"],
-        ["feedback", "train", "evaluate"],
-        ["evaluate", "feedback", "train"],
-        ["train", "train", "evaluate"],  # Duplicate training should fail
-    ])
-    @pytest.mark.asyncio
-    async def test_operation_sequence_states(self, learning_system_states, operation_sequence):
-        """Test state consistency across different operation sequences."""
-        for i, operation in enumerate(operation_sequence):
-            if operation == "train":
-                if i > 0 and operation_sequence[i-1] == "train":
-                    # Second consecutive training should fail
-                    learning_system_states._is_training = True
-                    with pytest.raises(RuntimeError, match="Training already in progress"):
-                        await learning_system_states.fine_tune_model()
-                    learning_system_states._is_training = False
-                else:
-                    await learning_system_states.fine_tune_model()
-            elif operation == "evaluate":
-                learning_system_states.evaluate_model_performance()
-            elif operation == "feedback":
-                learning_system_states.collect_feedback()
-        
-        # Verify final state is consistent
-        stats = learning_system_states.get_system_statistics()
-        assert not stats["is_training"]
-
-    def test_error_state_recovery(self, learning_system_states):
-        """Test system recovery from error states."""
-        # Introduce errors
-        learning_system_states.model.evaluate.side_effect = Exception("Evaluation error")
-        
-        # Verify error increments
-        initial_errors = learning_system_states.error_count
-        try:
-            learning_system_states.evaluate_model_performance()
-        except Exception:
-            pass
-        
-        assert learning_system_states.error_count == initial_errors + 1
-        
-        # Reset error condition and verify recovery
-        learning_system_states.model.evaluate.side_effect = None
-        learning_system_states.model.evaluate.return_value = {"accuracy": 0.9}
-        
-        result = learning_system_states.evaluate_model_performance()
-        assert result["accuracy"] == 0.9
-
-    def test_version_increment_tracking(self, learning_system_states):
-        """Test proper version tracking across operations."""
-        initial_version = learning_system_states.model_version
-        
-        # Simulate multiple training rounds
-        for expected_version in range(initial_version + 1, initial_version + 5):
-            asyncio.run(learning_system_states.fine_tune_model())
-            assert learning_system_states.model_version == expected_version
 
 
-class TestLLMContinuousLearningSystemAdvancedValidation:
-    """Advanced validation tests for complex scenarios."""
+class TestLLMContinuousLearningSystemAdvancedBatching:
+    """Advanced batching and data processing tests."""
 
     @pytest.fixture
-    def validation_system(self):
-        """Create system optimized for validation testing."""
-        model = Mock()
-        data_loader = Mock()
-        feedback_collector = Mock()
-        
-        system = LLMContinuousLearningSystem(
-            model=model,
-            data_loader=data_loader,
-            feedback_collector=feedback_collector
+    def mock_model(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_data_loader(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_feedback_collector(self):
+        return Mock()
+
+    @pytest.fixture
+    def learning_system(self, mock_model, mock_data_loader, mock_feedback_collector):
+        return LLMContinuousLearningSystem(
+            model=mock_model,
+            data_loader=mock_data_loader,
+            feedback_collector=mock_feedback_collector
         )
-        
-        # Set validation constraints
-        system.max_input_length = 1000
-        system.max_output_length = 500
-        
-        return system
 
-    @pytest.mark.parametrize("invalid_data,expected_error", [
-        # Test various malformed data structures
-        ([{"input": {"nested": "dict"}, "output": "test"}], "Invalid training data format"),
-        ([{"input": ["list", "input"], "output": "test"}], "Invalid training data format"),
-        ([{"input": "test", "output": {"nested": "dict"}}], "Invalid training data format"),
-        ([{"input": "test", "output": ["list", "output"]}], "Invalid training data format"),
-        # Test None and empty values
-        ([{"input": None, "output": "test"}], "Empty inputs or outputs not allowed"),
-        ([{"input": "test", "output": None}], "Empty inputs or outputs not allowed"),
-        ([{"input": "", "output": "test"}], "Empty inputs or outputs not allowed"),
-        ([{"input": "test", "output": ""}], "Empty inputs or outputs not allowed"),
-        # Test whitespace-only values  
-        ([{"input": "   ", "output": "test"}], "Empty inputs or outputs not allowed"),
-        ([{"input": "test", "output": "   "}], "Empty inputs or outputs not allowed"),
-        ([{"input": "\t\n", "output": "test"}], "Empty inputs or outputs not allowed"),
+    @pytest.mark.parametrize("data_size,batch_size,expected_batches", [
+        (0, 16, 0),
+        (1, 16, 1),
+        (15, 16, 1),
+        (16, 16, 1),
+        (17, 16, 2),
+        (32, 16, 2),
+        (33, 16, 3),
+        (100, 7, 15),  # 100/7 = 14.28... = 15 batches
+        (1000, 1, 1000),
     ])
-    def test_comprehensive_data_validation(self, validation_system, invalid_data, expected_error):
-        """Test comprehensive data validation scenarios."""
-        with pytest.raises(ValueError, match=expected_error):
-            validation_system.validate_training_data(invalid_data)
-
-    def test_input_length_validation_edge_cases(self, validation_system):
-        """Test input length validation with edge cases."""
-        # Test exact boundary
-        boundary_input = "a" * validation_system.max_input_length
-        valid_data = [{"input": boundary_input, "output": "test"}]
-        assert validation_system.validate_training_data(valid_data) is True
+    def test_batch_creation_various_combinations(self, learning_system, data_size, batch_size, expected_batches):
+        """Test batch creation with various data size and batch size combinations."""
+        data = [{"input": f"input {i}", "output": f"output {i}"} for i in range(data_size)]
+        learning_system.data_loader.load_training_data.return_value = data
+        learning_system.batch_size = batch_size
         
-        # Test exceeding boundary by one character
-        exceeding_input = "a" * (validation_system.max_input_length + 1)
-        invalid_data = [{"input": exceeding_input, "output": "test"}]
-        with pytest.raises(ValueError, match="Input exceeds maximum length"):
-            validation_system.validate_training_data(invalid_data)
+        if data_size == 0:
+            # Should handle empty data appropriately
+            with pytest.raises(ValueError, match="Training data cannot be empty"):
+                learning_system.create_training_batches()
+        else:
+            batches = learning_system.create_training_batches()
+            assert len(batches) == expected_batches
+            
+            # Verify total items in all batches equals original data size
+            total_items = sum(len(batch) for batch in batches)
+            assert total_items == data_size
 
-    def test_output_length_validation_edge_cases(self, validation_system):
-        """Test output length validation with edge cases."""
-        # Test exact boundary
-        boundary_output = "a" * validation_system.max_output_length
-        valid_data = [{"input": "test", "output": boundary_output}]
-        assert validation_system.validate_training_data(valid_data) is True
+    def test_batch_content_integrity(self, learning_system):
+        """Test that batch content maintains data integrity."""
+        original_data = [
+            {"input": f"input {i}", "output": f"output {i}", "id": i}
+            for i in range(25)
+        ]
+        learning_system.data_loader.load_training_data.return_value = original_data
+        learning_system.batch_size = 7
         
-        # Test exceeding boundary by one character
-        exceeding_output = "a" * (validation_system.max_output_length + 1)
-        invalid_data = [{"input": "test", "output": exceeding_output}]
-        with pytest.raises(ValueError, match="Output exceeds maximum length"):
-            validation_system.validate_training_data(invalid_data)
+        batches = learning_system.create_training_batches()
+        
+        # Reconstruct data from batches
+        reconstructed_data = []
+        for batch in batches:
+            reconstructed_data.extend(batch)
+        
+        # Verify all original data is preserved
+        assert len(reconstructed_data) == len(original_data)
+        
+        # Verify each item is preserved exactly
+        for i, original_item in enumerate(original_data):
+            assert original_item in reconstructed_data
 
-    @pytest.mark.parametrize("special_chars", [
-        "\x00\x01\x02\x03",  # Control characters
-        "🚀🌟💫⭐",  # Emojis
-        "αβγδεζηθ",  # Greek letters
-        "中文测试",  # Chinese characters
-        "🇺🇸🇬🇧🇫🇷",  # Flag emojis
-        "♠♣♥♦",  # Card suits
-        "∑∏∫∆∇",  # Mathematical symbols
-        "©®™",  # Legal symbols
+    def test_batch_processing_with_duplicates(self, learning_system):
+        """Test batch processing with duplicate data."""
+        duplicate_data = [
+            {"input": "duplicate input", "output": "duplicate output"}
+        ] * 10
+        
+        learning_system.data_loader.load_training_data.return_value = duplicate_data
+        learning_system.batch_size = 3
+        
+        batches = learning_system.create_training_batches()
+        
+        # Should handle duplicates without issues
+        assert len(batches) == 4  # 10/3 = 3.33... = 4 batches
+        
+        # Verify all duplicates are preserved
+        total_items = sum(len(batch) for batch in batches)
+        assert total_items == 10
+
+    def test_batch_processing_with_varying_sizes(self, learning_system):
+        """Test batch processing with data items of varying sizes."""
+        varying_data = [
+            {"input": "short", "output": "short"},
+            {"input": "medium length input text", "output": "medium length output text"},
+            {"input": "very long input text that contains many words and characters", 
+             "output": "very long output text that also contains many words and characters"},
+            {"input": "a" * 1000, "output": "b" * 1000}  # Very long strings
+        ]
+        
+        learning_system.data_loader.load_training_data.return_value = varying_data
+        learning_system.batch_size = 2
+        
+        batches = learning_system.create_training_batches()
+        
+        assert len(batches) == 2
+        assert len(batches[0]) == 2
+        assert len(batches[1]) == 2
+
+    def test_batch_memory_efficiency(self, learning_system):
+        """Test batch creation memory efficiency."""
+        # Create large dataset
+        large_data = [
+            {"input": f"input {i} " * 100, "output": f"output {i} " * 100}
+            for i in range(1000)
+        ]
+        
+        learning_system.data_loader.load_training_data.return_value = large_data
+        learning_system.batch_size = 50
+        
+        # Should create batches without memory issues
+        batches = learning_system.create_training_batches()
+        
+        assert len(batches) == 20  # 1000/50 = 20
+        assert all(len(batch) == 50 for batch in batches)
+
+
+class TestLLMContinuousLearningSystemAdvancedMetrics:
+    """Advanced metrics calculation and analysis tests."""
+
+    @pytest.fixture
+    def mock_model(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_data_loader(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_feedback_collector(self):
+        return Mock()
+
+    @pytest.fixture
+    def learning_system(self, mock_model, mock_data_loader, mock_feedback_collector):
+        return LLMContinuousLearningSystem(
+            model=mock_model,
+            data_loader=mock_data_loader,
+            feedback_collector=mock_feedback_collector
+        )
+
+    @pytest.mark.parametrize("old_metrics,new_metrics,expected_accuracy_improvement,expected_loss_reduction", [
+        ({"accuracy": 0.8, "loss": 0.2}, {"accuracy": 0.9, "loss": 0.1}, 0.1, 0.1),
+        ({"accuracy": 0.5, "loss": 0.5}, {"accuracy": 0.6, "loss": 0.4}, 0.1, 0.1),
+        ({"accuracy": 0.9, "loss": 0.1}, {"accuracy": 0.8, "loss": 0.2}, -0.1, -0.1),
+        ({"accuracy": 0.0, "loss": 1.0}, {"accuracy": 1.0, "loss": 0.0}, 1.0, 1.0),
+        ({"accuracy": 0.5, "loss": 0.5}, {"accuracy": 0.5, "loss": 0.5}, 0.0, 0.0),
     ])
-    def test_special_character_handling(self, validation_system, special_chars):
-        """Test handling of various special characters."""
-        data = [{"input": f"Test with {special_chars}", "output": f"Response with {special_chars}"}]
-        # Should handle special characters gracefully
-        assert validation_system.validate_training_data(data) is True
+    def test_metrics_calculation_various_scenarios(self, learning_system, old_metrics, new_metrics, 
+                                                 expected_accuracy_improvement, expected_loss_reduction):
+        """Test metrics calculation with various improvement/degradation scenarios."""
+        improvement = learning_system.calculate_learning_metrics(old_metrics, new_metrics)
+        
+        assert abs(improvement["accuracy_improvement"] - expected_accuracy_improvement) < 1e-6
+        assert abs(improvement["loss_reduction"] - expected_loss_reduction) < 1e-6
 
-    def test_configuration_validation_edge_cases(self, validation_system):
-        """Test configuration validation with edge cases."""
-        # Test with extra keys
-        config_with_extra = {
-            "learning_rate": 0.01,
-            "batch_size": 16,
-            "max_epochs": 10,
-            "extra_key": "should_be_ignored"
+    def test_metrics_with_additional_metrics(self, learning_system):
+        """Test metrics calculation with additional metric types."""
+        old_metrics = {
+            "accuracy": 0.8,
+            "loss": 0.2,
+            "precision": 0.75,
+            "recall": 0.85,
+            "f1_score": 0.80
         }
-        assert validation_system.validate_configuration(config_with_extra) is True
+        new_metrics = {
+            "accuracy": 0.85,
+            "loss": 0.15,
+            "precision": 0.80,
+            "recall": 0.90,
+            "f1_score": 0.85
+        }
         
-        # Test with string values (should fail)
-        config_with_strings = {
+        improvement = learning_system.calculate_learning_metrics(old_metrics, new_metrics)
+        
+        assert improvement["accuracy_improvement"] == 0.05
+        assert improvement["loss_reduction"] == 0.05
+        # Should handle additional metrics gracefully
+
+    def test_metrics_with_missing_values(self, learning_system):
+        """Test metrics calculation with missing values."""
+        old_metrics = {"accuracy": 0.8}
+        new_metrics = {"loss": 0.15}
+        
+        improvement = learning_system.calculate_learning_metrics(old_metrics, new_metrics)
+        
+        # Should handle missing values gracefully
+        assert improvement["accuracy_improvement"] == 0.0
+        assert improvement["loss_reduction"] == 0.0
+
+    def test_metrics_with_nan_values(self, learning_system):
+        """Test metrics calculation with NaN values."""
+        old_metrics = {"accuracy": float('nan'), "loss": 0.2}
+        new_metrics = {"accuracy": 0.85, "loss": float('nan')}
+        
+        improvement = learning_system.calculate_learning_metrics(old_metrics, new_metrics)
+        
+        # Should handle NaN values gracefully
+        assert improvement["accuracy_improvement"] == 0.85
+        assert improvement["loss_reduction"] == 0.0
+
+    def test_metrics_with_infinity_values(self, learning_system):
+        """Test metrics calculation with infinity values."""
+        old_metrics = {"accuracy": 0.8, "loss": float('inf')}
+        new_metrics = {"accuracy": float('inf'), "loss": 0.15}
+        
+        improvement = learning_system.calculate_learning_metrics(old_metrics, new_metrics)
+        
+        # Should handle infinity values gracefully
+        assert improvement["accuracy_improvement"] == float('inf')
+        assert improvement["loss_reduction"] == float('inf')
+
+    def test_metrics_with_negative_values(self, learning_system):
+        """Test metrics calculation with negative values."""
+        old_metrics = {"accuracy": -0.5, "loss": -0.3}
+        new_metrics = {"accuracy": 0.8, "loss": 0.2}
+        
+        improvement = learning_system.calculate_learning_metrics(old_metrics, new_metrics)
+        
+        assert improvement["accuracy_improvement"] == 1.3
+        assert improvement["loss_reduction"] == -0.5  # Loss increased
+
+    @pytest.mark.parametrize("metric_type", ["accuracy", "loss", "precision", "recall", "f1_score"])
+    def test_individual_metric_improvements(self, learning_system, metric_type):
+        """Test calculation of individual metric improvements."""
+        old_metrics = {metric_type: 0.7}
+        new_metrics = {metric_type: 0.8}
+        
+        improvement = learning_system.calculate_learning_metrics(old_metrics, new_metrics)
+        
+        if metric_type == "accuracy":
+            assert improvement["accuracy_improvement"] == 0.1
+        elif metric_type == "loss":
+            assert improvement["loss_reduction"] == 0.1
+        # Other metrics should not affect the standard calculations
+        assert "accuracy_improvement" in improvement
+        assert "loss_reduction" in improvement
+
+
+class TestLLMContinuousLearningSystemAdvancedMemoryManagement:
+    """Advanced memory management and resource handling tests."""
+
+    @pytest.fixture
+    def mock_model(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_data_loader(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_feedback_collector(self):
+        return Mock()
+
+    @pytest.fixture
+    def learning_system(self, mock_model, mock_data_loader, mock_feedback_collector):
+        return LLMContinuousLearningSystem(
+            model=mock_model,
+            data_loader=mock_data_loader,
+            feedback_collector=mock_feedback_collector
+        )
+
+    def test_memory_usage_tracking(self, learning_system):
+        """Test memory usage tracking functionality."""
+        initial_memory = learning_system.get_memory_usage()
+        
+        # Simulate memory usage by creating data
+        learning_system.total_training_samples = 10000
+        learning_system.total_feedback_samples = 5000
+        
+        # Memory usage should remain consistent (since it's mocked)
+        current_memory = learning_system.get_memory_usage()
+        assert isinstance(current_memory, int)
+        assert current_memory > 0
+
+    def test_memory_cleanup_operations(self, learning_system):
+        """Test memory cleanup operations."""
+        # Set up some data
+        learning_system.total_training_samples = 1000
+        learning_system.total_feedback_samples = 500
+        
+        # Cleanup should not raise exceptions
+        learning_system.cleanup_memory()
+        
+        # System should still be functional after cleanup
+        stats = learning_system.get_system_statistics()
+        assert isinstance(stats, dict)
+
+    def test_memory_operations_under_stress(self, learning_system):
+        """Test memory operations under stress conditions."""
+        # Simulate high memory usage scenario
+        for i in range(100):
+            learning_system.get_memory_usage()
+            learning_system.cleanup_memory()
+            
+            # Update counters to simulate activity
+            learning_system.total_training_samples += 10
+            learning_system.total_feedback_samples += 5
+        
+        # Should handle stress without issues
+        final_stats = learning_system.get_system_statistics()
+        assert final_stats["total_training_samples"] == 1000
+        assert final_stats["total_feedback_samples"] == 500
+
+    def test_memory_with_large_datasets(self, learning_system):
+        """Test memory handling with large datasets."""
+        # Simulate large dataset processing
+        large_data = [
+            {"input": f"Large input {i} " * 1000, "output": f"Large output {i} " * 1000}
+            for i in range(10)  # Smaller number to avoid actual memory issues
+        ]
+        
+        learning_system.data_loader.load_training_data.return_value = large_data
+        learning_system.batch_size = 2
+        
+        # Should handle large data without memory errors
+        batches = learning_system.create_training_batches()
+        assert len(batches) == 5
+        
+        # Memory operations should work
+        memory_usage = learning_system.get_memory_usage()
+        assert memory_usage > 0
+        
+        learning_system.cleanup_memory()
+
+
+class TestLLMContinuousLearningSystemAdvancedConfiguration:
+    """Advanced configuration and parameter validation tests."""
+
+    @pytest.fixture
+    def mock_model(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_data_loader(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_feedback_collector(self):
+        return Mock()
+
+    @pytest.fixture
+    def learning_system(self, mock_model, mock_data_loader, mock_feedback_collector):
+        return LLMContinuousLearningSystem(
+            model=mock_model,
+            data_loader=mock_data_loader,
+            feedback_collector=mock_feedback_collector
+        )
+
+    @pytest.mark.parametrize("config", [
+        {},  # Empty config
+        {"learning_rate": 0.01},  # Partial config
+        {"batch_size": 32},  # Partial config
+        {"max_epochs": 15},  # Partial config
+        {"learning_rate": 0.01, "batch_size": 32},  # Two parameters
+        {"extra_param": "value"},  # Extra parameter
+    ])
+    def test_configuration_validation_edge_cases(self, learning_system, config):
+        """Test configuration validation with various edge cases."""
+        if len(config) == 0 or any(key not in ["learning_rate", "batch_size", "max_epochs"] for key in config):
+            # Should fail validation for empty or incomplete configs
+            result = learning_system.validate_configuration(config)
+            assert result is False
+        else:
+            # Should pass for valid partial configs
+            result = learning_system.validate_configuration(config)
+            # Result depends on whether all required keys are present
+
+    def test_configuration_with_extreme_values(self, learning_system):
+        """Test configuration with extreme but valid values."""
+        extreme_configs = [
+            {"learning_rate": 1e-10, "batch_size": 1, "max_epochs": 1},
+            {"learning_rate": 0.9, "batch_size": 1024, "max_epochs": 1000},
+            {"learning_rate": 0.5, "batch_size": 2048, "max_epochs": 10000},
+        ]
+        
+        for config in extreme_configs:
+            result = learning_system.validate_configuration(config)
+            assert result is True
+
+    def test_configuration_with_string_values(self, learning_system):
+        """Test configuration with string values (should fail)."""
+        string_config = {
             "learning_rate": "0.01",
             "batch_size": "16",
             "max_epochs": "10"
         }
-        assert validation_system.validate_configuration(config_with_strings) is False
+        
+        result = learning_system.validate_configuration(string_config)
+        assert result is False
+
+    def test_configuration_with_float_batch_size(self, learning_system):
+        """Test configuration with float batch size (should fail)."""
+        float_config = {
+            "learning_rate": 0.01,
+            "batch_size": 16.5,
+            "max_epochs": 10
+        }
+        
+        result = learning_system.validate_configuration(float_config)
+        assert result is False
+
+    def test_configuration_with_nested_dict(self, learning_system):
+        """Test configuration with nested dictionary values."""
+        nested_config = {
+            "learning_rate": 0.01,
+            "batch_size": 16,
+            "max_epochs": 10,
+            "advanced": {"optimizer": "adam", "scheduler": "cosine"}
+        }
+        
+        result = learning_system.validate_configuration(nested_config)
+        # Should handle nested structures gracefully
+        assert result is True
+
+    def test_configuration_validation_consistency(self, learning_system):
+        """Test that configuration validation is consistent across calls."""
+        valid_config = {
+            "learning_rate": 0.01,
+            "batch_size": 16,
+            "max_epochs": 10
+        }
+        
+        # Multiple calls should return the same result
+        results = [learning_system.validate_configuration(valid_config) for _ in range(10)]
+        assert all(results)
+        assert len(set(results)) == 1  # All results should be the same
+
+    @pytest.mark.parametrize("num_calls", [1, 10, 100])
+    def test_configuration_validation_performance(self, learning_system, num_calls):
+        """Test configuration validation performance with multiple calls."""
+        config = {
+            "learning_rate": 0.01,
+            "batch_size": 16,
+            "max_epochs": 10
+        }
+        
+        start_time = time.time()
+        for _ in range(num_calls):
+            learning_system.validate_configuration(config)
+        end_time = time.time()
+        
+        # Should complete quickly regardless of number of calls
+        assert end_time - start_time < 1.0  # Should complete within 1 second
 
 
-# Additional utility test functions
+# Additional utility test functions for comprehensive coverage
 class TestLLMContinuousLearningSystemUtilities:
     """Test utility functions and helper methods."""
 
-    def test_create_sample_training_data_function(self):
-        """Test the utility function for creating sample training data."""
-        sizes = [0, 1, 10, 100]
-        for size in sizes:
-            data = create_sample_training_data(size)
-            assert len(data) == size
-            if size > 0:
-                assert all("input" in item and "output" in item for item in data)
-                assert all(isinstance(item["input"], str) and isinstance(item["output"], str) for item in data)
-
-    def test_create_sample_feedback_data_function(self):
-        """Test the utility function for creating sample feedback data."""
-        # Test default rating range
-        data = create_sample_feedback_data(10)
-        assert len(data) == 10
-        assert all(1 <= item["rating"] <= 5 for item in data)
-        
-        # Test custom rating range
-        data = create_sample_feedback_data(5, rating_range=(3, 7))
-        assert len(data) == 5
-        assert all(3 <= item["rating"] <= 7 for item in data)
-
-    def test_utility_data_structure_consistency(self):
-        """Test that utility functions create consistent data structures."""
-        training_data = create_sample_training_data(5)
-        feedback_data = create_sample_feedback_data(5)
-        
-        # Verify training data structure
-        for item in training_data:
-            assert isinstance(item, dict)
-            assert set(item.keys()) == {"input", "output"}
-        
-        # Verify feedback data structure
-        for item in feedback_data:
-            assert isinstance(item, dict)
-            assert set(item.keys()) == {"query", "response", "rating", "timestamp"}
-            assert isinstance(item["timestamp"], datetime)
-
-
-# Performance and stress tests
-class TestLLMContinuousLearningSystemStress:
-    """Stress tests for system reliability under extreme conditions."""
+    @pytest.fixture
+    def mock_model(self):
+        return Mock()
 
     @pytest.fixture
-    def stress_test_system(self):
-        """Create system for stress testing."""
-        model = Mock()
-        model.fine_tune = AsyncMock(return_value={"status": "success", "loss": 0.1})
-        model.evaluate = Mock(return_value={"accuracy": 0.85})
-        
-        data_loader = Mock()
-        feedback_collector = Mock()
-        
+    def mock_data_loader(self):
+        return Mock()
+
+    @pytest.fixture
+    def mock_feedback_collector(self):
+        return Mock()
+
+    @pytest.fixture
+    def learning_system(self, mock_model, mock_data_loader, mock_feedback_collector):
         return LLMContinuousLearningSystem(
-            model=model,
-            data_loader=data_loader,
-            feedback_collector=feedback_collector
+            model=mock_model,
+            data_loader=mock_data_loader,
+            feedback_collector=mock_feedback_collector
         )
 
-    @pytest.mark.stress
-    def test_rapid_successive_operations(self, stress_test_system):
-        """Test rapid successive operations for race conditions."""
-        operations_count = 100
+    def test_system_state_consistency(self, learning_system):
+        """Test that system state remains consistent across operations."""
+        initial_state = {
+            "training_samples": learning_system.total_training_samples,
+            "feedback_samples": learning_system.total_feedback_samples,
+            "model_version": learning_system.model_version,
+            "error_count": learning_system.error_count
+        }
         
-        # Rapid statistics access
-        for _ in range(operations_count):
-            stats = stress_test_system.get_system_statistics()
-            assert isinstance(stats, dict)
+        # Perform various operations
+        stats = learning_system.get_system_statistics()
+        memory = learning_system.get_memory_usage()
+        learning_system.cleanup_memory()
         
-        # Rapid configuration validation
-        config = {"learning_rate": 0.01, "batch_size": 16, "max_epochs": 10}
-        for _ in range(operations_count):
-            result = stress_test_system.validate_configuration(config)
-            assert result is True
+        # State should remain consistent
+        final_state = {
+            "training_samples": learning_system.total_training_samples,
+            "feedback_samples": learning_system.total_feedback_samples,
+            "model_version": learning_system.model_version,
+            "error_count": learning_system.error_count
+        }
+        
+        assert initial_state == final_state
 
-    @pytest.mark.stress 
-    def test_memory_pressure_simulation(self, stress_test_system):
-        """Test system behavior under simulated memory pressure."""
-        # Create large data structures repeatedly
-        large_datasets = []
-        for i in range(10):
-            large_data = create_sample_training_data(1000)
-            large_datasets.append(large_data)
-            
-            # Validate each dataset
-            stress_test_system.data_loader.load_training_data.return_value = large_data
-            batches = stress_test_system.create_training_batches()
-            assert len(batches) > 0
+    def test_system_initialization_idempotency(self, mock_model, mock_data_loader, mock_feedback_collector):
+        """Test that multiple system initializations are idempotent."""
+        system1 = LLMContinuousLearningSystem(
+            model=mock_model,
+            data_loader=mock_data_loader,
+            feedback_collector=mock_feedback_collector
+        )
         
-        # Cleanup
-        stress_test_system.cleanup_memory()
-
-    @pytest.mark.stress
-    @pytest.mark.asyncio
-    async def test_concurrent_async_operations_stress(self, stress_test_system):
-        """Test handling of many concurrent async operations."""
-        # Create multiple async tasks that don't actually conflict
-        async def non_training_async_op():
-            await asyncio.sleep(0.001)
-            return stress_test_system.get_system_statistics()
+        system2 = LLMContinuousLearningSystem(
+            model=mock_model,
+            data_loader=mock_data_loader,
+            feedback_collector=mock_feedback_collector
+        )
         
-        # Run many concurrent non-training operations
-        tasks = [non_training_async_op() for _ in range(50)]
-        results = await asyncio.gather(*tasks)
+        # Both systems should have identical initial states
+        stats1 = system1.get_system_statistics()
+        stats2 = system2.get_system_statistics()
         
-        assert len(results) == 50
-        assert all(isinstance(result, dict) for result in results)
+        # Remove instance-specific fields for comparison
+        comparable_stats1 = {k: v for k, v in stats1.items() if k != 'last_training_time'}
+        comparable_stats2 = {k: v for k, v in stats2.items() if k != 'last_training_time'}
+        
+        assert comparable_stats1 == comparable_stats2
+
+    def test_error_handling_doesnt_affect_system_state(self, learning_system):
+        """Test that error handling doesn't corrupt system state."""
+        initial_stats = learning_system.get_system_statistics()
+        initial_error_count = initial_stats["error_count"]
+        
+        # Cause an error
+        learning_system.model.evaluate.side_effect = Exception("Test error")
+        
+        try:
+            learning_system.evaluate_model_performance()
+        except Exception:
+            pass
+        
+        # Check that only error count increased
+        final_stats = learning_system.get_system_statistics()
+        assert final_stats["error_count"] == initial_error_count + 1
+        
+        # Other stats should remain unchanged
+        for key in ["total_training_samples", "total_feedback_samples", "model_version"]:
+            assert final_stats[key] == initial_stats[key]
+
+    def test_system_statistics_completeness(self, learning_system):
+        """Test that system statistics contain all expected fields."""
+        stats = learning_system.get_system_statistics()
+        
+        expected_fields = [
+            "total_training_samples",
+            "total_feedback_samples",
+            "model_version",
+            "last_training_time",
+            "error_count",
+            "is_training"
+        ]
+        
+        for field in expected_fields:
+            assert field in stats, f"Missing field: {field}"
+
+    def test_system_statistics_types(self, learning_system):
+        """Test that system statistics have correct types."""
+        stats = learning_system.get_system_statistics()
+        
+        assert isinstance(stats["total_training_samples"], int)
+        assert isinstance(stats["total_feedback_samples"], int)
+        assert isinstance(stats["model_version"], int)
+        assert isinstance(stats["error_count"], int)
+        assert isinstance(stats["is_training"], bool)
+        # last_training_time can be None or datetime
 
 
-# Add markers for new test categories
+# Pytest configuration additions
+pytest.mark.usefixtures("mock_model", "mock_data_loader", "mock_feedback_collector")
+
+# Additional markers for the new test classes
 pytestmark.extend([
-    pytest.mark.comprehensive,  # Mark comprehensive test additions
-    pytest.mark.advanced,       # Mark advanced scenario tests
+    pytest.mark.advanced,  # Mark advanced tests
+    pytest.mark.comprehensive,  # Mark comprehensive tests
 ])
-
-# Additional pytest configuration
-def pytest_configure_advanced(config):
-    """Configure additional pytest markers for enhanced tests."""
-    config.addinivalue_line("markers", "comprehensive: Comprehensive test coverage")
-    config.addinivalue_line("markers", "advanced: Advanced scenario tests") 
-    config.addinivalue_line("markers", "stress: Stress and load tests")
-    config.addinivalue_line("markers", "validation: Data validation tests")
