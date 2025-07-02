@@ -116,7 +116,10 @@ class MultiChannelNotifier:
             tasks.append(self._send_discord(formatted_message, severity))
         
         if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
+results = await asyncio.gather(*tasks, return_exceptions=True)
+for result in results:
+    if isinstance(result, Exception):
+        logger.error(f"❌ Notification task failed: {result}")
             self.notifications_sent += 1
         else:
             logger.info(f"📱 NOTIFICATION: {title} - {message}")
