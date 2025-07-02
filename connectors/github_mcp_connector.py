@@ -64,7 +64,7 @@ class GitHubMCPConnector(MCPConnector):
     def __init__(self, api_token: Optional[str] = None):
         super().__init__("github_mcp", "version_control")
         self.api_token = api_token or os.environ.get('GITHUB_TOKEN')
-        self.base_url = "https.api.github.com"
+        self.base_url = "https://api.github.com"
         self.session = None
         self.connected = False
         self.breaker = CircuitBreaker() # Add the circuit breaker instance
@@ -90,7 +90,7 @@ class GitHubMCPConnector(MCPConnector):
 
             self.session = aiohttp.ClientSession(headers=headers)
 
-            async with self.session.get(f"https://{self.base_url}/user") as response:
+            async with self.session.get(f"{self.base_url}/user") as response:
                 if response.status == 200:
                     user_data = await response.json()
                     logger.info(f"Connected to GitHub as: {user_data.get('login', 'Unknown')}")
@@ -167,7 +167,7 @@ class GitHubMCPConnector(MCPConnector):
     async def search_repositories(self, params: Dict[str, Any]) -> Dict[str, Any]:
         query = params.get('query', '')
         search_query = query + (f" language:{params['language']}" if params.get('language') else "")
-        url = f"https://{self.base_url}/search/repositories"
+        url = f"{self.base_url}/search/repositories"
         params_dict = {
             'q': search_query, 'sort': params.get('sort', 'stars'),
             'order': params.get('order', 'desc'), 'per_page': params.get('per_page', 10)
@@ -183,7 +183,7 @@ class GitHubMCPConnector(MCPConnector):
         owner, repo = params.get('owner'), params.get('repo')
         if not owner or not repo:
             return {'success': False, 'error': 'Owner and repo parameters required'}
-        url = f"https://{self.base_url}/repos/{owner}/{repo}"
+        url = f"{self.base_url}/repos/{owner}/{repo}"
         async with self.session.get(url) as response:
             if response.status == 200:
                 data = await response.json()
@@ -195,7 +195,7 @@ class GitHubMCPConnector(MCPConnector):
         owner, repo = params.get('owner'), params.get('repo')
         if not owner or not repo:
             return {'success': False, 'error': 'Owner and repo parameters required'}
-        url = f"https://{self.base_url}/repos/{owner}/{repo}/issues"
+        url = f"{self.base_url}/repos/{owner}/{repo}/issues"
         params_dict = {
             'state': params.get('state', 'open'), 'per_page': params.get('per_page', 30),
             'labels': params.get('labels')
@@ -211,7 +211,7 @@ class GitHubMCPConnector(MCPConnector):
         owner, repo = params.get('owner'), params.get('repo')
         if not owner or not repo:
             return {'success': False, 'error': 'Owner and repo parameters required'}
-        url = f"https://{self.base_url}/repos/{owner}/{repo}/pulls"
+        url = f"{self.base_url}/repos/{owner}/{repo}/pulls"
         params_dict = {'state': params.get('state', 'open'), 'per_page': params.get('per_page', 30)}
         async with self.session.get(url, params=params_dict) as response:
             if response.status == 200:
@@ -224,7 +224,7 @@ class GitHubMCPConnector(MCPConnector):
         owner, repo, path = params.get('owner'), params.get('repo'), params.get('path')
         if not all([owner, repo, path]):
             return {'success': False, 'error': 'Owner, repo, and path parameters required'}
-        url = f"https://{self.base_url}/repos/{owner}/{repo}/contents/{path}"
+        url = f"{self.base_url}/repos/{owner}/{repo}/contents/{path}"
         params_dict = {'ref': params.get('ref', 'main')}
         async with self.session.get(url, params=params_dict) as response:
             if response.status == 200:
@@ -242,7 +242,7 @@ class GitHubMCPConnector(MCPConnector):
         owner, repo = params.get('owner'), params.get('repo')
         if not owner or not repo:
             return {'success': False, 'error': 'Owner and repo parameters required'}
-        url = f"https://{self.base_url}/repos/{owner}/{repo}/commits"
+        url = f"{self.base_url}/repos/{owner}/{repo}/commits"
         params_dict = {
             'sha': params.get('sha'), 'per_page': params.get('per_page', 30),
             'since': params.get('since'), 'until': params.get('until')
@@ -258,7 +258,7 @@ class GitHubMCPConnector(MCPConnector):
         username = params.get('username')
         if not username:
             return {'success': False, 'error': 'Username parameter required'}
-        url = f"https://{self.base_url}/users/{username}"
+        url = f"{self.base_url}/users/{username}"
         async with self.session.get(url) as response:
             if response.status == 200:
                 return {'success': True, 'user': await response.json()}
@@ -270,7 +270,7 @@ class GitHubMCPConnector(MCPConnector):
         if not all([owner, repo, title]):
             return {'success': False, 'error': 'Owner, repo, and title parameters required'}
 
-        url = f"https://{self.base_url}/repos/{owner}/{repo}/issues"
+        url = f"{self.base_url}/repos/{owner}/{repo}/issues"
         data = {
             'title': title,
             'body': params.get('body', ''),
@@ -287,7 +287,7 @@ class GitHubMCPConnector(MCPConnector):
 
     async def get_rate_limit(self, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Get GitHub API rate limit information"""
-        url = f"https://{self.base_url}/rate_limit"
+        url = f"{self.base_url}/rate_limit"
         async with self.session.get(url) as response:
             if response.status == 200:
                 data = await response.json()
