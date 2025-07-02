@@ -15,6 +15,7 @@ click==8.2.1
 cryptography==45.0.4
 dataclasses-json==0.6.7
 dimod==0.12.20
+# D-Wave tools that work without API access
 diskcache==5.6.3
 distro==1.9.0
 dwave-cloud-client==0.13.6
