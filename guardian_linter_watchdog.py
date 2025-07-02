@@ -11,13 +11,22 @@ PLACEHOLDER_STRINGS = ['TODO', 'FIXME', 'XXX', 'PLACEHOLDER']
 MIN_TEST_COVERAGE = 80  # Minimum test coverage percentage
 
 class GuardianAgent(FileSystemEventHandler):
+    def __init__(self):
+        self.debounce_timer = None
+
     def on_modified(self, event):
         if not event.is_directory and event.src_path.endswith(PYTHON_EXTENSIONS):
             print(f"Guardian Agent: Detected change in {event.src_path}")
             self.run_linter(event.src_path)
             self.check_placeholders(event.src_path)
-            self.run_test_coverage_analysis()
+            self.schedule_test_coverage_analysis()
 
+    def schedule_test_coverage_analysis(self):
+        """Schedules the test coverage analysis with debouncing."""
+        if self.debounce_timer:
+            self.debounce_timer.cancel()
+        self.debounce_timer = threading.Timer(2.0, self.run_test_coverage_analysis)
+        self.debounce_timer.start()
     def run_linter(self, file_path):
         """Runs a linter on the specified file."""
         print(f"Guardian Agent: Running linter on {file_path}...")
