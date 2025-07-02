@@ -29,7 +29,7 @@ try:
     from dwave.system import DWaveSampler, EmbeddingComposite, FixedEmbeddingComposite
     from dwave.system.composites import LazyFixedEmbeddingComposite
     from dwave.cloud import Client
-    from dwave.samplers import SimulatedAnnealingSampler
+    # SimulatedAnnealingSampler removed - real QPU only
     import dimod
     from dimod import BinaryQuadraticModel, ConstrainedQuadraticModel
     import dwave.inspector
@@ -96,7 +96,7 @@ class DWaveQuantumConnector(MCPConnector):
             
             if not qpu_solvers:
                 logger.warning("No QPU solvers available, using simulated annealing")
-                self.sampler = SimulatedAnnealingSampler()
+                self.sampler = raise RuntimeError("Real QPU required - no simulations")
                 self.solver_info = {
                     "name": "SimulatedAnnealingSampler",
                     "type": "software",

@@ -9,7 +9,7 @@ from typing import List, Tuple
 # Define replacements
 REPLACEMENTS = [
     # Mock API URLs
-    (r'config.get_endpoints()['mcp_server']', 'config.get_endpoints()[\'mcp_server\']'),
+    (r"config\.get_endpoints\(\)\['mcp_server'\]", "config.get_endpoints()['mcp_server']"),
     (r'"real-mcp-server"', '"real-mcp-server"'),
     
     # Mock imports and references

@@ -403,4 +403,12 @@ secrets/
 # OS generated files
 Thumbs.db
 ehthumbs.db
-Desktop.ini 
+Desktop.ini # Security
+.env
+.env.*
+!.env.example
+auth/users.json
+*.key
+*.pem
+*.cert
+security_config.yaml.backup
