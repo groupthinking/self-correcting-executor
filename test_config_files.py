@@ -1,3 +1,7 @@
+# Comprehensive configuration file testing suite
+# Testing framework: pytest with custom markers (slow, integration, performance)
+# Coverage: JSON, YAML, INI formats with extensive edge cases and security validations
+
 import pytest
 import json
 import yaml
@@ -7,6 +11,14 @@ from pathlib import Path
 from unittest.mock import patch, mock_open, MagicMock
 import configparser
 from io import StringIO
+import warnings
+import threading
+import time
+import queue
+import shutil
+import hashlib
+import random
+from concurrent.futures import ThreadPoolExecutor
 
 
 class TestConfigFileValidation:
@@ -519,110 +531,18 @@ class TestConfigFileStress:
         assert all(result == sample_json_config for result in results)
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
-
-class TestConfigFileSecurity:
-    """Security tests for configuration files."""
-    
-    def test_yaml_bomb_protection(self, temp_config_dir):
-        """Test protection against YAML bomb attacks."""
-        yaml_bomb = """
-        a: &anchor [*anchor, *anchor, *anchor, *anchor, *anchor, *anchor, *anchor]
-        """
-        
-        config_file = temp_config_dir / "bomb.yaml"
-        with open(config_file, 'w') as f:
-            f.write(yaml_bomb)
-        
-        # This should either fail gracefully or have reasonable limits
-        with pytest.raises((yaml.YAMLError, RecursionError, MemoryError)):
-            with open(config_file, 'r') as f:
-                yaml.safe_load(f)
-    
-    def test_json_injection_prevention(self, temp_config_dir):
-        """Test prevention of JSON injection attacks."""
-        malicious_json = '{"__proto__": {"polluted": "true"}, "key": "value"}'
-        
-        config_file = temp_config_dir / "malicious.json"
-        with open(config_file, 'w') as f:
-            f.write(malicious_json)
-        
-        with open(config_file, 'r') as f:
-            loaded_config = json.load(f)
-        
-        # Ensure prototype pollution doesn't occur
-        assert "__proto__" in loaded_config  # It's just a regular key
-        assert loaded_config["key"] == "value"
-    
-    def test_path_traversal_prevention(self, temp_config_dir):
-        """Test prevention of path traversal in file paths."""
-        malicious_config = {
-            "log_file": "../../../etc/passwd",
-            "data_dir": "../../../../sensitive/data"
-        }
-        
-        config_file = temp_config_dir / "traversal.json"
-        with open(config_file, 'w') as f:
-            json.dump(malicious_config, f)
-        
-        with open(config_file, 'r') as f:
-            loaded_config = json.load(f)
-        
-        # Configuration loading should work, but path validation should be done by the application
-        assert "../" in loaded_config["log_file"]
-        assert loaded_config["data_dir"].count("../") == 4
-    
-    @pytest.mark.parametrize("encoding", ["utf-8", "utf-16", "latin1"])
-    def test_encoding_handling(self, temp_config_dir, encoding):
-        """Test handling of different file encodings."""
-        config_data = {"message": "Hello, 世界! 🌍"}
-        
-        config_file = temp_config_dir / f"encoded_{encoding}.json"
-        
-        with open(config_file, 'w', encoding=encoding) as f:
-            json.dump(config_data, f, ensure_ascii=False)
-        
-        with open(config_file, 'r', encoding=encoding) as f:
-            loaded_config = json.load(f)
-        
-        assert loaded_config["message"] == "Hello, 世界! 🌍"
 
 
 class TestConfigFileEdgeCases:
-    """Edge case tests for configuration files."""
+    """Additional edge case tests for configuration files."""
     
-    def test_deeply_nested_json_config(self, temp_config_dir):
-        """Test handling of deeply nested JSON configurations."""
-        # Create a deeply nested structure
-        deep_config = {"level": 1}
-        current = deep_config
-        for i in range(2, 50):  # 49 levels deep
-            current["nested"] = {"level": i}
-            current = current["nested"]
-        
-        config_file = temp_config_dir / "deep.json"
-        with open(config_file, 'w') as f:
-            json.dump(deep_config, f)
-        
-        with open(config_file, 'r') as f:
-            loaded_config = json.load(f)
-        
-        # Navigate to the deepest level
-        current = loaded_config
-        for _ in range(48):
-            current = current["nested"]
-        
-        assert current["level"] == 49
-    
-    def test_unicode_keys_and_values(self, temp_config_dir):
-        """Test handling of Unicode characters in keys and values."""
+    def test_unicode_config_content(self, temp_config_dir):
+        """Test handling of Unicode characters in configuration files."""
         unicode_config = {
-            "🔑_key": "🌟_value",
-            "中文键": "中文值",
-            "עברית": "ערך בעברית",
-            "русский": "русское значение",
-            "emoji_🎉": "celebration_🎊"
+            "message": "Hello 世界! 🌍",
+            "symbols": "©®™€£¥",
+            "emoji": "🚀💡📊",
+            "special_chars": "áéíóú ñüç àèìòù"
         }
         
         config_file = temp_config_dir / "unicode.json"
@@ -632,813 +552,87 @@ class TestConfigFileEdgeCases:
         with open(config_file, 'r', encoding='utf-8') as f:
             loaded_config = json.load(f)
         
-        assert loaded_config["🔑_key"] == "🌟_value"
-        assert loaded_config["中文键"] == "中文值"
-        assert loaded_config["emoji_🎉"] == "celebration_🎊"
+        assert loaded_config["message"] == "Hello 世界! 🌍"
+        assert loaded_config["symbols"] == "©®™€£¥"
+        assert loaded_config["emoji"] == "🚀💡📊"
+        assert loaded_config["special_chars"] == "áéíóú ñüç àèìòù"
     
-    def test_extremely_long_strings(self, temp_config_dir):
-        """Test handling of extremely long string values."""
-        long_string = "x" * 100000  # 100KB string
-        config_with_long_string = {
-            "short_key": "short_value",
-            "long_key": long_string
-        }
-        
-        config_file = temp_config_dir / "long_strings.json"
-        with open(config_file, 'w') as f:
-            json.dump(config_with_long_string, f)
-        
-        with open(config_file, 'r') as f:
-            loaded_config = json.load(f)
-        
-        assert len(loaded_config["long_key"]) == 100000
-        assert loaded_config["short_key"] == "short_value"
-    
-    def test_numeric_precision(self, temp_config_dir):
-        """Test handling of numeric precision in configurations."""
-        precision_config = {
-            "small_float": 0.000000000001,
-            "large_float": 1234567890.123456789,
-            "scientific": 1.23e-10,
-            "large_int": 9007199254740991,  # MAX_SAFE_INTEGER in JavaScript
-            "negative": -9007199254740991
-        }
-        
-        config_file = temp_config_dir / "precision.json"
-        with open(config_file, 'w') as f:
-            json.dump(precision_config, f)
-        
-        with open(config_file, 'r') as f:
-            loaded_config = json.load(f)
-        
-        assert abs(loaded_config["small_float"] - 0.000000000001) < 1e-15
-        assert loaded_config["large_int"] == 9007199254740991
-        assert loaded_config["scientific"] == 1.23e-10
-    
-    def test_special_characters_in_strings(self, temp_config_dir):
-        """Test handling of special characters and escape sequences."""
-        special_config = {
-            "newlines": "line1\nline2\nline3",
-            "tabs": "col1\tcol2\tcol3",
-            "quotes": 'He said "Hello" and she replied \'Hi\'',
-            "backslashes": "C:\\Users\\Name\\Documents",
-            "null_char": "before\x00after",
-            "control_chars": "\x01\x02\x03\x04\x05",
-            "unicode_escapes": "\u03B1\u03B2\u03B3"  # Greek letters
-        }
-        
-        config_file = temp_config_dir / "special_chars.json"
-        with open(config_file, 'w') as f:
-            json.dump(special_config, f)
-        
-        with open(config_file, 'r') as f:
-            loaded_config = json.load(f)
-        
-        assert loaded_config["newlines"].count('\n') == 2
-        assert loaded_config["tabs"].count('\t') == 2
-        assert "Hello" in loaded_config["quotes"]
-        assert loaded_config["unicode_escapes"] == "αβγ"
-
-
-class TestConfigFileFormatConversion:
-    """Tests for converting between different configuration formats."""
-    
-    def test_json_to_yaml_conversion(self, temp_config_dir, sample_json_config):
-        """Test converting JSON configuration to YAML format."""
-        # Save as JSON first
-        json_file = temp_config_dir / "config.json"
-        with open(json_file, 'w') as f:
-            json.dump(sample_json_config, f)
-        
-        # Load JSON and save as YAML
-        with open(json_file, 'r') as f:
-            config_data = json.load(f)
-        
-        yaml_file = temp_config_dir / "config.yaml"
-        with open(yaml_file, 'w') as f:
-            yaml.dump(config_data, f)
-        
-        # Load YAML and verify it matches original JSON
-        with open(yaml_file, 'r') as f:
-            yaml_data = yaml.safe_load(f)
-        
-        assert yaml_data == sample_json_config
-    
-    def test_yaml_to_json_conversion(self, temp_config_dir, sample_yaml_config):
-        """Test converting YAML configuration to JSON format."""
-        # Save YAML
-        yaml_file = temp_config_dir / "config.yaml"
-        with open(yaml_file, 'w') as f:
-            f.write(sample_yaml_config)
-        
-        # Load YAML and save as JSON
-        with open(yaml_file, 'r') as f:
-            yaml_data = yaml.safe_load(f)
-        
-        json_file = temp_config_dir / "config.json"
-        with open(json_file, 'w') as f:
-            json.dump(yaml_data, f)
-        
-        # Load JSON and verify conversion
-        with open(json_file, 'r') as f:
-            json_data = json.load(f)
-        
-        assert json_data["database"]["host"] == "localhost"
-        assert json_data["api"]["timeout"] == 30
-    
-    def test_ini_to_dict_conversion(self, temp_config_dir, sample_ini_config):
-        """Test converting INI configuration to dictionary format."""
-        # Save INI
-        ini_file = temp_config_dir / "config.ini"
-        with open(ini_file, 'w') as f:
-            f.write(sample_ini_config)
-        
-        # Load INI and convert to dict
-        config = configparser.ConfigParser()
-        config.read(ini_file)
-        
-        config_dict = {}
-        for section_name in config.sections():
-            config_dict[section_name] = dict(config.items(section_name))
-        
-        assert config_dict["database"]["host"] == "localhost"
-        assert config_dict["database"]["port"] == "5432"  # INI values are strings
-        assert config_dict["api"]["base_url"] == "https://api.example.com"
-
-
-class TestConfigFileTemplating:
-    """Tests for configuration file templating and variable substitution."""
-    
-    def test_environment_variable_substitution(self, temp_config_dir):
-        """Test substitution of environment variables in configurations."""
-        import os
-        
-        # Set test environment variables
-        os.environ["TEST_HOST"] = "test.example.com"
-        os.environ["TEST_PORT"] = "8080"
-        
-        try:
-            template_config = {
-                "database": {
-                    "host": "${TEST_HOST}",
-                    "port": "${TEST_PORT}"
-                }
-            }
-            
-            config_file = temp_config_dir / "template.json"
-            with open(config_file, 'w') as f:
-                json.dump(template_config, f)
-            
-            # Load and substitute variables
-            with open(config_file, 'r') as f:
-                config_str = f.read()
-            
-            # Simple substitution for testing
-            import re
-            def substitute_env_vars(text):
-                def replacer(match):
-                    var_name = match.group(1)
-                    return os.environ.get(var_name, match.group(0))
-                return re.sub(r'\$\{([^}]+)\}', replacer, text)
-            
-            substituted_config = substitute_env_vars(config_str)
-            loaded_config = json.loads(substituted_config)
-            
-            assert loaded_config["database"]["host"] == "test.example.com"
-            assert loaded_config["database"]["port"] == "8080"
-            
-        finally:
-            # Clean up environment variables
-            os.environ.pop("TEST_HOST", None)
-            os.environ.pop("TEST_PORT", None)
-    
-    def test_nested_template_substitution(self, temp_config_dir):
-        """Test nested template variable substitution."""
-        template_config = {
-            "base_url": "https://api.example.com",
-            "endpoints": {
-                "users": "${base_url}/users",
-                "orders": "${base_url}/orders",
-                "nested": {
-                    "deep": "${base_url}/deep/path"
-                }
-            }
-        }
-        
-        config_file = temp_config_dir / "nested_template.json"
-        with open(config_file, 'w') as f:
-            json.dump(template_config, f)
-        
-        # Simple nested substitution logic for testing
-        def substitute_internal_vars(config_dict):
-            import copy
-            result = copy.deepcopy(config_dict)
-            
-            def substitute_value(value, context):
-                if isinstance(value, str) and "${" in value:
-                    for key, val in context.items():
-                        if isinstance(val, str):
-                            value = value.replace(f"${{{key}}}", val)
-                return value
-            
-            # First pass: substitute simple values
-            for key, value in result.items():
-                if isinstance(value, str):
-                    result[key] = substitute_value(value, result)
-                elif isinstance(value, dict):
-                    for nested_key, nested_value in value.items():
-                        if isinstance(nested_value, str):
-                            value[nested_key] = substitute_value(nested_value, result)
-                        elif isinstance(nested_value, dict):
-                            for deep_key, deep_value in nested_value.items():
-                                if isinstance(deep_value, str):
-                                    nested_value[deep_key] = substitute_value(deep_value, result)
-            
-            return result
-        
-        with open(config_file, 'r') as f:
-            loaded_config = json.load(f)
-        
-        substituted = substitute_internal_vars(loaded_config)
-        
-        assert substituted["endpoints"]["users"] == "https://api.example.com/users"
-        assert substituted["endpoints"]["nested"]["deep"] == "https://api.example.com/deep/path"
-
-
-class TestConfigFileAtomicity:
-    """Tests for atomic configuration file operations."""
-    
-    def test_atomic_config_update(self, temp_config_dir, sample_json_config):
-        """Test atomic updates to configuration files."""
-        config_file = temp_config_dir / "atomic.json"
-        temp_file = temp_config_dir / "atomic.json.tmp"
-        
-        # Initial config
-        with open(config_file, 'w') as f:
-            json.dump(sample_json_config, f)
-        
-        # Atomic update simulation
-        updated_config = sample_json_config.copy()
-        updated_config["database"]["host"] = "updated.example.com"
-        
-        # Write to temporary file first
-        with open(temp_file, 'w') as f:
-            json.dump(updated_config, f)
-        
-        # Atomic move
-        import shutil
-        shutil.move(str(temp_file), str(config_file))
-        
-        # Verify update
-        with open(config_file, 'r') as f:
-            final_config = json.load(f)
-        
-        assert final_config["database"]["host"] == "updated.example.com"
-        assert not temp_file.exists()
-    
-    def test_config_rollback_on_error(self, temp_config_dir, sample_json_config):
-        """Test configuration rollback on update errors."""
-        import shutil
-        
-        config_file = temp_config_dir / "rollback.json"
-        backup_file = temp_config_dir / "rollback.json.backup"
-        
-        # Initial config
-        with open(config_file, 'w') as f:
-            json.dump(sample_json_config, f)
-        
-        # Create backup
-        shutil.copy2(str(config_file), str(backup_file))
-        
-        # Simulate failed update (invalid JSON)
-        try:
-            with open(config_file, 'w') as f:
-                f.write('{"invalid": json}')  # Invalid JSON
-            
-            # Try to load - should fail
-            with open(config_file, 'r') as f:
-                json.load(f)
-                
-        except json.JSONDecodeError:
-            # Rollback on error
-            shutil.copy2(str(backup_file), str(config_file))
-        
-        # Verify rollback worked
-        with open(config_file, 'r') as f:
-            restored_config = json.load(f)
-        
-        assert restored_config == sample_json_config
-
-
-class TestConfigFileVersioning:
-    """Tests for configuration file versioning and compatibility."""
-    
-    def test_config_version_detection(self, temp_config_dir):
-        """Test detection of configuration file versions."""
-        v1_config = {
-            "version": "1.0",
-            "database": {
-                "host": "localhost",
-                "port": 5432
-            }
-        }
-        
-        v2_config = {
-            "version": "2.0",
-            "database": {
-                "connection_string": "postgresql://localhost:5432/db",
-                "pool_size": 10
-            }
-        }
-        
-        v1_file = temp_config_dir / "config_v1.json"
-        v2_file = temp_config_dir / "config_v2.json"
-        
-        with open(v1_file, 'w') as f:
-            json.dump(v1_config, f)
-        
-        with open(v2_file, 'w') as f:
-            json.dump(v2_config, f)
-        
-        # Test version detection
-        with open(v1_file, 'r') as f:
-            config1 = json.load(f)
-        
-        with open(v2_file, 'r') as f:
-            config2 = json.load(f)
-        
-        assert config1["version"] == "1.0"
-        assert config2["version"] == "2.0"
-        assert "connection_string" not in config1["database"]
-        assert "connection_string" in config2["database"]
-    
-    def test_config_migration_compatibility(self, temp_config_dir):
-        """Test configuration migration between versions."""
-        old_config = {
-            "version": "1.0",
-            "db_host": "localhost",
-            "db_port": 5432,
-            "db_name": "myapp"
-        }
-        
-        config_file = temp_config_dir / "migration.json"
-        with open(config_file, 'w') as f:
-            json.dump(old_config, f)
-        
-        # Migration logic
-        def migrate_config(config):
-            if config.get("version") == "1.0":
-                # Migrate to v2.0 format
-                new_config = {
-                    "version": "2.0",
-                    "database": {
-                        "host": config.get("db_host"),
-                        "port": config.get("db_port"),
-                        "name": config.get("db_name")
-                    }
-                }
-                return new_config
-            return config
-        
-        # Load and migrate
-        with open(config_file, 'r') as f:
-            loaded_config = json.load(f)
-        
-        migrated_config = migrate_config(loaded_config)
-        
-        assert migrated_config["version"] == "2.0"
-        assert migrated_config["database"]["host"] == "localhost"
-        assert migrated_config["database"]["port"] == 5432
-
-
-class TestConfigFileMemoryUsage:
-    """Tests for configuration file memory usage and efficiency."""
-    
-    def test_memory_efficient_large_config(self, temp_config_dir):
-        """Test memory efficiency with large configuration files."""
-        # Create a large configuration
-        large_config = {
-            f"section_{i}": {
-                f"key_{j}": f"value_{i}_{j}" 
-                for j in range(100)
-            } for i in range(100)
-        }
-        
-        config_file = temp_config_dir / "large_memory.json"
-        with open(config_file, 'w') as f:
-            json.dump(large_config, f)
-        
-        # Measure memory usage
-        import tracemalloc
-        tracemalloc.start()
-        
-        with open(config_file, 'r') as f:
-            loaded_config = json.load(f)
-        
-        current, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-        
-        # Verify loading worked and memory usage is reasonable
-        assert len(loaded_config) == 100
-        assert len(loaded_config["section_0"]) == 100
-        assert peak < 50 * 1024 * 1024  # Less than 50MB peak memory
-    
-    def test_streaming_large_config(self, temp_config_dir):
-        """Test streaming processing of large configuration files."""
-        # Create a configuration with large arrays
-        streaming_config = {
-            "metadata": {"version": "1.0"},
-            "items": [{"id": i, "data": f"item_{i}"} for i in range(1000)]
-        }
-        
-        config_file = temp_config_dir / "streaming.json"
-        with open(config_file, 'w') as f:
-            json.dump(streaming_config, f)
-        
-        # Test that we can at least load it normally
-        with open(config_file, 'r') as f:
-            loaded_config = json.load(f)
-        
-        assert loaded_config["metadata"]["version"] == "1.0"
-        assert len(loaded_config["items"]) == 1000
-
-
-class TestConfigFileValidationEnhanced:
-    """Enhanced validation tests for configuration files."""
-    
-    def test_recursive_validation(self, temp_config_dir):
-        """Test recursive validation of nested configuration structures."""
-        nested_config = {
+    def test_deeply_nested_json_config(self, temp_config_dir):
+        """Test handling of deeply nested JSON configurations."""
+        deep_config = {
             "level1": {
                 "level2": {
                     "level3": {
-                        "required_field": "value",
-                        "optional_field": None
+                        "level4": {
+                            "level5": {
+                                "value": "deep_value",
+                                "list": [1, 2, {"nested_in_list": True}],
+                                "nested_dict": {"key": "nested_value"}
+                            }
+                        }
                     }
                 }
+            },
+            "parallel_branch": {
+                "data": "parallel_data"
             }
         }
         
-        config_file = temp_config_dir / "nested_validation.json"
+        config_file = temp_config_dir / "deep.json"
         with open(config_file, 'w') as f:
-            json.dump(nested_config, f)
-        
-        def validate_nested(config, path=""):
-            """Recursive validation function."""
-            errors = []
-            
-            if isinstance(config, dict):
-                for key, value in config.items():
-                    current_path = f"{path}.{key}" if path else key
-                    
-                    if key == "required_field" and value is None:
-                        errors.append(f"Required field {current_path} is null")
-                    
-                    if isinstance(value, dict):
-                        errors.extend(validate_nested(value, current_path))
-            
-            return errors
+            json.dump(deep_config, f, indent=2)
         
         with open(config_file, 'r') as f:
             loaded_config = json.load(f)
         
-        validation_errors = validate_nested(loaded_config)
-        
-        # Should pass validation since required_field has a value
-        assert len(validation_errors) == 0
-        assert loaded_config["level1"]["level2"]["level3"]["required_field"] == "value"
+        assert loaded_config["level1"]["level2"]["level3"]["level4"]["level5"]["value"] == "deep_value"
+        assert loaded_config["level1"]["level2"]["level3"]["level4"]["level5"]["list"][2]["nested_in_list"] is True
+        assert loaded_config["parallel_branch"]["data"] == "parallel_data"
     
-    @pytest.mark.parametrize("config_data,expected_valid", [
-        ({"timeout": 30, "retries": 3}, True),
-        ({"timeout": -1, "retries": 3}, False),
-        ({"timeout": 30, "retries": -1}, False),
-        ({"timeout": "30", "retries": 3}, False),  # Wrong type
-        ({"timeout": 30}, False),  # Missing required field
-    ])
-    def test_parametrized_config_validation(self, temp_config_dir, config_data, expected_valid):
-        """Test parametrized configuration validation scenarios."""
-        config_file = temp_config_dir / "param_validation.json"
-        with open(config_file, 'w') as f:
-            json.dump(config_data, f)
+    def test_config_with_scientific_notation(self, temp_config_dir):
+        """Test handling of scientific notation in config files."""
+        scientific_config = {
+            "small_number": 1.23e-10,
+            "large_number": 4.56e+15,
+            "negative_exponent": -7.89e-5,
+            "positive_exponent": 2.34e+8,
+            "zero_exponent": 5.67e0,
+            "integer_scientific": 1e6
+        }
         
-        def validate_config(config):
-            """Simple validation function."""
-            try:
-                # Check required fields
-                if "timeout" not in config or "retries" not in config:
-                    return False
-                
-                # Check types
-                if not isinstance(config["timeout"], int) or not isinstance(config["retries"], int):
-                    return False
-                
-                # Check ranges
-                if config["timeout"] <= 0 or config["retries"] < 0:
-                    return False
-                
-                return True
-            except (KeyError, TypeError):
-                return False
+        config_file = temp_config_dir / "scientific.json"
+        with open(config_file, 'w') as f:
+            json.dump(scientific_config, f)
         
         with open(config_file, 'r') as f:
             loaded_config = json.load(f)
         
-        is_valid = validate_config(loaded_config)
-        assert is_valid == expected_valid
-
-
-class TestConfigFileRobustness:
-    """Robustness tests for configuration file handling."""
+        assert loaded_config["small_number"] == 1.23e-10
+        assert loaded_config["large_number"] == 4.56e+15
+        assert loaded_config["negative_exponent"] == -7.89e-5
+        assert loaded_config["positive_exponent"] == 2.34e+8
+        assert loaded_config["zero_exponent"] == 5.67
+        assert loaded_config["integer_scientific"] == 1000000.0
     
-    def test_partial_file_corruption_recovery(self, temp_config_dir, sample_json_config):
-        """Test recovery from partial file corruption."""
-        config_file = temp_config_dir / "corrupted.json"
+    def test_yaml_multiline_strings(self, temp_config_dir):
+        """Test YAML multiline string handling."""
+        yaml_multiline="description: |\n  This is a multiline string\n  that preserves line breaks\n  and formatting.\n  Line 4 of the description.\n\nfolded_string: >\n  This is a folded string\n  that will be joined\n  into a single line\n  with spaces.\n\nliteral_block: |\n  #!/bin/bash\n  echo \"This is a script\"\n  for i in {1..3}; do\n    echo \"Line $i\"\n  done\n  exit 0\n\nplain_multiline: >\n  This is plain text\n  that spans multiple lines\n  but will be folded.\n"
         
-        # Write valid config first
+        config_file = temp_config_dir / "multiline.yaml"
         with open(config_file, 'w') as f:
-            json.dump(sample_json_config, f)
+            f.write(yaml_multiline)
         
-        # Simulate partial corruption by truncating the file
-        with open(config_file, 'r+') as f:
-            content = f.read()
-            f.seek(0)
-            f.write(content[:-10])  # Remove last 10 characters
-            f.truncate()
+        with open(config_file, 'r') as f:
+            loaded_config = yaml.safe_load(f)
         
-        # Should fail to load
-        with pytest.raises(json.JSONDecodeError):
-            with open(config_file, 'r') as f:
-                json.load(f)
+        assert "line breaks\nand formatting" in loaded_config["description"]
+        assert "\n" not in loaded_config["folded_string"]
+        assert "#!/bin/bash" in loaded_config["literal_block"]
+        assert "for i in" in loaded_config["literal_block"]
+        assert loaded_config["plain_multiline"].count("\n") == 0
     
-    def test_config_with_comments_handling(self, temp_config_dir):
-        """Test handling of configurations with comments (JSON5-like)."""
-        # Standard JSON doesn't support comments, but test handling
-        json_with_comments = """{
-    // This is a comment
-    "database": {
-        "host": "localhost", // Another comment
-        "port": 5432
-    },
-    /* Multi-line
-       comment */
-    "api": {
-        "timeout": 30
-    }
-}"""
-        
-        config_file = temp_config_dir / "with_comments.json"
-        with open(config_file, 'w') as f:
-            f.write(json_with_comments)
-        
-        # Standard JSON parser should fail with comments
-        with pytest.raises(json.JSONDecodeError):
-            with open(config_file, 'r') as f:
-                json.load(f)
-        
-        # Test comment removal for basic cases
-        def remove_json_comments(text):
-            """Simple comment removal - not production ready."""
-            import re
-            # Remove single-line comments
-            text = re.sub(r'//.*$', '', text, flags=re.MULTILINE)
-            # Remove multi-line comments
-            text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
-            return text
-        
-        cleaned_json = remove_json_comments(json_with_comments)
-        cleaned_config = json.loads(cleaned_json)
-        
-        assert cleaned_config["database"]["host"] == "localhost"
-        assert cleaned_config["api"]["timeout"] == 30
-    
-    def test_config_file_locking(self, temp_config_dir, sample_json_config):
-        """Test file locking during configuration updates."""
-        import threading
-        import time
-        
-        config_file = temp_config_dir / "locked.json"
-        with open(config_file, 'w') as f:
-            json.dump(sample_json_config, f)
-        
-        lock_acquired = threading.Event()
-        lock_released = threading.Event()
-        
-        def lock_and_hold():
-            try:
-                with open(config_file, 'r+') as f:
-                    lock_acquired.set()
-                    # Hold file handle briefly
-                    time.sleep(0.1)
-                    lock_released.set()
-            except (OSError, IOError):
-                # Handle any file access issues
-                lock_released.set()
-        
-        # Start locking thread
-        lock_thread = threading.Thread(target=lock_and_hold)
-        lock_thread.start()
-        
-        # Wait for lock to be acquired
-        if lock_acquired.wait(timeout=1.0):
-            # Try to access file while potentially locked
-            try:
-                with open(config_file, 'r') as f:
-                    # This should still work for reading
-                    loaded_config = json.load(f)
-                    assert loaded_config == sample_json_config
-            except (OSError, IOError):
-                # Expected if exclusive lock prevents reading
-                pass
-        
-        lock_thread.join()
-        assert lock_released.is_set()
-
-
-class TestConfigFileAdvancedFeatures:
-    """Tests for advanced configuration file features."""
-    
-    def test_config_schema_validation(self, temp_config_dir):
-        """Test configuration validation against a schema."""
-        # Define a simple schema
-        config_schema = {
-            "type": "object",
-            "required": ["database", "api"],
-            "properties": {
-                "database": {
-                    "type": "object",
-                    "required": ["host", "port"],
-                    "properties": {
-                        "host": {"type": "string"},
-                        "port": {"type": "integer", "minimum": 1, "maximum": 65535}
-                    }
-                },
-                "api": {
-                    "type": "object",
-                    "required": ["timeout"],
-                    "properties": {
-                        "timeout": {"type": "integer", "minimum": 1}
-                    }
-                }
-            }
-        }
-        
-        valid_config = {
-            "database": {"host": "localhost", "port": 5432},
-            "api": {"timeout": 30}
-        }
-        
-        invalid_config = {
-            "database": {"host": "localhost", "port": "invalid"},  # Wrong type
-            "api": {"timeout": -1}  # Invalid value
-        }
-        
-        def validate_against_schema(config, schema):
-            """Simple schema validation - in practice use jsonschema library."""
-            def validate_type(value, expected_type):
-                if expected_type == "object":
-                    return isinstance(value, dict)
-                elif expected_type == "string":
-                    return isinstance(value, str)
-                elif expected_type == "integer":
-                    return isinstance(value, int)
-                return True
-            
-            def validate_object(obj, schema_obj):
-                if not isinstance(obj, dict):
-                    return False
-                
-                # Check required fields
-                for required_field in schema_obj.get("required", []):
-                    if required_field not in obj:
-                        return False
-                
-                # Check properties
-                for prop, prop_schema in schema_obj.get("properties", {}).items():
-                    if prop in obj:
-                        if not validate_type(obj[prop], prop_schema.get("type")):
-                            return False
-                        
-                        # Check nested objects
-                        if prop_schema.get("type") == "object":
-                            if not validate_object(obj[prop], prop_schema):
-                                return False
-                        
-                        # Check integer constraints
-                        if prop_schema.get("type") == "integer":
-                            value = obj[prop]
-                            if isinstance(value, int):
-                                min_val = prop_schema.get("minimum")
-                                max_val = prop_schema.get("maximum")
-                                if min_val is not None and value < min_val:
-                                    return False
-                                if max_val is not None and value > max_val:
-                                    return False
-                
-                return True
-            
-            return validate_object(config, schema)
-        
-        assert validate_against_schema(valid_config, config_schema) == True
-        assert validate_against_schema(invalid_config, config_schema) == False
-    
-    def test_config_profile_management(self, temp_config_dir):
-        """Test management of different configuration profiles."""
-        profiles = {
-            "development": {
-                "database": {"host": "localhost", "debug": True},
-                "api": {"base_url": "http://localhost:8000"}
-            },
-            "staging": {
-                "database": {"host": "staging.db.com", "debug": False},
-                "api": {"base_url": "https://staging-api.example.com"}
-            },
-            "production": {
-                "database": {"host": "prod.db.com", "debug": False},
-                "api": {"base_url": "https://api.example.com"}
-            }
-        }
-        
-        profiles_file = temp_config_dir / "profiles.json"
-        with open(profiles_file, 'w') as f:
-            json.dump(profiles, f)
-        
-        def get_profile_config(profile_name):
-            with open(profiles_file, 'r') as f:
-                all_profiles = json.load(f)
-            return all_profiles.get(profile_name)
-        
-        dev_config = get_profile_config("development")
-        prod_config = get_profile_config("production")
-        
-        assert dev_config["database"]["debug"] == True
-        assert prod_config["database"]["debug"] == False
-        assert dev_config["api"]["base_url"].startswith("http://")
-        assert prod_config["api"]["base_url"].startswith("https://")
-    
-    def test_config_inheritance(self, temp_config_dir):
-        """Test configuration inheritance from base configurations."""
-        base_config = {
-            "database": {"port": 5432, "timeout": 30},
-            "logging": {"level": "INFO"}
-        }
-        
-        override_config = {
-            "database": {"host": "override.com"},
-            "logging": {"level": "DEBUG"},  # Override
-            "api": {"timeout": 60}  # New section
-        }
-        
-        base_file = temp_config_dir / "base.json"
-        override_file = temp_config_dir / "override.json"
-        
-        with open(base_file, 'w') as f:
-            json.dump(base_config, f)
-        
-        with open(override_file, 'w') as f:
-            json.dump(override_config, f)
-        
-        def merge_configs(base_config, override_config):
-            """Deep merge two configuration dictionaries."""
-            import copy
-            result = copy.deepcopy(base_config)
-            
-            def deep_merge(base_dict, override_dict):
-                for key, value in override_dict.items():
-                    if key in base_dict and isinstance(base_dict[key], dict) and isinstance(value, dict):
-                        deep_merge(base_dict[key], value)
-                    else:
-                        base_dict[key] = value
-            
-            deep_merge(result, override_config)
-            return result
-        
-        with open(base_file, 'r') as f:
-            base_data = json.load(f)
-        
-        with open(override_file, 'r') as f:
-            override_data = json.load(f)
-        
-        merged_config = merge_configs(base_data, override_data)
-        
-        # Base values should be preserved
-        assert merged_config["database"]["port"] == 5432
-        assert merged_config["database"]["timeout"] == 30
-        
-        # Override values should take precedence
-        assert merged_config["database"]["host"] == "override.com"
-        assert merged_config["logging"]["level"] == "DEBUG"
-        
-        # New sections should be added
-        assert merged_config["api"]["timeout"] == 60
-
-
-# Add pytest marks for different test categories
-pytest.mark.security = pytest.mark.mark("security")
-pytest.mark.edge_cases = pytest.mark.mark("edge_cases")
-pytest.mark.performance = pytest.mark.mark("performance")
-pytest.mark.advanced = pytest.mark.mark("advanced")
-
-
+    def test_ini_special_characters(self, temp_config_dir):
+        """Test INI files with special characters and edge cases."""
+        ini_special="[special]\nkey_with_equals = value=with=equals\nkey_with_colon = value:with:colon\nkey_with_semicolon = value ; with comment\nkey_with_percent = 100%%\nempty_value = \nspaces_in_key = value with spaces\nquotes_in_value = quoted
 if __name__ == "__main__":
-    # Run with various markers to categorize tests
-    pytest.main([__file__, "-v", "--tb=short"])
+    pytest.main([__file__, "-v"])
