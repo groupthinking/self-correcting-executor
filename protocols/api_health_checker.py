@@ -1,7 +1,7 @@
 import requests
 from requests.exceptions import RequestException, Timeout, ConnectionError
 
-def execute(protocol_context):
+def task(protocol_context):
     """
     Checks the health of a list of API endpoints.
     """
