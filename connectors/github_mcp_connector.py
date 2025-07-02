@@ -210,6 +210,7 @@ class GitHubMCPConnector(MCPConnector):
     async def get_pull_requests(self, params: Dict[str, Any]) -> Dict[str, Any]:
         owner, repo = params.get('owner'), params.get('repo')
         if not owner or not repo:
+            logger.error("Missing required parameters: 'owner' and 'repo'")
             return {'success': False, 'error': 'Owner and repo parameters required'}
         url = f"{self.base_url}/repos/{owner}/{repo}/pulls"
         params_dict = {'state': params.get('state', 'open'), 'per_page': params.get('per_page', 30)}
