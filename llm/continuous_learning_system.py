@@ -65,6 +65,17 @@ class ContinuousLearningLLM:
     """
     
     def __init__(self, model_name: str = "continuous_learner"):
+        """
+        Initialize a ContinuousLearningLLM instance for managing continuous, quantum-accelerated LLM training.
+        
+        This constructor sets up the model name, connectors for classical and quantum resources, training state variables, model and data storage directories, and performance tracking structures.
+        
+        Args:
+            model_name (str, optional): The name of the model instance. Defaults to "continuous_learner".
+        
+        Example:
+            learner = ContinuousLearningLLM(model_name="my_incremental_llm")
+        """
         self.model_name = model_name
         self.llm_connector = LLMConnector()
         self.quantum_connector = DWaveQuantumConnector()
@@ -93,13 +104,13 @@ class ContinuousLearningLLM:
         
     async def initialize(self, config: Dict[str, Any] = None) -> bool:
         """
-        Initializes the continuous learning system by connecting to LLM and quantum resources, loading or creating the initial model, and starting the background training loop.
+        Initializes the continuous learning system by connecting to LLM and quantum computing resources, loading or creating the initial model, and starting the background training loop.
         
         Args:
-            config (Optional[Dict[str, Any]]): Configuration dictionary containing connection parameters for LLM and quantum resources. If not provided, defaults are used.
+            config (Optional[Dict[str, Any]]): Optional configuration dictionary with connection parameters for LLM and quantum resources. If omitted, default settings are used.
         
         Returns:
-            bool: True if initialization succeeds, False otherwise.
+            bool: True if initialization is successful; False otherwise.
         
         Example:
             success = await continuous_learner.initialize({

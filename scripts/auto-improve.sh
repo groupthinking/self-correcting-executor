@@ -6,7 +6,7 @@ WAIT_DURATION=${CODERABBIT_WAIT_DURATION:-30}
 MAX_WAIT_TIME=${CODERABBIT_MAX_WAIT:-300}
 POLL_INTERVAL=${CODERABBIT_POLL_INTERVAL:-10}
 
-# check_for_new_commits determines if the remote branch has new commits compared to the local HEAD.
+# check_for_new_commits checks if the remote branch has commits not present in the local HEAD and returns success if new commits are detected.
 check_for_new_commits() {
     local initial_commit=$(git rev-parse HEAD)
     git fetch origin >/dev/null 2>&1
@@ -19,7 +19,7 @@ check_for_new_commits() {
     fi
 }
 
-# wait_for_coderabbit polls the remote repository to detect new commits from CodeRabbit, waiting up to a maximum duration before proceeding.
+# wait_for_coderabbit waits for new commits from CodeRabbit by polling the remote repository until a commit is detected or a maximum wait time is reached.
 wait_for_coderabbit() {
     local start_time=$(date +%s)
     local initial_commit=$(git rev-parse HEAD)
