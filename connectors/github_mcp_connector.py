@@ -296,7 +296,13 @@ class GitHubMCPConnector(MCPConnector):
                     return {'success': True, 'user': await response.json()}
                 else:
                     return {'success': False, 'error': f"User not found: {response.status}", 'status_code': response.status}
-      try:
+        except Exception as e:
+            logger.error(f"Get user info failed: {e}")
+            return {'success': False, 'error': str(e)}
+
+    async def create_issue(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new issue in a repository"""
+        try:
             owner, repo, title = params.get('owner'), params.get('repo'), params.get('title')
             if not all([owner, repo, title]):
                 return {'success': False, 'error': 'Owner, repo, and title parameters required'}
