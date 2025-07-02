@@ -66,7 +66,12 @@ class QualityMetrics:
     analysis_start_time: float = 0.0
     
     def calculate_savings(self) -> float:
-        """Calculate total money saved"""
+        """
+        Calculate the total estimated money saved by detecting code quality issues and technical debt placeholders.
+        
+        Returns:
+            float: The total amount of money saved based on the counts of lint issues, TODOs, FIXMEs, HACKs, and NotImplementedErrors found, using predefined cost constants.
+        """
         savings = (
             self.lint_issues_found * COST_PER_LINT_ISSUE +
             self.todos_found * COST_PER_TODO +
@@ -78,7 +83,9 @@ class QualityMetrics:
         return savings
     
     def get_roi(self) -> str:
-        """Calculate ROI (prevention vs remediation)"""
+        """
+        Return the ROI (return on investment) as a string, indicating infinity if money has been saved, otherwise zero.
+        """
         if self.money_saved > 0:
             return "∞ (Prevention vs Remediation)"
         return "0"
@@ -87,12 +94,22 @@ class MultiChannelNotifier:
     """Send notifications to multiple channels"""
     
     def __init__(self):
+        """
+        Initializes the MultiChannelNotifier with Slack and Discord webhook URLs from environment variables and sets the notification counter to zero.
+        """
         self.slack_webhook = os.getenv('SLACK_WEBHOOK_URL')
         self.discord_webhook = os.getenv('DISCORD_WEBHOOK_URL')
         self.notifications_sent = 0
     
     async def send_notification(self, title: str, message: str, severity: str = "info"):
-        """Send notification to all configured channels"""
+        """
+        Sends a formatted notification with branding and severity to all configured channels asynchronously.
+        
+        Parameters:
+            title (str): The notification title.
+            message (str): The main notification message.
+            severity (str): The severity level of the notification (e.g., "info", "warning", "error").
+        """
         
         # Format message with Guardian branding
         formatted_message = f"""
@@ -125,7 +142,9 @@ for result in results:
             logger.info(f"📱 NOTIFICATION: {title} - {message}")
     
     async def _send_slack(self, message: str, severity: str):
-        """Send to Slack"""
+        """
+        Asynchronously sends a formatted notification message to a configured Slack channel using a webhook, with color coding based on severity.
+        """
         color_map = {"error": "#FF0000", "warning": "#FFA500", "info": "#00FF00"}
         
         payload = {
@@ -149,7 +168,9 @@ for result in results:
             logger.error(f"❌ Slack notification error: {e}")
     
     async def _send_discord(self, message: str, severity: str):
-        """Send to Discord"""
+        """
+        Asynchronously sends a formatted alert message to a configured Discord webhook with severity-based color coding.
+        """
         color_map = {"error": 16711680, "warning": 16753920, "info": 65280}
         
         payload = {
@@ -176,6 +197,9 @@ class PlaceholderPolice:
     """Detect and track technical debt placeholders"""
     
     def __init__(self):
+        """
+        Initializes the PlaceholderPolice with regex patterns for detecting technical debt placeholders and an empty list for violations.
+        """
         self.patterns = {
             'TODO': re.compile(r'#\s*TODO|//\s*TODO|/\*\s*TODO|\bTODO\b', re.IGNORECASE),
             'FIXME': re.compile(r'#\s*FIXME|//\s*FIXME|/\*\s*FIXME|\bFIXME\b', re.IGNORECASE),
@@ -185,7 +209,15 @@ class PlaceholderPolice:
         self.violations = []
     
     async def scan_file(self, file_path: Path) -> Dict[str, List[Dict]]:
-        """Scan file for placeholder violations"""
+        """
+        Asynchronously scans a file for technical debt placeholders such as TODO, FIXME, HACK, and NotImplementedError.
+        
+        Parameters:
+            file_path (Path): The path to the file to be scanned.
+        
+        Returns:
+            Dict[str, List[Dict]]: A dictionary mapping each placeholder type to a list of violation details, including line number, content, and relative file path.
+        """
         violations = {pattern: [] for pattern in self.patterns}
         
         try:
@@ -207,7 +239,15 @@ class PlaceholderPolice:
         return violations
     
     def calculate_violation_cost(self, violations: Dict[str, List[Dict]]) -> int:
-        """Calculate cost of violations"""
+        """
+        Calculate the total estimated cost of technical debt violations based on their types and predefined cost values.
+        
+        Parameters:
+        	violations (Dict[str, List[Dict]]): A dictionary mapping violation types (e.g., 'TODO', 'FIXME') to lists of violation details.
+        
+        Returns:
+        	int: The total estimated cost of all violations.
+        """
         cost_map = {
             'TODO': COST_PER_TODO,
             'FIXME': COST_PER_FIXME,
@@ -225,10 +265,18 @@ class TestCoverageAnalyst:
     """Analyze test coverage and generate insights"""
     
     def __init__(self):
+        """
+        Initialize the TestCoverageAnalyst with an empty coverage data dictionary.
+        """
         self.coverage_data = {}
     
     async def analyze_coverage(self) -> Dict[str, Any]:
-        """Run coverage analysis"""
+        """
+        Run test coverage analysis using pytest and coverage.py, returning coverage metrics and recommendations.
+        
+        Returns:
+            A dictionary containing total coverage percentage, status message, number of files analyzed, and a recommendation based on the coverage results.
+        """
         try:
             # Check if pytest and coverage are available
             process = await asyncio.create_subprocess_exec(
@@ -274,6 +322,9 @@ class EnhancedLinterWatchdog:
     """Enhanced multi-language linter with business metrics"""
     
     def __init__(self):
+        """
+        Initialize the EnhancedLinterWatchdog with supported linter commands for various file extensions and an empty dictionary for lint results.
+        """
         self.linters = {
             '.py': ['python3', '-m', 'pylint'],
             '.ts': ['npx', 'eslint'],
@@ -286,7 +337,15 @@ class EnhancedLinterWatchdog:
         self.lint_results = {}
     
     async def lint_file(self, file_path: Path) -> Dict[str, Any]:
-        """Lint a file with appropriate linter"""
+        """
+        Run the appropriate linter asynchronously on the given file and return linting results.
+        
+        Parameters:
+            file_path (Path): The path to the file to be linted.
+        
+        Returns:
+            Dict[str, Any]: A dictionary containing the linting status, return code, number of issues found, and truncated stdout/stderr output. If no linter is available for the file type, or if the linter is not found, the dictionary includes the reason or error encountered.
+        """
         if file_path.suffix not in self.linters:
             return {'status': 'skipped', 'reason': 'no_linter'}
         
@@ -325,7 +384,16 @@ class EnhancedLinterWatchdog:
             }
     
     def _count_issues(self, output: str, file_extension: str) -> int:
-        """Count issues in linter output"""
+        """
+        Counts the number of lint issues in the linter output based on file extension.
+        
+        Parameters:
+            output (str): The raw output from the linter.
+            file_extension (str): The file extension indicating the language.
+        
+        Returns:
+            int: The number of detected lint issues (errors or warnings).
+        """
         if file_extension == '.py':
             # Count pylint issues (lines that start with file:line:column)
             return len([line for line in output.split('\n') if ':' in line and ('error' in line.lower() or 'warning' in line.lower())])
@@ -340,6 +408,9 @@ class GuardianAgentV2:
     """Main Guardian Agent V2.0 orchestrator"""
     
     def __init__(self):
+        """
+        Initializes the GuardianAgentV2 orchestrator with all core components and metrics tracking.
+        """
         self.metrics = QualityMetrics()
         self.notifier = MultiChannelNotifier()
         self.placeholder_police = PlaceholderPolice()
@@ -352,7 +423,11 @@ class GuardianAgentV2:
         logger.info("💰 Every bug caught = $1000+ saved")
     
     async def analyze_file(self, file_path: Path):
-        """Comprehensive file analysis"""
+        """
+        Performs comprehensive analysis on a single file, including linting, technical debt placeholder detection, metric updates, notifications, and dashboard refresh.
+        
+        The method runs the appropriate linter and scans for technical debt placeholders (TODO, FIXME, HACK, NotImplementedError) in the specified file. It updates quality metrics, sends notifications if issues or violations are found, and regenerates the HTML dashboard to reflect the latest analysis results.
+        """
         self.metrics.files_analyzed += 1
         
         logger.info(f"🔍 Analyzing {file_path.relative_to(PROJECT_ROOT)}...")
@@ -404,7 +479,11 @@ class GuardianAgentV2:
         await self.generate_dashboard()
     
     async def run_full_analysis(self):
-        """Run analysis on entire codebase"""
+        """
+        Perform a comprehensive analysis of the entire codebase, including linting, placeholder detection, dashboard generation, notifications, and test coverage reporting.
+        
+        This method scans all files in the project root with supported extensions, analyzes each file for code quality and technical debt, updates business metrics, logs progress, sends notifications, generates an executive dashboard, and reports test coverage statistics upon completion.
+        """
         logger.info("🚀 Starting full codebase analysis...")
         self.metrics.analysis_start_time = time.time()
         
@@ -449,7 +528,11 @@ class GuardianAgentV2:
         logger.info(f"📊 Test Coverage: {coverage_result['total_coverage']:.1f}% - {coverage_result['status']}")
     
     async def generate_dashboard(self):
-        """Generate beautiful HTML dashboard"""
+        """
+        Generate an HTML dashboard summarizing code quality metrics, estimated savings, issues found, and ROI.
+        
+        The dashboard includes metrics such as money saved, total issues, files analyzed, ROI, placeholder violation breakdowns, lint issues, and notification counts. The generated HTML is written to the configured dashboard path.
+        """
         total_savings = self.metrics.calculate_savings()
         total_issues = (self.metrics.lint_issues_found + self.metrics.todos_found + 
                        self.metrics.fixmes_found + self.metrics.hacks_found + 
@@ -586,7 +669,11 @@ class GuardianAgentV2:
         logger.info(f"📊 Dashboard updated: {self.dashboard_path}")
     
     async def watch_directory(self):
-        """Continuous monitoring mode"""
+        """
+        Continuously monitors the project directory for file changes and analyzes modified files in real time.
+        
+        This method scans all files with watched extensions, detects modifications by comparing file modification times, and triggers analysis on changed files. The monitoring loop runs indefinitely, checking for changes every 5 seconds.
+        """
         logger.info("👀 Starting continuous monitoring mode...")
         logger.info(f"🎯 Watching: {PROJECT_ROOT}")
         
@@ -616,7 +703,11 @@ class GuardianAgentV2:
             await asyncio.sleep(5)  # Check every 5 seconds
 
 async def main():
-    """Main entry point"""
+    """
+    Main entry point for Guardian Agent V2.0.
+    
+    Initializes the GuardianAgentV2 orchestrator and runs either a full codebase analysis or continuous directory monitoring based on command-line arguments.
+    """
     guardian = GuardianAgentV2()
     
     # Check command line arguments
