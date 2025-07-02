@@ -9,7 +9,25 @@ import sys
 import time
 
 def run_tests():
-    """Run comprehensive test suite"""
+    """
+    Runs the comprehensive test suite for `utils/helpers.py`, executing both standard and performance/stress tests.
+    
+    This function invokes `pytest` via subprocess to run two categories of tests in `test_utils_helpers.py`:
+    1. Standard tests (excluding those marked as slow).
+    2. Performance and stress tests (marked as slow).
+    
+    Test results and outputs are printed to the console. A summary is displayed at the end, and the function returns an exit code indicating overall success or failure.
+    
+    Returns:
+        int: `0` if all tests pass, `1` if any test fails.
+    
+    Example:
+        >>> exit_code = run_tests()
+        >>> if exit_code == 0:
+        ...     print("All tests succeeded.")
+        ... else:
+        ...     print("Some tests failed.")
+    """
     print("Running comprehensive tests for utils/helpers.py...")
     print("=" * 60)
     

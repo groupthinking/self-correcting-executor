@@ -11,18 +11,20 @@ from pathlib import Path
 
 def safe_json_parse(json_string: str) -> Optional[Dict[str, Any]]:
     """
-    Parses a JSON string into a dictionary, returning None if parsing fails.
+    Safely parses a JSON string into a Python dictionary.
+    
+    Attempts to decode the provided JSON string. Returns the resulting dictionary if parsing is successful, or None if the input is invalid or cannot be parsed.
     
     Args:
-        json_string (str): The JSON string to parse.
+        json_string (str): The JSON-formatted string to parse.
     
     Returns:
-        Optional[Dict[str, Any]]: The parsed dictionary if successful, or None if the input is invalid or cannot be parsed.
+        Optional[Dict[str, Any]]: The parsed dictionary if successful, or None if parsing fails.
     
     Example:
-        >>> safe_json_parse('{"key": "value"}')
-        {'key': 'value'}
-        >>> safe_json_parse('invalid json')
+        >>> safe_json_parse('{"foo": 123, "bar": "baz"}')
+        {'foo': 123, 'bar': 'baz'}
+        >>> safe_json_parse('not a json')
         None
     """
     try:
@@ -33,18 +35,20 @@ def safe_json_parse(json_string: str) -> Optional[Dict[str, Any]]:
 
 def safe_json_dumps(data: Any, indent: int = 2) -> str:
     """
-    Serialize data to a JSON-formatted string, returning an empty string if serialization fails.
+    Serializes Python data to a JSON-formatted string with indentation.
+    
+    If the data cannot be serialized (e.g., due to non-serializable objects), returns an empty string. Non-serializable objects are converted to strings using `str()`.
     
     Args:
-        data (Any): The data to serialize to JSON.
-        indent (int, optional): Number of spaces for indentation in the output. Defaults to 2.
+        data (Any): The Python object to serialize.
+        indent (int, optional): Number of spaces to use for indentation in the output JSON string. Defaults to 2.
     
     Returns:
         str: The JSON-formatted string, or an empty string if serialization fails.
     
     Example:
         >>> safe_json_dumps({'a': 1, 'b': 2})
-        '{\n  "a": 1,\n  "b": 2\n}'
+        '{\\n  "a": 1,\\n  "b": 2\\n}'
     """
     try:
         return json.dumps(data, indent=indent, default=str)
@@ -54,13 +58,13 @@ def safe_json_dumps(data: Any, indent: int = 2) -> str:
 
 def generate_hash(data: Union[str, bytes]) -> str:
     """
-    Generates a SHA256 hash for the given input data.
+    Generate a SHA256 hash of the input string or bytes.
     
     Args:
-        data (str or bytes): The input to hash. If a string is provided, it is encoded as UTF-8 before hashing.
+        data (str or bytes): Input data to hash. Strings are encoded as UTF-8 before hashing.
     
     Returns:
-        str: The hexadecimal representation of the SHA256 hash.
+        str: Hexadecimal SHA256 hash of the input.
     
     Example:
         >>> generate_hash("hello")
@@ -73,17 +77,17 @@ def generate_hash(data: Union[str, bytes]) -> str:
 
 def retry_with_backoff(func, max_retries: int = 3, base_delay: float = 1.0):
     """
-    Executes a function with retries using exponential backoff.
+    Execute a no-argument function with retries and exponential backoff.
     
-    Retries the provided function up to `max_retries` times, doubling the delay after each failure starting from `base_delay` seconds. If all attempts fail, the last exception is raised.
+    Retries the given function up to `max_retries` times, doubling the delay after each failure starting from `base_delay` seconds. If all attempts fail, raises the last encountered exception.
     
-    Parameters:
-        func (Callable[[], Any]): The function to execute. Should take no arguments.
-        max_retries (int, optional): Maximum number of attempts. Defaults to 3.
-        base_delay (float, optional): Initial delay in seconds before retrying. Defaults to 1.0.
+    Args:
+        func: A callable that takes no arguments and returns any value.
+        max_retries: Maximum number of attempts (default is 3).
+        base_delay: Initial delay in seconds before retrying (default is 1.0).
     
     Returns:
-        Any: The result returned by `func` if successful.
+        The result returned by `func` if successful.
     
     Raises:
         Exception: The last exception raised by `func` if all retries fail.
@@ -111,12 +115,12 @@ def flatten_dict(data: Dict[str, Any], prefix: str = "") -> Dict[str, Any]:
     """
     Recursively flattens a nested dictionary into a single-level dictionary with dot-separated keys.
     
-    Parameters:
+    Args:
         data (Dict[str, Any]): The dictionary to flatten.
-        prefix (str, optional): A prefix to prepend to each key. Defaults to "".
+        prefix (str, optional): Prefix to prepend to each key in the flattened dictionary. Defaults to "".
     
     Returns:
-        Dict[str, Any]: A flattened dictionary where nested keys are joined by dots.
+        Dict[str, Any]: A new dictionary with all nested keys flattened and joined by dots.
     
     Example:
         >>> flatten_dict({'a': {'b': 1, 'c': 2}, 'd': 3})
@@ -134,10 +138,10 @@ def flatten_dict(data: Dict[str, Any], prefix: str = "") -> Dict[str, Any]:
 
 def ensure_directory_exists(path: Union[str, Path]) -> Path:
     """
-    Ensures that the specified directory exists, creating it and any necessary parent directories if they do not already exist.
+    Ensure that a directory exists at the specified path, creating it and any necessary parent directories if needed.
     
     Args:
-        path (str or Path): The path to the directory to ensure exists.
+        path (str or Path): The directory path to check or create.
     
     Returns:
         Path: A Path object representing the ensured directory.
@@ -153,13 +157,13 @@ def ensure_directory_exists(path: Union[str, Path]) -> Path:
 
 def sanitize_filename(filename: str) -> str:
     """
-    Cleans a filename by replacing invalid characters and trimming unwanted characters.
+    Sanitizes a filename by replacing invalid characters with underscores and trimming leading or trailing spaces and dots.
     
     Parameters:
-        filename (str): The original filename to sanitize.
+        filename (str): The filename to sanitize.
     
     Returns:
-        str: A sanitized filename with invalid characters replaced by underscores, leading/trailing spaces and dots removed, and guaranteed to be non-empty. Returns "unnamed" if the sanitized result is empty or only underscores.
+        str: The sanitized filename. If the result is empty or consists only of underscores, returns "unnamed".
     
     Example:
         >>> sanitize_filename('  my<file>:name?.txt  ')
@@ -178,11 +182,11 @@ def sanitize_filename(filename: str) -> str:
 
 def merge_dicts(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Recursively merges two dictionaries, combining nested dictionaries and giving precedence to values from the second dictionary.
+    Recursively merge two dictionaries, combining nested dictionaries and prioritizing values from the second dictionary.
     
     Args:
         dict1 (Dict[str, Any]): The base dictionary to merge into.
-        dict2 (Dict[str, Any]): The dictionary whose values take precedence. Nested dictionaries are merged recursively.
+        dict2 (Dict[str, Any]): The dictionary whose values take precedence. If both dictionaries have a key with dictionary values, those are merged recursively.
     
     Returns:
         Dict[str, Any]: A new dictionary containing the merged keys and values.
@@ -202,14 +206,14 @@ def merge_dicts(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
 
 def chunk_list(data: List[Any], chunk_size: int) -> List[List[Any]]:
     """
-    Splits a list into sublists (chunks) of a specified size.
+    Split a list into consecutive sublists (chunks) of a specified maximum size.
     
     Args:
-        data (List[Any]): The list to be divided into chunks.
-        chunk_size (int): The maximum size of each chunk. Must be a positive integer.
+        data (List[Any]): The list to split into chunks.
+        chunk_size (int): The maximum number of elements per chunk. Must be greater than zero.
     
     Returns:
-        List[List[Any]]: A list of sublists, where each sublist contains up to `chunk_size` elements from the original list. The last chunk may contain fewer elements if the total is not divisible by `chunk_size`.
+        List[List[Any]]: A list of sublists, each containing up to `chunk_size` elements. The final chunk may have fewer elements if the list size is not a multiple of `chunk_size`.
     
     Example:
         >>> chunk_list([1, 2, 3, 4, 5], 2)
@@ -220,15 +224,15 @@ def chunk_list(data: List[Any], chunk_size: int) -> List[List[Any]]:
 
 def format_duration(seconds: float) -> str:
     """
-    Converts a duration in seconds to a human-readable string in seconds, minutes, or hours.
+    Convert a duration in seconds to a human-readable string formatted as seconds, minutes, or hours.
     
-    Args:
-        seconds (float): The duration in seconds.
+    Parameters:
+        seconds (float): Duration in seconds.
     
     Returns:
-        str: The formatted duration as a string, using seconds with two decimals if under 60, minutes with one decimal if under 3600, or hours with one decimal otherwise.
+        str: The duration formatted as a string. Uses seconds with two decimals if less than 60, minutes with one decimal if less than 3600, or hours with one decimal otherwise.
     
-    Example:
+    Examples:
         >>> format_duration(45)
         '45.00s'
         >>> format_duration(125)
