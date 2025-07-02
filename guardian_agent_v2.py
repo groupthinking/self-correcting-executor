@@ -325,7 +325,7 @@ class EnhancedLinterWatchdog:
         """Count issues in linter output"""
         if file_extension == '.py':
             # Count pylint issues (lines that start with file:line:column)
-            return len([line for line in output.split('\n') if ':' in line and 'error' in line.lower() or 'warning' in line.lower()])
+            return len([line for line in output.split('\n') if ':' in line and ('error' in line.lower() or 'warning' in line.lower())])
         elif file_extension in ['.ts', '.tsx', '.js', '.jsx']:
             # Count ESLint issues
             return len([line for line in output.split('\n') if 'error' in line.lower() or 'warning' in line.lower()])
