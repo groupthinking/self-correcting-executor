@@ -43,8 +43,9 @@ class GuardianAgent(FileSystemEventHandler):
         print("Guardian Agent: Running test coverage analysis...")
         try:
             subprocess.run(['coverage', 'run', '-m', 'pytest'], check=True)
-            result = subprocess.run(['coverage', 'report', '--format=total'], capture_output=True, text=True, check=True)
-            coverage_percentage = int(float(result.stdout.strip()))
+            result = subprocess.run(['coverage', 'json'], capture_output=True, text=True, check=True)
+            coverage_data = json.loads(result.stdout)
+            coverage_percentage = int(coverage_data['totals']['percent'])
             if coverage_percentage < MIN_TEST_COVERAGE:
                 print(f"Guardian Agent: Test coverage is {coverage_percentage}%, which is below the minimum of {MIN_TEST_COVERAGE}%")
             else:
