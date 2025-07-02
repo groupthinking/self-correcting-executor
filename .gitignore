@@ -403,4 +403,20 @@ secrets/
 # OS generated files
 Thumbs.db
 ehthumbs.db
-Desktop.ini 
+Desktop.ini # Python
+# IDEs
+# OS
+# Project specific
+.backup/
+todo_report.txt
+mock_implementations.txt
+duplicate_test_files.txt
+# Security
+.env
+.env.*
+!.env.example
+auth/users.json
+*.key
+*.pem
+*.cert
+security_config.yaml.backup

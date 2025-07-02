@@ -22,19 +22,12 @@ def task():
             break
     
     if not data_dir:
-        # Create a mock result when no data directory exists
+        # NO SIMULATIONS - Real data required
         return {
-            'success': True,
+            'success': False,
             'action': 'data_processing',
-            'mode': 'simulation',
-            'message': 'No data directory found, returning simulated results',
-            'files_processed': 3,
-            'total_records': 150,
-            'insights': [
-                'Simulated: Found 3 data files',
-                'Simulated: Processed 150 records total',
-                'Simulated: Average processing time 0.5s per file'
-            ],
+            'error': 'No data directory found. Please set DATA_DIR environment variable or ensure /data exists.',
+            'checked_paths': possible_dirs,
             'timestamp': datetime.utcnow().isoformat()
         }
     

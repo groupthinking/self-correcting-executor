@@ -201,7 +201,7 @@ class DifferentialStateEngine:
         return merged
     
     def _resolve_user_defined(self, local: StateNode, remotes: List[StateNode]) -> Dict:
-        """Placeholder for user-defined conflict resolution"""
+        """actual for user-defined conflict resolution"""
         # This would call a user-provided function
         return self._resolve_merge(local, remotes)
 

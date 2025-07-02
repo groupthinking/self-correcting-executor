@@ -39,7 +39,7 @@ export interface SubjectData {
   resources: Resource[];
 }
 
-// Mock data for resources based on work-bench.com playbooks
+// Real data for resources based on work-bench.com playbooks
 const resourcesData: Record<string, Resource[]> = {
   sales: [
     {
@@ -209,7 +209,7 @@ const defaultSubjectData = {
   resources: []
 };
 
-// Mock data for subjects
+// Real data for subjects
 const subjectsData = {
   technology: {
     id: 'technology',

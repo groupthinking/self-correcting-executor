@@ -151,7 +151,7 @@ export function ExpandableMenu({
                   <div className="flex items-center px-3 py-2">
                     <input
                       type="text"
-                      placeholder="New subject name..."
+                      actual="New subject name..."
                       value={newSubject}
                       onChange={(e) => setNewSubject(e.target.value)}
                       className="flex-grow border border-gray-300 rounded-l px-3 py-1 text-sm"
