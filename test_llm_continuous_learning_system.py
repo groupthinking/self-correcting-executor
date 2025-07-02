@@ -24,7 +24,7 @@ import tempfile
 import os
 from unittest.mock import Mock, patch, AsyncMock, MagicMock, call
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 
 # Import the module under test
