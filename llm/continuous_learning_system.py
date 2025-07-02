@@ -65,6 +65,27 @@ class ContinuousLearningLLM:
     """
     
     def __init__(self, model_name: str = "continuous_learner"):
+        """
+        Initialize a ContinuousLearningLLM instance with connectors, state variables, and storage directories.
+        
+        Args:
+            model_name (str, optional): The name used for the model, storage directories, and versioning. Defaults to "continuous_learner".
+        
+        Attributes:
+            model_name (str): Name of the model instance.
+            llm_connector (LLMConnector): Connector for classical LLM resources.
+            quantum_connector (DWaveQuantumConnector): Connector for quantum computing resources.
+            current_model_version (ModelVersion or None): Metadata for the currently loaded model version.
+            training_queue (asyncio.Queue): Queue for incoming training data samples.
+            is_training (bool): Indicates if training is currently in progress.
+            training_stats (dict): Tracks total samples processed, training time, quantum optimizations, and model versions.
+            model_dir (Path): Directory for storing model versions and related files.
+            data_dir (Path): Directory for storing ingested and processed data.
+            performance_history (list): List of historical performance metrics for model versions.
+        
+        Example:
+            >>> learner = ContinuousLearningLLM(model_name="my_incremental_llm")
+        """
         self.model_name = model_name
         self.llm_connector = LLMConnector()
         self.quantum_connector = DWaveQuantumConnector()
@@ -93,13 +114,13 @@ class ContinuousLearningLLM:
         
     async def initialize(self, config: Dict[str, Any] = None) -> bool:
         """
-        Initializes the continuous learning system by connecting to LLM and quantum resources, loading or creating the initial model, and starting the background training loop.
+        Initialize the continuous learning system by connecting to LLM and quantum resources, loading or creating the initial model, and starting the background training loop.
         
         Args:
-            config (Optional[Dict[str, Any]]): Configuration dictionary containing connection parameters for LLM and quantum resources. If not provided, defaults are used.
+            config (Optional[Dict[str, Any]]): Configuration dictionary with connection parameters for LLM and quantum resources. For example, it may include keys like "llm" (with API credentials) and "quantum" (with access tokens). If not provided, default settings are used.
         
         Returns:
-            bool: True if initialization succeeds, False otherwise.
+            bool: True if initialization is successful; False if any connection or setup step fails.
         
         Example:
             success = await continuous_learner.initialize({
