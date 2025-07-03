@@ -131,14 +131,8 @@ class CodeGeneratorAgent:
     def _generate_api_endpoint(self, context: Dict) -> str:
         """Generate a single API endpoint"""
         endpoint_name = context.get("endpoint_name", "process")
-        function_name = context.get(
-            "function_name",
-            endpoint_name.replace(
-                "-",
-                "_"))
-        description = context.get(
-            "description",
-            f"Process {endpoint_name} request")
+        function_name = context.get("function_name", endpoint_name.replace("-", "_"))
+        description = context.get("description", f"Process {endpoint_name} request")
 
         # Generate parameter list
         params = context.get("parameters", {})
@@ -154,7 +148,10 @@ class CodeGeneratorAgent:
         validation_logic = "# Validate required fields\n        "
         if params:
             for param in params:
-                validation_logic += f"if not {param}:\n            raise ValidationError('{param} is required')\n        "
+                validation_logic += (
+                    f"if not {param}:\n            "
+                    f"raise ValidationError('{param} is required')\n        "
+                )
         else:
             validation_logic += "pass"
 
@@ -215,7 +212,8 @@ class {model_name}(BaseModel):
             close_bracket = "]" if optional else ""
             default = " = None" if optional else ""
             model_code += (
-                f"    {field_name}: {optional}{field_type}{close_bracket}{default}\n")
+                f"    {field_name}: {optional}{field_type}{close_bracket}{default}\n"
+            )
 
         return model_code
 

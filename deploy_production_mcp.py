@@ -157,13 +157,10 @@ class ProductionMCPDeployment:
             return {
                 "success": True,
                 "result": final_result.get("output") if final_result else None,
-                "execution_time_ms": (
-                    asyncio.get_event_loop().time() -
-                    start_time) *
-                1000,
+                "execution_time_ms": (asyncio.get_event_loop().time() - start_time)
+                * 1000,
                 "has_state_continuity": self.state_fabric is not None,
-                "transport_type": (
-                    "unified" if self.unified_transport else "standard"),
+                "transport_type": ("unified" if self.unified_transport else "standard"),
             }
 
         except Exception as e:
@@ -184,10 +181,8 @@ class ProductionMCPDeployment:
             return {
                 "success": False,
                 "error": str(e),
-                "execution_time_ms": (
-                    asyncio.get_event_loop().time() -
-                    start_time) *
-                1000,
+                "execution_time_ms": (asyncio.get_event_loop().time() - start_time)
+                * 1000,
             }
 
     async def demonstrate_unique_capabilities(self):
@@ -253,8 +248,7 @@ class ProductionMCPDeployment:
                 "public_data": "can be shared",
             }
 
-            filtered = self.state_fabric._apply_privacy_filters(
-                sensitive_context)
+            filtered = self.state_fabric._apply_privacy_filters(sensitive_context)
             assert "api_key" not in filtered
             assert "<encrypted>" in filtered.get("user_data", "")
             logger.info("✓ Privacy-aware filtering working")

@@ -106,7 +106,8 @@ def track_outcome(protocol_name, outcome):
             f"Outcome tracked in database for {protocol_name}: {
                 outcome.get(
                     'success',
-                    'unknown')}")
+                    'unknown')}"
+        )
 
     except Exception as e:
         log(f"Failed to track outcome in database: {e}")

@@ -52,10 +52,10 @@ class QuantumMCPTools:
                 logger.info(
                     f"Connected to quantum solver: {
                         self.solver_info.get(
-                            'name', 'Unknown')}")
+                            'name', 'Unknown')}"
+                )
             else:
-                logger.warning(
-                    "Quantum connector not available, using simulation mode")
+                logger.warning("Quantum connector not available, using simulation mode")
 
             return True
 
@@ -362,8 +362,7 @@ class QuantumMCPTools:
         # Learning rate optimization (discrete values)
         lr_values = [0.0001, 0.0005, 0.001, 0.005, 0.01]
         for i, lr in enumerate(lr_values):
-            qubo[f"x{i}"] = abs(lr - learning_rate) * \
-                1000  # Penalty for deviation
+            qubo[f"x{i}"] = abs(lr - learning_rate) * 1000  # Penalty for deviation
 
         # Batch size optimization
         batch_values = [16, 32, 64, 128]
@@ -407,10 +406,11 @@ class QuantumMCPTools:
                 break
 
         return {
-            "learning_rate": selected_lr or model_config.get(
-                "learning_rate", 0.001), "batch_size": selected_batch or model_config.get(
-                "batch_size", 32), "epochs": model_config.get(
-                "epochs", 10), "optimization_method": "quantum_annealing", }
+            "learning_rate": selected_lr or model_config.get("learning_rate", 0.001),
+            "batch_size": selected_batch or model_config.get("batch_size", 32),
+            "epochs": model_config.get("epochs", 10),
+            "optimization_method": "quantum_annealing",
+        }
 
     def _estimate_training_improvement(
         self, qubo_result: Dict[str, Any]
@@ -469,10 +469,8 @@ async def demonstrate_quantum_tools():
     )
     print(f"   - Success: {llm_result['success']}")
     if llm_result["success"]:
-        print(
-            f"   - Optimized parameters: {llm_result['optimized_parameters']}")
-        print(
-            f"   - Expected improvement: {llm_result['expected_improvement']}")
+        print(f"   - Optimized parameters: {llm_result['optimized_parameters']}")
+        print(f"   - Expected improvement: {llm_result['expected_improvement']}")
     else:
         print(f"   - Error: {llm_result['error']}")
     print()

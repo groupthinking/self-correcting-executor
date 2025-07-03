@@ -27,11 +27,7 @@ class BasicAuth:
         with open(self.users_file, "w") as f:
             json.dump(self.users, f, indent=2)
 
-    def create_user(
-            self,
-            username: str,
-            password: str,
-            role: str = "viewer") -> bool:
+    def create_user(self, username: str, password: str, role: str = "viewer") -> bool:
         """Create a new user"""
         if username in self.users:
             return False
@@ -90,8 +86,7 @@ if not auth.users:
     )
     auth.create_user("admin", secure_password, "admin")
     auth.enforce_password_reset("admin")
-    print(
-        f"⚠️  Default admin user created with a secure password: {secure_password}")
+    print(f"⚠️  Default admin user created with a secure password: {secure_password}")
     print("⚠️  You must change this password on first login!")
 
 # (Removed redundant block)

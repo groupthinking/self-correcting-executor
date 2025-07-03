@@ -129,21 +129,22 @@ def task():
             overall_success_rate = (successes / total) * 100
             insights.append(
                 f"Overall success rate: {
-                    overall_success_rate:.1f}%")
+                    overall_success_rate:.1f}%"
+            )
 
             if overall_success_rate < 50:
                 insights.append(
                     "⚠️ System performance below 50% - review failing protocols"
                 )
             elif overall_success_rate > 80:
-                insights.append(
-                    "✅ System performing well with >80% success rate")
+                insights.append("✅ System performing well with >80% success rate")
 
             if len(failure_patterns) > 0:
                 insights.append(
                     f"Most common error: '{
                         failure_patterns[0]['error']}' ({
-                        failure_patterns[0]['occurrences']} times)")
+                        failure_patterns[0]['occurrences']} times)"
+                )
 
         return {
             "success": True,

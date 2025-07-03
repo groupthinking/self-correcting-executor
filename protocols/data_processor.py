@@ -75,7 +75,8 @@ def task():
                             f"{filename}: {
                                 type(data).__name__} with {
                                 len(data) if isinstance(
-                                    data, (list, dict)) else 1} items")
+                                    data, (list, dict)) else 1} items"
+                        )
                 except BaseException:
                     pass
 
@@ -86,8 +87,7 @@ def task():
                         row_count = sum(1 for row in reader)
                         total_records += row_count
                         processed_count += 1
-                        insights.append(
-                            f"{filename}: CSV with {row_count} rows")
+                        insights.append(f"{filename}: CSV with {row_count} rows")
                 except BaseException:
                     pass
 

@@ -21,12 +21,7 @@ class ProtocolRegistry:
         except FileNotFoundError:
             return {"categories": {}, "registry": {}}
 
-    def register_protocol(
-            self,
-            name,
-            category,
-            location="local",
-            metadata=None):
+    def register_protocol(self, name, category, location="local", metadata=None):
         """Register a new protocol"""
         registry = self.load_registry()
 

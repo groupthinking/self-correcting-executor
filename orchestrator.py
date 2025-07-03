@@ -147,10 +147,7 @@ class OrchestrationEngine:
             return {"path": path}
         return {}
 
-    async def discover_components(
-            self,
-            intent: Dict,
-            sources: List[str]) -> Dict:
+    async def discover_components(self, intent: Dict, sources: List[str]) -> Dict:
         """Discover which components are needed"""
         components = {
             "agents": [],
@@ -415,10 +412,7 @@ class KnowledgeGraph:
 
 
 # CLI Interface matching your example
-async def run_mcp(
-        intent: str,
-        sources: List[str],
-        quantum: bool = False) -> Dict:
+async def run_mcp(intent: str, sources: List[str], quantum: bool = False) -> Dict:
     """Run MCP orchestration from CLI"""
     engine = OrchestrationEngine()
 

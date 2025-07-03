@@ -82,8 +82,9 @@ def _analyze_massive_user_collection() -> Dict[str, Any]:
                     capture_output=True,
                     text=True,
                 )
-                all_files = (result.stdout.strip().split("\n")
-                             if result.stdout.strip() else [])
+                all_files = (
+                    result.stdout.strip().split("\n") if result.stdout.strip() else []
+                )
                 folder_file_count = len(all_files)
 
                 analysis["directory_stats"][folder_name] = {
@@ -161,24 +162,21 @@ def _analyze_massive_user_collection() -> Dict[str, Any]:
 
             except Exception as e:
                 analysis["scan_errors"] = analysis.get("scan_errors", [])
-                analysis["scan_errors"].append(
-                    f"Error scanning {base_path}: {str(e)}")
+                analysis["scan_errors"].append(f"Error scanning {base_path}: {str(e)}")
 
     # Generate large-scale insights
     analysis["large_scale_patterns"] = _detect_large_scale_patterns(analysis)
 
     # Generate specific project insights
     if analysis["code_files"]:
-        js_files = len(
-            [f for f in analysis["code_files"] if f["type"] == ".js"])
-        py_files = len(
-            [f for f in analysis["code_files"] if f["type"] == ".py"])
-        ts_files = len(
-            [f for f in analysis["code_files"] if f["type"] == ".ts"])
+        js_files = len([f for f in analysis["code_files"] if f["type"] == ".js"])
+        py_files = len([f for f in analysis["code_files"] if f["type"] == ".py"])
+        ts_files = len([f for f in analysis["code_files"] if f["type"] == ".ts"])
 
         if js_files > 10:
             analysis["project_insights"].append(
-                f"MASSIVE JavaScript development detected ({js_files} JS files in sample)")
+                f"MASSIVE JavaScript development detected ({js_files} JS files in sample)"
+            )
         if py_files > 5:
             analysis["project_insights"].append(
                 f"Extensive Python project work ({py_files} Python files)"
@@ -192,13 +190,13 @@ def _analyze_massive_user_collection() -> Dict[str, Any]:
         safari_files = [
             f for f in analysis["code_files"] if "safari" in f["path"].lower()
         ]
-        mcp_files = [f for f in analysis["code_files"]
-                     if "mcp" in f["file"].lower()]
+        mcp_files = [f for f in analysis["code_files"] if "mcp" in f["file"].lower()]
 
         if safari_files:
             analysis["project_insights"].append(
                 f"Safari extension development detected ({
-                    len(safari_files)} related files)")
+                    len(safari_files)} related files)"
+            )
         if mcp_files:
             analysis["project_insights"].append(
                 f"MCP protocol development active ({len(mcp_files)} MCP files)"
@@ -239,7 +237,8 @@ def _detect_large_scale_patterns(
                         code_ratio:.1%} of files are code/development related",
                     "file_count": code_files,
                     "significance": "high",
-                })
+                }
+            )
 
         # Media content detection
         media_extensions = [".jpg", ".png", ".gif", ".mp4", ".mov", ".pdf"]
@@ -255,8 +254,7 @@ def _detect_large_scale_patterns(
 
         # Archive detection
         archive_extensions = [".zip", ".tar", ".gz", ".rar"]
-        archive_files = sum(file_types.get(ext, 0)
-                            for ext in archive_extensions)
+        archive_files = sum(file_types.get(ext, 0) for ext in archive_extensions)
         if archive_files > 50:
             patterns.append(
                 {
@@ -336,11 +334,10 @@ def _perform_real_analysis(
                 {
                     "type": "failing_protocols",
                     "count": len(low_performers),
-                    "protocols": [
-                        p["protocol"] for p in low_performers],
-                    "total_failures": sum(
-                        p["failures"] for p in low_performers),
-                })
+                    "protocols": [p["protocol"] for p in low_performers],
+                    "total_failures": sum(p["failures"] for p in low_performers),
+                }
+            )
 
     # Analyze massive file patterns
     total_files = user_data.get("total_files", 0)
@@ -394,7 +391,8 @@ def _perform_real_analysis(
                         0)} executions successful",
                 "scale_impact": f"Potential to automate workflows across {
                     total_files:,                            } files",
-            })
+            }
+        )
 
     return analysis
 
@@ -415,22 +413,25 @@ def _generate_real_ideas(insights: Dict[str, Any]) -> List[Dict[str, str]]:
                         "name": "massive_codebase_optimizer",
                         "description": f"Automatically analyze and optimize estimated {
                             estimated_code_files:,        } code files",
-                        "real_basis": f"Based on statistical analysis of massive file collection",
+                        "real_basis": "Based on statistical analysis of massive file collection",
                         "implementation": "Create distributed protocol system for large-scale code analysis",
-                    })
+                    }
+                )
 
             large_scale_patterns = pattern.get("large_scale_patterns", [])
             for ls_pattern in large_scale_patterns:
-                if ls_pattern.get(
-                        "pattern") == "heavy_development_environment":
+                if ls_pattern.get("pattern") == "heavy_development_environment":
                     ideas.append(
                         {
                             "name": "development_environment_automator",
-                            "description": f"Automate development workflows across massive codebase",
+                            "description": "Automate development workflows across massive codebase",
                             "real_basis": f'Development environment with {
                                 ls_pattern.get("file_count")} code files',
-                            "implementation": "Build automation protocols for build, test, deploy across large codebases",
-                        })
+                            "implementation": (
+                                "Build automation protocols for build, test, deploy across large codebases"
+                            ),
+                        }
+                    )
 
     # Scale-specific ideas
     scale_insights = insights.get("scale_insights", [])
@@ -448,7 +449,8 @@ def _generate_real_ideas(insights: Dict[str, Any]) -> List[Dict[str, str]]:
                             "total_files_discovered",
                             0):,            } total files',
                     "implementation": "Create intelligent file organization and search protocols",
-                })
+                }
+            )
 
     return ideas
 
@@ -487,6 +489,7 @@ def _create_real_optimizations(
                     "expected_benefit": "Efficient processing of massive file collections",
                     "priority": "high",
                     "scale": "massive",
-                })
+                }
+            )
 
     return optimizations

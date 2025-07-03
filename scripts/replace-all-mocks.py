@@ -49,11 +49,7 @@ def update_file(file_path: Path, replacements: List[Tuple[str, str]]) -> int:
             # Count changes
             matches = len(re.findall(pattern, content, re.IGNORECASE))
             if matches > 0:
-                content = re.sub(
-                    pattern,
-                    replacement,
-                    content,
-                    flags=re.IGNORECASE)
+                content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
                 changes += matches
 
         # Only write if changes were made
@@ -94,7 +90,7 @@ def add_imports_to_test_files(file_path: Path) -> None:
                 if line.startswith("import ") or line.startswith("from "):
                     # Find last import
                     continue
-                elif import_added == False and i > 0:
+                elif import_added is False and i > 0:
                     # Add our import after last import
                     lines.insert(i, "from config.mcp_config import MCPConfig")
                     import_added = True
@@ -117,8 +113,9 @@ def main():
     python_files = find_python_files(workspace)
 
     # Skip virtual environments and cache
-    python_files = [f for f in python_files if "venv" not in str(
-        f) and "__pycache__" not in str(f)]
+    python_files = [
+        f for f in python_files if "venv" not in str(f) and "__pycache__" not in str(f)
+    ]
 
     for file_path in python_files:
         # Add imports to test files

@@ -62,10 +62,12 @@ class RealQuantumTest:
                 if solver_info["solver_info"]["type"] == "QPU":
                     logger.info(
                         f"⚛️  Qubits: {
-                            solver_info['solver_info']['num_qubits']}")
+                            solver_info['solver_info']['num_qubits']}"
+                    )
                     logger.info(
                         f"🔗 Couplers: {
-                            solver_info['solver_info']['num_couplers']}")
+                            solver_info['solver_info']['num_couplers']}"
+                    )
 
                 return True
             else:
@@ -93,7 +95,7 @@ class RealQuantumTest:
                 solution = result["best_solution"]
                 energy = result["best_energy"]
 
-                logger.info(f"✅ QUBO solved")
+                logger.info("✅ QUBO solved")
                 logger.info(f"📊 Best solution: {solution}")
                 logger.info(f"⚡ Energy: {energy}")
                 logger.info(f"🔢 Samples: {result['num_solutions']}")
@@ -105,7 +107,8 @@ class RealQuantumTest:
                     return True
                 else:
                     logger.warning(
-                        f"⚠️  Energy {energy} not optimal (expected ~{expected_energy})")
+                        f"⚠️  Energy {energy} not optimal (expected ~{expected_energy})"
+                    )
                     return True  # Still counts as working
             else:
                 logger.error(f"❌ QUBO failed: {result.get('error')}")
@@ -137,7 +140,7 @@ class RealQuantumTest:
                 route = result.get("route", [])
                 total_distance = result.get("total_distance", 0)
 
-                logger.info(f"✅ TSP solved")
+                logger.info("✅ TSP solved")
                 logger.info(f"🛣️  Route: {' → '.join(route)}")
                 logger.info(f"📏 Total distance: {total_distance}")
 
@@ -175,7 +178,7 @@ class RealQuantumTest:
                 partition_b = result.get("partition_b", [])
                 cut_value = result.get("cut_value", 0)
 
-                logger.info(f"✅ Max-Cut solved")
+                logger.info("✅ Max-Cut solved")
                 logger.info(f"🔵 Partition A: {partition_a}")
                 logger.info(f"🔴 Partition B: {partition_b}")
                 logger.info(f"✂️  Cut value: {cut_value}")
@@ -185,8 +188,7 @@ class RealQuantumTest:
                     logger.info("🎯 Good cut found!")
                     return True
                 else:
-                    logger.warning(
-                        f"⚠️  Cut value {cut_value} could be better")
+                    logger.warning(f"⚠️  Cut value {cut_value} could be better")
                     return True  # Still working
             else:
                 logger.error(f"❌ Max-Cut failed: {result.get('error')}")

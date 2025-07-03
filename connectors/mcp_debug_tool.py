@@ -265,14 +265,14 @@ class MCPDebugTool(MCPConnector):
                 else:
                     self.logger.warning(
                         f"GCP API returned status {
-                            response.status}")
+                            response.status}"
+                    )
                     return await self._fallback_reasoning(code, error)
         except Exception as e:
             self.logger.error(f"GCP API call failed: {str(e)}")
             return await self._fallback_reasoning(code, error)
 
-    async def _fallback_reasoning(
-            self, code: str, error: str) -> Dict[str, Any]:
+    async def _fallback_reasoning(self, code: str, error: str) -> Dict[str, Any]:
         """Fallback reasoning when GCP is unavailable"""
         suggestions = []
 
@@ -319,11 +319,14 @@ class MCPDebugTool(MCPConnector):
 
         # Performance optimization fixes
         if code_analysis.get("complexity", 0) > 10:
-            fixes.append({"type": "optimization",
-                          "description": "Reduce code complexity",
-                          "suggestion": "Break down complex functions into smaller ones",
-                          "priority": "medium",
-                          })
+            fixes.append(
+                {
+                    "type": "optimization",
+                    "description": "Reduce code complexity",
+                    "suggestion": "Break down complex functions into smaller ones",
+                    "priority": "medium",
+                }
+            )
 
         return fixes
 
@@ -338,8 +341,7 @@ class MCPDebugTool(MCPConnector):
 
         for insight_type, insight_data in quantum_insights.items():
             if isinstance(insight_data, dict) and "error" not in insight_data:
-                if insight_type == "qubit_state" and insight_data.get(
-                        "issues"):
+                if insight_type == "qubit_state" and insight_data.get("issues"):
                     fixes.append(
                         {
                             "type": "quantum_state",
@@ -347,10 +349,10 @@ class MCPDebugTool(MCPConnector):
                             "suggestion": "Initialize qubits properly and check measurement timing",
                             "priority": "high",
                             "quantum_specific": True,
-                        })
+                        }
+                    )
 
-                if insight_type == "entanglement" and insight_data.get(
-                        "warning"):
+                if insight_type == "entanglement" and insight_data.get("warning"):
                     fixes.append(
                         {
                             "type": "quantum_entanglement",
@@ -358,7 +360,8 @@ class MCPDebugTool(MCPConnector):
                             "suggestion": "Review gate sequence and timing",
                             "priority": "medium",
                             "quantum_specific": True,
-                        })
+                        }
+                    )
 
         return fixes
 
@@ -404,11 +407,8 @@ class MCPDebugTool(MCPConnector):
         """Calculate performance metrics for the code"""
         return {
             "complexity_score": self._calculate_complexity(code),
-            "line_count": len(
-                code.split("\n")),
-            "estimated_runtime": (
-                "low" if len(
-                    code.split("\n")) < 100 else "medium"),
+            "line_count": len(code.split("\n")),
+            "estimated_runtime": ("low" if len(code.split("\n")) < 100 else "medium"),
             "memory_usage": "estimated_low",
             "quantum_efficiency": self._estimate_quantum_efficiency(code),
         }
@@ -424,14 +424,14 @@ class MCPDebugTool(MCPConnector):
         lines = code.split("\n")
         for i, line in enumerate(lines):
             if "qubits" in line.lower() or "qubit" in line.lower():
-                qubit_operations.append(
-                    {"line": i + 1, "operation": line.strip()})
+                qubit_operations.append({"line": i + 1, "operation": line.strip()})
 
             if "measure" in line.lower() and "before" not in line.lower():
                 if i > 0 and "gate" not in lines[i - 1].lower():
                     issues.append(
                         f"Potential premature measurement at line {
-                            i + 1}")
+                            i + 1}"
+                    )
 
         return {
             "operations": qubit_operations,
@@ -461,7 +461,8 @@ class MCPDebugTool(MCPConnector):
             "entanglement_operations": entanglement_ops,
             "count": len(entanglement_ops),
             "warning": (
-                "High entanglement density" if len(entanglement_ops) > 5 else None),
+                "High entanglement density" if len(entanglement_ops) > 5 else None
+            ),
         }
 
     async def _analyze_decoherence(
@@ -471,8 +472,7 @@ class MCPDebugTool(MCPConnector):
         decoherence_risks = []
 
         if "sleep" in code or "wait" in code:
-            decoherence_risks.append(
-                "Timing delays detected - may cause decoherence")
+            decoherence_risks.append("Timing delays detected - may cause decoherence")
 
         if code.count("\n") > 50:  # Long quantum programs
             decoherence_risks.append(
@@ -555,8 +555,7 @@ class MCPDebugTool(MCPConnector):
         functions = []
         for line in code.split("\n"):
             stripped = line.strip()
-            if stripped.startswith(
-                    "def ") or stripped.startswith("async def "):
+            if stripped.startswith("def ") or stripped.startswith("async def "):
                 functions.append(stripped)
         return functions
 
@@ -587,8 +586,13 @@ class MCPDebugTool(MCPConnector):
     def _estimate_quantum_efficiency(self, code: str) -> str:
         """Estimate quantum algorithm efficiency"""
         quantum_elements = self._detect_quantum_elements(code)
-        gate_density = len([line for line in code.split("\n") if any(
-            gate in line.lower() for gate in ["h", "x", "y", "z", "cnot"])])
+        gate_density = len(
+            [
+                line
+                for line in code.split("\n")
+                if any(gate in line.lower() for gate in ["h", "x", "y", "z", "cnot"])
+            ]
+        )
 
         if not quantum_elements:
             return "n/a"
@@ -652,7 +656,11 @@ MCP_DEBUG_TOOL_SCHEMA = {
                     "required": ["error", "mcp_data"],
                 },
             },
-            "description": "A debugging tool integrated with GCP to analyze code issues, provide reasoning, and suggest fixes, leveraging MCP for context sharing. Supports quantum agent applications.",
+            "description": (
+                "A debugging tool integrated with GCP to analyze code issues, "
+                "provide reasoning, and suggest fixes, leveraging MCP for context "
+                "sharing. Supports quantum agent applications."
+            ),
             "version": "1.0.0",
             "authentication": {
                 "type": "oauth2",

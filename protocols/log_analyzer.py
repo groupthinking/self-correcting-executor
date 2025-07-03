@@ -27,8 +27,7 @@ def task():
                         # Check for errors
                         if "error" in line.lower() or "exception" in line.lower():
                             error_count += 1
-                            error_patterns.append(
-                                line.strip()[:100])  # First 100 chars
+                            error_patterns.append(line.strip()[:100])  # First 100 chars
 
                         # Check for warnings
                         if "warning" in line.lower() or "warn" in line.lower():

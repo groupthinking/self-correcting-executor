@@ -64,7 +64,8 @@ class TestMCPCompliance:
         for feature in critical_features:
             if not validation.get(feature, False):
                 pytest.skip(
-                    f"{feature} not configured - set required environment variables")
+                    f"{feature} not configured - set required environment variables"
+                )
 
     @pytest.mark.asyncio
     async def test_quantum_requires_real_qpu(self):
@@ -160,16 +161,14 @@ class TestMCPCompliance:
                     for line_num, line in enumerate(content.splitlines(), 1):
                         for pattern in placeholder_patterns:
                             if pattern in line and not line.strip().startswith("#"):
-                                issues.append(
-                                    f"{py_file}:{line_num} - {line.strip()}")
+                                issues.append(f"{py_file}:{line_num} - {line.strip()}")
 
         # Report but don't fail - these need to be addressed
         if issues:
             print("\n⚠️  Placeholder code found in production files:")
             for issue in issues[:10]:  # Show first 10
                 print(f"  - {issue}")
-            (print(f"  ... and {len(issues) - 10} more")
-             if len(issues) > 10 else None)
+            (print(f"  ... and {len(issues) - 10} more") if len(issues) > 10 else None)
 
     @pytest.mark.asyncio
     async def test_mcp_http_endpoints(self, mcp_config):
@@ -219,7 +218,9 @@ class TestMCPCompliance:
                             issues.append(f"{ts_file}:{i} - {line.strip()}")
 
             # These should all be replaced
-            assert len(issues) == 0, f"Found {
+            assert (
+                len(issues) == 0
+            ), f"Found {
                 len(issues)} mock references in UI"
 
     def test_integration_points_documented(self):
@@ -294,8 +295,7 @@ def run_compliance_check():
                 pass
 
     if placeholder_count > 0:
-        print(
-            f"   ⚠️  Found {placeholder_count} files with TODO/FIXME markers")
+        print(f"   ⚠️  Found {placeholder_count} files with TODO/FIXME markers")
     else:
         print("   No placeholder code found!")
 

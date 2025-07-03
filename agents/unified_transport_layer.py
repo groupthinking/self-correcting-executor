@@ -151,10 +151,7 @@ class UnifiedTransportLayer:
 
         return result
 
-    async def _zero_copy_transfer(
-            self,
-            pipe: MojoMessagePipe,
-            payload: Dict) -> Dict:
+    async def _zero_copy_transfer(self, pipe: MojoMessagePipe, payload: Dict) -> Dict:
         """Zero-copy transfer for same-process communication"""
         # In real Mojo, this would be direct memory transfer
         # Python simulation: direct object passing
@@ -193,10 +190,7 @@ class UnifiedTransportLayer:
             # Fallback for same-process
             return await self._zero_copy_transfer(pipe, payload)
 
-    async def _pipe_transfer(
-            self,
-            pipe: MojoMessagePipe,
-            payload: Dict) -> Dict:
+    async def _pipe_transfer(self, pipe: MojoMessagePipe, payload: Dict) -> Dict:
         """Standard pipe transfer for small cross-process messages"""
         # In real Mojo, this would use message pipes
         # Python simulation: asyncio queue
@@ -320,12 +314,8 @@ class UnifiedAgent(BaseAgent):
             "negotiation_complete": True,
             "participants": other_agents,
             "results": results,
-            "total_latency_ms": sum(
-                r.get(
-                    "transport_latency_ms",
-                    0) for r in results),
-            "transport_methods": [
-                r["method"] for r in results],
+            "total_latency_ms": sum(r.get("transport_latency_ms", 0) for r in results),
+            "transport_methods": [r["method"] for r in results],
         }
 
     def _generate_proposal(self, topic: str) -> Dict:
@@ -368,7 +358,8 @@ class TradingAgent(UnifiedAgent):
             # Fallback or alert
             print(
                 f"WARNING: High latency detected: {
-                    result['transport_latency_ms']}ms")
+                    result['transport_latency_ms']}ms"
+            )
 
         return result
 
@@ -408,10 +399,8 @@ async def demonstrate_unified_architecture():
         ["trader_1", "executor_1"], "resource_allocation"
     )
     print(f"   - Participants: {negotiation_result['participants']}")
-    print(
-        f"   - Total latency: {negotiation_result['total_latency_ms']:.3f}ms")
-    print(
-        f"   - Methods used: {set(negotiation_result['transport_methods'])}\n")
+    print(f"   - Total latency: {negotiation_result['total_latency_ms']:.3f}ms")
+    print(f"   - Methods used: {set(negotiation_result['transport_methods'])}\n")
 
     # Test 3: Large context transfer
     print("3. Large context transfer:")
@@ -430,8 +419,7 @@ async def demonstrate_unified_architecture():
         analyzer, "executor_1", large_message, large_context
     )
     print(f"   - Method: {result['method']}")
-    print(
-        f"   - Handle type: {result.get('handle', {}).get('handle_type', 'N/A')}")
+    print(f"   - Handle type: {result.get('handle', {}).get('handle_type', 'N/A')}")
     print(f"   - Status: {result['status']}\n")
 
     # Print performance summary

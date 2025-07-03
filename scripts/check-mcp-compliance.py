@@ -33,7 +33,8 @@ def check_no_mock_endpoints() -> Tuple[bool, List[str]]:
                 for indicator in mock_indicators:
                     if indicator in url_lower and "localhost" not in url_lower:
                         issues.append(
-                            f"Mock indicator '{indicator}' found in {name}: {url}")
+                            f"Mock indicator '{indicator}' found in {name}: {url}"
+                        )
 
         # Run built-in check
         try:
@@ -82,7 +83,8 @@ def check_mock_implementations_in_code() -> Tuple[bool, List[str]]:
                             # Count occurrences
                             count = content.count(pattern)
                             issues.append(
-                                f"{py_file}: {count} occurrences of '{pattern}'")
+                                f"{py_file}: {count} occurrences of '{pattern}'"
+                            )
                 except Exception:
                     pass
 
@@ -97,7 +99,8 @@ def check_mock_implementations_in_code() -> Tuple[bool, List[str]]:
                         if pattern in content:
                             count = content.count(pattern)
                             issues.append(
-                                f"{ts_file}: {count} occurrences of '{pattern}'")
+                                f"{ts_file}: {count} occurrences of '{pattern}'"
+                            )
                 except Exception:
                     pass
 
@@ -164,7 +167,8 @@ def check_environment_setup() -> Tuple[bool, List[str]]:
     if missing_vars:
         issues.append(
             f"Missing environment variables: {
-                ', '.join(missing_vars)}")
+                ', '.join(missing_vars)}"
+        )
 
     return len(issues) == 0, issues
 
@@ -182,13 +186,11 @@ def check_quantum_no_simulation() -> Tuple[bool, List[str]]:
             "SimulatedAnnealingSampler" in content
             and "removed - real QPU only" not in content
         ):
-            issues.append(
-                "Quantum connector still imports SimulatedAnnealingSampler")
+            issues.append("Quantum connector still imports SimulatedAnnealingSampler")
 
         # Should require real QPU
         if "Real QPU required" not in content:
-            issues.append(
-                "Quantum connector doesn't enforce real QPU requirement")
+            issues.append("Quantum connector doesn't enforce real QPU requirement")
     else:
         issues.append("Quantum connector file not found")
 

@@ -161,8 +161,7 @@ class MCPLLMIntegration:
         else:
             self.execution_metrics["failed_calls"] += 1
 
-    async def get_cross_device_context(
-            self, session_id: str) -> Dict[str, Any]:
+    async def get_cross_device_context(self, session_id: str) -> Dict[str, Any]:
         """
         Get context from other devices/sessions - our unique capability.
 
@@ -181,8 +180,7 @@ class MCPLLMIntegration:
 
             # Filter by session if provided
             if session_id:
-                history = [h for h in history if h.get(
-                    "session_id") == session_id]
+                history = [h for h in history if h.get("session_id") == session_id]
 
             return {
                 "available": True,
@@ -290,16 +288,13 @@ async def analyze_competitive_advantage():
     """
 
     logger.info("=== Competitive Analysis ===")
-    logger.info(
-        "mcp-use provides: Basic MCP protocol, tool discovery, execution")
+    logger.info("mcp-use provides: Basic MCP protocol, tool discovery, execution")
     logger.info("We add:")
-    logger.info(
-        "1. State Continuity Fabric - Track state across devices/sessions")
+    logger.info("1. State Continuity Fabric - Track state across devices/sessions")
     logger.info("2. Cross-device context - Access history from any device")
     logger.info("3. Execution metrics - Production monitoring")
     logger.info("4. Privacy-aware state management - Filter sensitive data")
-    logger.info(
-        "5. Vector clock synchronization - Resolve distributed conflicts")
+    logger.info("5. Vector clock synchronization - Resolve distributed conflicts")
 
     # Show concrete example
     integration = MCPLLMIntegration()

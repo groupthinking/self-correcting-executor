@@ -117,8 +117,7 @@ class ContinuousLearningLLM:
             if quantum_connected:
                 logger.info("✅ Quantum computing resources available")
             else:
-                logger.info(
-                    "⚠️  Quantum computing not available, using classical only")
+                logger.info("⚠️  Quantum computing not available, using classical only")
 
             # Load or create initial model
             await self._load_or_create_model()
@@ -130,8 +129,7 @@ class ContinuousLearningLLM:
             return True
 
         except Exception as e:
-            logger.error(
-                f"Failed to initialize continuous learning system: {e}")
+            logger.error(f"Failed to initialize continuous learning system: {e}")
             return False
 
     async def ingest_data(
@@ -148,8 +146,7 @@ class ContinuousLearningLLM:
             logger.info(f"Ingesting data from: {data_source}")
 
             # Analyze massive dataset if it's a large collection
-            if data_source.endswith(
-                    "/gptdata") or "massive" in data_source.lower():
+            if data_source.endswith("/gptdata") or "massive" in data_source.lower():
                 analysis_result = await self._analyze_massive_dataset(data_source)
                 return await self._process_massive_data(analysis_result)
 
@@ -183,7 +180,8 @@ class ContinuousLearningLLM:
             start_time = time.time()
             logger.info(
                 f"Starting incremental training on {
-                    len(training_data)} samples")
+                    len(training_data)} samples"
+            )
 
             # Preprocess training data
             processed_data = await self._preprocess_training_data(training_data)
@@ -208,8 +206,7 @@ class ContinuousLearningLLM:
 
             # Update performance tracking
             training_time = time.time() - start_time
-            self.training_stats["total_samples_processed"] += len(
-                training_data)
+            self.training_stats["total_samples_processed"] += len(training_data)
             self.training_stats["total_training_time"] += training_time
             self.training_stats["model_versions"] += 1
 
@@ -221,9 +218,7 @@ class ContinuousLearningLLM:
                 "training_time": training_time,
                 "samples_processed": len(training_data),
                 "new_model_version": new_version.version_id,
-                "performance_improvement": training_result.get(
-                    "improvement",
-                    0.0),
+                "performance_improvement": training_result.get("improvement", 0.0),
                 "quantum_optimized": self.quantum_connector.connected,
             }
 
@@ -282,8 +277,7 @@ class ContinuousLearningLLM:
             logger.error(f"Model rollback failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def _analyze_massive_dataset(
-            self, data_source: str) -> Dict[str, Any]:
+    async def _analyze_massive_dataset(self, data_source: str) -> Dict[str, Any]:
         """Analyze massive dataset using existing analyzer"""
         try:
             # Use the existing multimodal LLM analyzer
@@ -294,12 +288,14 @@ class ContinuousLearningLLM:
                     f"Analyzed {
                         analysis_result.get(
                             'total_files_discovered',
-                            0)} files")
+                            0)} files"
+                )
                 return analysis_result
             else:
                 logger.error(
                     f"Massive dataset analysis failed: {
-                        analysis_result.get('error')}")
+                        analysis_result.get('error')}"
+                )
                 return {"success": False, "error": "Analysis failed"}
 
         except Exception as e:
@@ -351,14 +347,13 @@ class ContinuousLearningLLM:
                                 '')}",
                         metadata={
                             "type": "idea",
-                            "rationale": idea.get(
-                                "rationale",
-                                ""),
+                            "rationale": idea.get("rationale", ""),
                         },
                         source="massive_analysis",
                         timestamp=datetime.utcnow(),
                         quality_score=0.8,
-                    ))
+                    )
+                )
 
             # Add optimizations as training data
             for opt in optimizations:
@@ -405,8 +400,7 @@ class ContinuousLearningLLM:
                     content = f.read()
 
                 # Split into chunks
-                chunks = self._split_text_into_chunks(
-                    content, max_chunk_size=1000)
+                chunks = self._split_text_into_chunks(content, max_chunk_size=1000)
 
                 for i, chunk in enumerate(chunks):
                     training_data.append(
@@ -476,7 +470,8 @@ class ContinuousLearningLLM:
         try:
             # Create optimization problem for hyperparameters
             optimization_problem = self._create_hyperparameter_optimization_problem(
-                training_data)
+                training_data
+            )
 
             # Solve using quantum annealer
             result = await self.quantum_connector.execute_action(
@@ -493,10 +488,8 @@ class ContinuousLearningLLM:
                 solution = result.get("best_solution", {})
                 return self._extract_hyperparameters_from_solution(solution)
             else:
-                logger.warning(
-                    "Quantum optimization failed, using classical fallback")
-                return self._classical_hyperparameter_optimization(
-                    training_data)
+                logger.warning("Quantum optimization failed, using classical fallback")
+                return self._classical_hyperparameter_optimization(training_data)
 
         except Exception as e:
             logger.error(f"Quantum hyperparameter optimization failed: {e}")
@@ -593,7 +586,8 @@ class ContinuousLearningLLM:
                     if result["success"]:
                         logger.info(
                             f"Training completed: {
-                                result['samples_processed']} samples")
+                                result['samples_processed']} samples"
+                        )
                     else:
                         logger.error(f"Training failed: {result['error']}")
 
@@ -620,7 +614,8 @@ class ContinuousLearningLLM:
                 self.current_model_version = model_data["version_info"]
                 logger.info(
                     f"Loaded model version: {
-                        self.current_model_version.version_id}")
+                        self.current_model_version.version_id}"
+                )
             else:
                 # Create initial model
                 initial_version = ModelVersion(

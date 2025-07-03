@@ -85,14 +85,10 @@ class A2AMCPMessage:
         return cls(
             a2a_message=a2a_msg,
             mcp_context=mcp_context,
-            priority=MessagePriority(
-                data["transport"]["priority"]),
-            transport_strategy=TransportStrategy(
-                data["transport"]["strategy"]),
+            priority=MessagePriority(data["transport"]["priority"]),
+            transport_strategy=TransportStrategy(data["transport"]["strategy"]),
             deadline_ms=data["transport"].get("deadline_ms"),
-            performance_requirements=data["transport"].get(
-                "requirements",
-                {}),
+            performance_requirements=data["transport"].get("requirements", {}),
         )
 
 
@@ -127,9 +123,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         }
 
         # Register handlers for common message types
-        self.register_handler(
-            "negotiate_request",
-            self.handle_negotiation_request)
+        self.register_handler("negotiate_request", self.handle_negotiation_request)
         self.register_handler("context_share", self.handle_context_share)
         self.register_handler("tool_request", self.handle_tool_request)
         self.register_handler(
@@ -311,8 +305,7 @@ class MCPEnabledA2AAgent(BaseAgent):
             "latency_ms": 0.1,
         }
 
-    async def _send_shared_memory(
-            self, message: A2AMCPMessage) -> Dict[str, Any]:
+    async def _send_shared_memory(self, message: A2AMCPMessage) -> Dict[str, Any]:
         """Shared memory transfer for large messages"""
         # Simulate shared memory transfer
         if self.message_bus:
@@ -349,8 +342,7 @@ class MCPEnabledA2AAgent(BaseAgent):
             "latency_ms": 10.0,
         }
 
-    async def handle_negotiation_request(
-            self, message: A2AMessage) -> Dict[str, Any]:
+    async def handle_negotiation_request(self, message: A2AMessage) -> Dict[str, Any]:
         """Handle incoming negotiation request"""
         content = message.content
 
@@ -371,8 +363,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         self.performance_stats["negotiations_completed"] += 1
         return response
 
-    async def handle_context_share(
-            self, message: A2AMessage) -> Dict[str, Any]:
+    async def handle_context_share(self, message: A2AMessage) -> Dict[str, Any]:
         """Handle MCP context sharing"""
         # Merge incoming context with local context
         incoming_context = message.content.get("context", {})
@@ -413,8 +404,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         except Exception as e:
             return {"status": "tool_error", "tool": tool_name, "error": str(e)}
 
-    async def handle_collaboration_request(
-            self, message: A2AMessage) -> Dict[str, Any]:
+    async def handle_collaboration_request(self, message: A2AMessage) -> Dict[str, Any]:
         """Handle collaboration requests"""
         collaboration_type = message.content.get("type")
         data = message.content.get("data", {})
@@ -460,7 +450,8 @@ class MCPEnabledA2AAgent(BaseAgent):
                     else:
                         logger.error(
                             f"MCP tool call failed: {
-                                response.status}")
+                                response.status}"
+                        )
                         return {
                             "status": "error",
                             "error": f"HTTP {response.status}",
@@ -499,8 +490,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         else:
             return {"status": "unknown_tool", "tool": tool_name}
 
-    def _generate_negotiation_proposal(
-            self, content: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_negotiation_proposal(self, content: Dict[str, Any]) -> Dict[str, Any]:
         """Generate negotiation proposal based on agent capabilities"""
         return {
             "resources": self._get_available_resources(),
@@ -600,8 +590,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         language = spec.get("language", "python")
 
         if language == "python":
-            if code_type == "api_endpoint" and spec.get(
-                    "framework") == "fastapi":
+            if code_type == "api_endpoint" and spec.get("framework") == "fastapi":
                 return '''from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any
@@ -670,8 +659,7 @@ class A2AMCPOrchestrator:
         monitor_task = asyncio.create_task(self.performance_monitor.start())
 
         # Start negotiation manager
-        negotiation_task = asyncio.create_task(
-            self.negotiation_manager.start())
+        negotiation_task = asyncio.create_task(self.negotiation_manager.start())
 
         return bus_task, monitor_task, negotiation_task
 

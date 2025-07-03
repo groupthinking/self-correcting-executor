@@ -41,8 +41,10 @@ def task():
             # Simulate expensive operation
             import hashlib
 
-            result = {"computed_value": hashlib.sha256(str(time.time()).encode(
-            )).hexdigest(), "computation_timestamp": datetime.utcnow().isoformat(), }
+            result = {
+                "computed_value": hashlib.sha256(str(time.time()).encode()).hexdigest(),
+                "computation_timestamp": datetime.utcnow().isoformat(),
+            }
             time.sleep(0.5)  # Simulate processing time
 
             computation_time = time.time() - start_time

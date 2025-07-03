@@ -73,7 +73,8 @@ class MCPEcosystemTester:
         logger.info(
             f"⏱️  Total time: {
                 time.time() -
-                self.start_time:.2f} seconds")
+                self.start_time:.2f} seconds"
+        )
 
         return final_report
 
@@ -88,10 +89,8 @@ class MCPEcosystemTester:
             )
 
             # Create test agents
-            analyzer = MCPEnabledA2AAgent(
-                "test_analyzer", ["analyze", "process"])
-            generator = MCPEnabledA2AAgent(
-                "test_generator", ["generate", "create"])
+            analyzer = MCPEnabledA2AAgent("test_analyzer", ["analyze", "process"])
+            generator = MCPEnabledA2AAgent("test_generator", ["generate", "create"])
 
             # Register agents
             a2a_mcp_orchestrator.register_agent(analyzer)
@@ -212,16 +211,14 @@ class MCPEcosystemTester:
                     # Always pass as it handles missing tokens gracefully
                     "connector_initialization": True,
                     "repository_search": (
-                        search_result.get(
-                            "success", False) if search_result else False
+                        search_result.get("success", False) if search_result else False
                     ),
                     "rate_limit_check": rate_limit.get("success", False),
                 },
                 "metrics": {
                     "github_connected": connected,
                     "search_results": (
-                        search_result.get(
-                            "total_count", 0) if search_result else 0
+                        search_result.get("total_count", 0) if search_result else 0
                     ),
                     "rate_limit_remaining": rate_limit.get("rate_limit", {}).get(
                         "remaining", 0
@@ -244,9 +241,7 @@ class MCPEcosystemTester:
             from llm.continuous_learning_system import continuous_learner
 
             # Test 1: System initialization
-            config = {
-                "quantum": {
-                    "api_token": os.environ.get("DWAVE_API_TOKEN")}}
+            config = {"quantum": {"api_token": os.environ.get("DWAVE_API_TOKEN")}}
 
             initialized = await continuous_learner.initialize(config)
 
@@ -317,9 +312,7 @@ class MCPEcosystemTester:
                 "metrics": {
                     "available_tools": len(tools),
                     "available_resources": len(resources),
-                    "code_analysis_lines": code_analyzer_result.get(
-                        "lines_of_code",
-                        0),
+                    "code_analysis_lines": code_analyzer_result.get("lines_of_code", 0),
                 },
                 "timestamp": datetime.utcnow().isoformat(),
             }
@@ -427,8 +420,9 @@ class MCPEcosystemTester:
         )
 
         # Calculate overall success rate
-        success_rate = ((passed_tests + partial_tests * 0.5) /
-                        total_tests if total_tests > 0 else 0)
+        success_rate = (
+            (passed_tests + partial_tests * 0.5) / total_tests if total_tests > 0 else 0
+        )
 
         # Collect all metrics
         all_metrics = {}

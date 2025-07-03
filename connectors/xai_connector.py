@@ -115,8 +115,7 @@ class XAIConnector:
                     "color": self.md3_colors["error"],
                 }
 
-    def _format_md3_response(
-            self, api_response: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_md3_response(self, api_response: Dict[str, Any]) -> Dict[str, Any]:
         """
         Format API response following Material Design 3 principles.
         """
@@ -128,9 +127,7 @@ class XAIConnector:
             "metadata": {
                 "model": api_response["model"],
                 "usage": api_response["usage"],
-                "sources_used": api_response["usage"].get(
-                    "num_sources_used",
-                    0),
+                "sources_used": api_response["usage"].get("num_sources_used", 0),
                 "timestamp": datetime.now().isoformat(),
             },
             "ui": {
@@ -140,9 +137,7 @@ class XAIConnector:
                     "body": "Roboto",
                     "code": "Roboto Mono",
                 },
-                "elevation": {
-                    "card": 1,
-                    "modal": 3},
+                "elevation": {"card": 1, "modal": 3},
             },
         }
 
@@ -153,7 +148,10 @@ class XAIConnector:
         messages = [
             {
                 "role": "system",
-                "content": "You are a helpful assistant with access to current information. Search for and summarize the requested information.",
+                "content": (
+                    "You are a helpful assistant with access to current information. "
+                    "Search for and summarize the requested information."
+                ),
             },
             {"role": "user", "content": query},
         ]

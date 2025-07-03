@@ -447,14 +447,13 @@ class QuantumDebugTestSuite:
         logger.info(f"✅ Passed: {self.passed_tests}")
         logger.info(f"❌ Failed: {self.total_tests - self.passed_tests}")
         logger.info(
-            f"📈 Success Rate: {(self.passed_tests / self.total_tests) * 100:.1f}%")
+            f"📈 Success Rate: {(self.passed_tests / self.total_tests) * 100:.1f}%"
+        )
 
         if self.passed_tests == self.total_tests:
-            logger.info(
-                "🎉 ALL TESTS PASSED! MCP Debug Tool is fully functional.")
+            logger.info("🎉 ALL TESTS PASSED! MCP Debug Tool is fully functional.")
         else:
-            logger.warning(
-                "⚠️  Some tests failed. Please review and fix issues.")
+            logger.warning("⚠️  Some tests failed. Please review and fix issues.")
 
         logger.info("=" * 80)
 
@@ -512,14 +511,16 @@ async def run_debug_tool_demo():
                 f"Quantum Insights: {
                     json.dumps(
                         result.quantum_insights,
-                        indent=2)}")
+                        indent=2)}"
+            )
 
         if result.performance_metrics:
             logger.info(
                 f"Performance Metrics: {
                     json.dumps(
                         result.performance_metrics,
-                        indent=2)}")
+                        indent=2)}"
+            )
 
 
 async def main():

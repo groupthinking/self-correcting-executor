@@ -163,10 +163,7 @@ class NegotiationAgent(BaseAgent):
             "status": "completed",
         }
 
-    async def find_optimal_solution(
-            self,
-            proposals: Dict,
-            constraints: Dict) -> Dict:
+    async def find_optimal_solution(self, proposals: Dict, constraints: Dict) -> Dict:
         """Find optimal solution from proposals"""
         # This would use optimization algorithms
         # For now, return a simple solution

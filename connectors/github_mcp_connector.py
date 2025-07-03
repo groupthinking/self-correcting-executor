@@ -70,7 +70,8 @@ class GitHubMCPConnector(MCPConnector):
                     logger.info(
                         f"Connected to GitHub as: {
                             user_data.get(
-                                'login', 'Unknown')}")
+                                'login', 'Unknown')}"
+                    )
                     self.connected = True
 
                     # Get rate limit info
@@ -79,7 +80,8 @@ class GitHubMCPConnector(MCPConnector):
                 else:
                     logger.error(
                         f"GitHub API connection failed: {
-                            response.status}")
+                            response.status}"
+                    )
                     return False
 
         except Exception as e:
@@ -131,8 +133,7 @@ class GitHubMCPConnector(MCPConnector):
 
         return {"error": f"Unknown action: {action}"}
 
-    async def search_repositories(
-            self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def search_repositories(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Search GitHub repositories
 
@@ -292,15 +293,18 @@ class GitHubMCPConnector(MCPConnector):
                                 "title": issue["title"],
                                 "body": issue["body"],
                                 "state": issue["state"],
-                                "labels": [
-                                    label["name"] for label in issue["labels"]],
+                                "labels": [label["name"] for label in issue["labels"]],
                                 "assignee": (
-                                    issue["assignee"]["login"] if issue["assignee"] else None),
+                                    issue["assignee"]["login"]
+                                    if issue["assignee"]
+                                    else None
+                                ),
                                 "created_at": issue["created_at"],
                                 "updated_at": issue["updated_at"],
                                 "url": issue["html_url"],
                                 "api_url": issue["url"],
-                            })
+                            }
+                        )
 
                     return {
                         "success": True,
@@ -318,8 +322,7 @@ class GitHubMCPConnector(MCPConnector):
             logger.error(f"Get issues failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def get_pull_requests(
-            self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def get_pull_requests(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Get repository pull requests
 
@@ -413,8 +416,7 @@ class GitHubMCPConnector(MCPConnector):
                     # Decode content if it's a file
                     content = None
                     if data.get("type") == "file":
-                        content = base64.b64decode(
-                            data["content"]).decode("utf-8")
+                        content = base64.b64decode(data["content"]).decode("utf-8")
 
                     return {
                         "success": True,
@@ -491,7 +493,8 @@ class GitHubMCPConnector(MCPConnector):
                                 },
                                 "url": commit["html_url"],
                                 "api_url": commit["url"],
-                            })
+                            }
+                        )
 
                     return {
                         "success": True,
@@ -624,8 +627,7 @@ class GitHubMCPConnector(MCPConnector):
             logger.error(f"Create issue failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def get_rate_limit(
-            self, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def get_rate_limit(self, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Get GitHub API rate limit information"""
         try:
             url = f"{self.base_url}/rate_limit"

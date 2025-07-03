@@ -107,8 +107,7 @@ class DWaveQuantumConnector(MCPConnector):
             qpu_solvers = [s for s in solvers if hasattr(s, "qubits")]
 
             if not qpu_solvers:
-                logger.warning(
-                    "No QPU solvers available, using simulated annealing")
+                logger.warning("No QPU solvers available, using simulated annealing")
                 raise RuntimeError("Real QPU required - no simulations")
                 self.solver_info = {
                     "name": "SimulatedAnnealingSampler",
@@ -126,8 +125,7 @@ class DWaveQuantumConnector(MCPConnector):
                 else:
                     solver = qpu_solvers[0]
 
-                self.sampler = EmbeddingComposite(
-                    DWaveSampler(solver=solver.id))
+                self.sampler = EmbeddingComposite(DWaveSampler(solver=solver.id))
                 self.solver_info = {
                     "name": solver.id,
                     "type": "QPU",
@@ -143,8 +141,7 @@ class DWaveQuantumConnector(MCPConnector):
                 }
 
             self.connected = True
-            logger.info(
-                f"Connected to D-Wave solver: {self.solver_info['name']}")
+            logger.info(f"Connected to D-Wave solver: {self.solver_info['name']}")
             return True
 
         except Exception as e:
@@ -230,9 +227,8 @@ class DWaveQuantumConnector(MCPConnector):
                 bqm,
                 num_reads=num_reads,
                 annealing_time=(
-                    annealing_time if hasattr(
-                        self.sampler,
-                        "annealing_time") else None),
+                    annealing_time if hasattr(self.sampler, "annealing_time") else None
+                ),
                 return_embedding=True,
             )
 
@@ -415,10 +411,8 @@ class DWaveQuantumConnector(MCPConnector):
                 # Calculate cut value
                 cut_value = 0
                 for u, v in graph_edges:
-                    if (u in set_a and v in set_b) or (
-                            u in set_b and v in set_a):
-                        cut_value += weights.get((u, v),
-                                                 weights.get((v, u), 1))
+                    if (u in set_a and v in set_b) or (u in set_b and v in set_a):
+                        cut_value += weights.get((u, v), weights.get((v, u), 1))
 
                 result["partition_a"] = set_a
                 result["partition_b"] = set_b
@@ -495,8 +489,7 @@ class DWaveQuantumConnector(MCPConnector):
                 "problem_type": "Knapsack",
             }
 
-    async def get_solver_info(
-            self, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def get_solver_info(self, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Get information about the connected D-Wave solver"""
         if not self.connected:
             return {"error": "Not connected to D-Wave service"}
@@ -505,8 +498,7 @@ class DWaveQuantumConnector(MCPConnector):
             "success": True,
             "solver_info": self.solver_info,
             "available": DWAVE_AVAILABLE,
-            "connection_status": (
-                "connected" if self.connected else "disconnected"),
+            "connection_status": ("connected" if self.connected else "disconnected"),
         }
 
 

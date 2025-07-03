@@ -10,7 +10,7 @@ import sys
 
 def run_self_correcting_executor(protocol="default_protocol", iterations=1):
     """Run the self-correcting executor with automatic mutation"""
-    log(f"🚀 Starting Self-Correcting MCP Executor")
+    log("🚀 Starting Self-Correcting MCP Executor")
     log(f"Protocol: {protocol}, Iterations: {iterations}")
 
     for i in range(iterations):
@@ -38,8 +38,7 @@ def run_self_correcting_executor(protocol="default_protocol", iterations=1):
     # Final analysis
     final_stats = get_protocol_stats(protocol)
     if final_stats:
-        log(
-            f"Final performance - Success rate: {final_stats['success_rate']:.2%}")
+        log(f"Final performance - Success rate: {final_stats['success_rate']:.2%}")
 
     return final_stats
 

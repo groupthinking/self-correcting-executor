@@ -18,8 +18,7 @@ class PatternDetector:
         self.insights = []
         self.mutation_recommendations = []
 
-    async def analyze_execution_patterns(
-            self, time_window: timedelta = None) -> Dict:
+    async def analyze_execution_patterns(self, time_window: timedelta = None) -> Dict:
         """Analyze execution patterns from database"""
         # Get execution history
         history = await self._get_execution_data(time_window)
@@ -48,8 +47,7 @@ class PatternDetector:
             "analysis_timestamp": datetime.utcnow().isoformat(),
         }
 
-    async def _get_execution_data(
-            self, time_window: timedelta = None) -> List[Dict]:
+    async def _get_execution_data(self, time_window: timedelta = None) -> List[Dict]:
         """Get execution data from database"""
         # In real implementation, would query database
         # For now, return mock data
@@ -116,8 +114,7 @@ class PatternDetector:
         protocol_durations = defaultdict(list)
         for execution in history:
             if "duration" in execution:
-                protocol_durations[execution["protocol"]].append(
-                    execution["duration"])
+                protocol_durations[execution["protocol"]].append(execution["duration"])
 
         # Find slow protocols
         for protocol, durations in protocol_durations.items():
@@ -142,10 +139,10 @@ class PatternDetector:
                     performance_patterns["performance_degradation"].append(
                         {
                             "protocol": protocol,
-                            "degradation_factor": np.mean(recent) /
-                            np.mean(older),
+                            "degradation_factor": np.mean(recent) / np.mean(older),
                             "trend": "increasing",
-                        })
+                        }
+                    )
 
         return performance_patterns
 
@@ -164,10 +161,7 @@ class PatternDetector:
             protocol_usage[execution["protocol"]] += 1
 
         # Sort by usage
-        sorted_usage = sorted(
-            protocol_usage.items(),
-            key=lambda x: x[1],
-            reverse=True)
+        sorted_usage = sorted(protocol_usage.items(), key=lambda x: x[1], reverse=True)
         usage_patterns["most_used_protocols"] = [
             {"protocol": p, "usage_count": c} for p, c in sorted_usage[:5]
         ]
@@ -194,7 +188,8 @@ class PatternDetector:
                         repeated['failure_count']} times",
                     "recommendation": "Consider mutation or redesign",
                     "data": repeated,
-                })
+                }
+            )
 
         # Performance insights
         for slow in performance_patterns["slow_protocols"]:
@@ -207,7 +202,8 @@ class PatternDetector:
                         slow['avg_duration']:.2f}s execution time",
                     "recommendation": "Optimize algorithm or add caching",
                     "data": slow,
-                })
+                }
+            )
 
         # Usage insights
         if usage_patterns["most_used_protocols"]:
@@ -221,7 +217,8 @@ class PatternDetector:
                         top_protocol['usage_count']} times)",
                     "recommendation": "Ensure robustness and consider optimization",
                     "data": top_protocol,
-                })
+                }
+            )
 
         return insights
 
@@ -334,10 +331,7 @@ def task():
     return random.random() > 0.5
 """
 
-    async def _add_error_handling(
-            self,
-            code: str,
-            recommendation: Dict) -> str:
+    async def _add_error_handling(self, code: str, recommendation: Dict) -> str:
         """Add error handling to code"""
         # In real implementation, would use AST manipulation
         return """

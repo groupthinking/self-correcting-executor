@@ -78,8 +78,7 @@ class SimpleMCPDebugTest:
         """Test MCP Debug Tool initialization"""
         try:
             async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
-                has_quantum_analyzers = hasattr(
-                    debug_tool, "quantum_analyzers")
+                has_quantum_analyzers = hasattr(debug_tool, "quantum_analyzers")
                 has_gcp_endpoint = hasattr(debug_tool, "gcp_endpoint")
                 has_connector_id = hasattr(debug_tool, "connector_id")
                 return has_quantum_analyzers and has_gcp_endpoint and has_connector_id
@@ -116,8 +115,7 @@ class SimpleMCPDebugTest:
                     "functions",
                     "quantum_elements",
                 ]
-                has_required_keys = all(
-                    key in analysis for key in required_keys)
+                has_required_keys = all(key in analysis for key in required_keys)
                 has_quantum_elements = len(analysis["quantum_elements"]) > 0
                 has_quantum_pattern = "quantum_computing" in analysis["patterns"]
 
@@ -125,9 +123,11 @@ class SimpleMCPDebugTest:
                     f"Analysis result: {
                         json.dumps(
                             analysis,
-                            indent=2)}")
+                            indent=2)}"
+                )
                 return (
-                    has_required_keys and has_quantum_elements and has_quantum_pattern)
+                    has_required_keys and has_quantum_elements and has_quantum_pattern
+                )
         except Exception as e:
             logger.error(f"Quantum analysis error: {e}")
             return False
@@ -182,7 +182,8 @@ class SimpleMCPDebugTest:
                 logger.info(
                     f"Entanglement analysis: {
                         json.dumps(
-                            result, indent=2)}")
+                            result, indent=2)}"
+                )
                 return has_operations and high_density_threshold_met
         except Exception as e:
             logger.error(f"Entanglement analysis error: {e}")
@@ -217,7 +218,8 @@ class SimpleMCPDebugTest:
                     else:
                         logger.info(
                             f"Generated fixes for {error}: {
-                                len(fixes)} fixes")
+                                len(fixes)} fixes"
+                        )
 
                 return all_patterns_detected
         except Exception as e:
@@ -261,8 +263,7 @@ class SimpleMCPDebugTest:
                     "estimated_runtime",
                     "quantum_efficiency",
                 ]
-                has_metrics = all(
-                    metric in metrics for metric in required_metrics)
+                has_metrics = all(metric in metrics for metric in required_metrics)
                 high_complexity = metrics["complexity_score"] > 5
                 correct_line_count = metrics["line_count"] > 100
 
@@ -270,7 +271,8 @@ class SimpleMCPDebugTest:
                     f"Performance metrics: {
                         json.dumps(
                             metrics,
-                            indent=2)}")
+                            indent=2)}"
+                )
                 return has_metrics and high_complexity and correct_line_count
         except Exception as e:
             logger.error(f"Performance metrics error: {e}")
@@ -324,7 +326,8 @@ class SimpleMCPDebugTest:
                     f"Fallback reasoning: {
                         json.dumps(
                             fallback_result,
-                            indent=2)}")
+                            indent=2)}"
+                )
                 return has_reasoning and has_suggestions and quantum_suggestions
         except Exception as e:
             logger.error(f"Fallback reasoning error: {e}")
@@ -344,11 +347,13 @@ class SimpleMCPDebugTest:
                 has_name = debug_tool_schema.get("name") == "DebugTool"
                 has_schema = "schema" in debug_tool_schema
                 has_quantum_context = "quantum_context" in debug_tool_schema.get(
-                    "schema", {}).get("context", {}).get("properties", {})
+                    "schema", {}
+                ).get("context", {}).get("properties", {})
 
                 logger.info(
                     f"Schema validation passed: {
-                        has_name and has_schema and has_quantum_context}")
+                        has_name and has_schema and has_quantum_context}"
+                )
                 return (
                     has_tools
                     and has_debug_tool
@@ -376,14 +381,13 @@ class SimpleMCPDebugTest:
         logger.info(f"✅ Passed: {self.passed_tests}")
         logger.info(f"❌ Failed: {self.total_tests - self.passed_tests}")
         logger.info(
-            f"📈 Success Rate: {(self.passed_tests / self.total_tests) * 100:.1f}%")
+            f"📈 Success Rate: {(self.passed_tests / self.total_tests) * 100:.1f}%"
+        )
 
         if self.passed_tests == self.total_tests:
-            logger.info(
-                "🎉 ALL TESTS PASSED! MCP Debug Tool is fully functional.")
+            logger.info("🎉 ALL TESTS PASSED! MCP Debug Tool is fully functional.")
         else:
-            logger.warning(
-                "⚠️  Some tests failed. Please review and fix issues.")
+            logger.warning("⚠️  Some tests failed. Please review and fix issues.")
 
         logger.info("=" * 80)
 
@@ -433,7 +437,8 @@ async def run_debug_demo():
                 f"Suggestions: {
                     json.dumps(
                         result.suggestions,
-                        indent=2)}")
+                        indent=2)}"
+            )
             logger.info(f"Number of Fixes: {len(result.fixes)}")
 
             if result.quantum_insights:
@@ -446,7 +451,8 @@ async def run_debug_demo():
                     f"Performance Metrics: {
                         json.dumps(
                             result.performance_metrics,
-                            indent=2)}")
+                            indent=2)}"
+                )
 
     except Exception as e:
         logger.error(f"Demo failed: {e}")
