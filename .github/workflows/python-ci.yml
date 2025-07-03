@@ -1,5 +1,6 @@
 name: Python CI
 
+# CI workflow for linting and testing Python code
 on:
   push:
     paths:
