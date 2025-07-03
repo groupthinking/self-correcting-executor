@@ -11,7 +11,7 @@ def mutate_protocol(protocol_name):
         from utils.db_tracker import get_protocol_stats, track_mutation
 
         stats = get_protocol_stats(protocol_name)
-    except:
+    except Exception:
         from utils.tracker import get_protocol_stats
 
         stats = get_protocol_stats(protocol_name)
@@ -110,7 +110,7 @@ def analyze_all_protocols():
         from utils.db_tracker import get_all_stats
 
         all_stats = get_all_stats()
-    except:
+    except Exception:
         from utils.tracker import get_all_stats
 
         all_stats = get_all_stats()

@@ -92,12 +92,12 @@ class BaseAgent(ABC):
         # Process based on message type
         handler = self.message_handlers.get(message.message_type)
         if handler:
-            response = await handler(message)
-            if response:
+            handler_response = await handler(message)
+            if handler_response:
                 await self.send_message(
                     recipient=message.sender,
                     message_type=f"{message.message_type}_response",
-                    content=response,
+                    content=handler_response,
                 )
 
     def register_handler(self, message_type: str, handler: Callable):
@@ -131,7 +131,7 @@ class NegotiationAgent(BaseAgent):
         # Start negotiation with each agent
         proposals = {}
         for agent in agents:
-            response = await self.send_message(
+            await self.send_message(
                 recipient=agent,
                 message_type="proposal_request",
                 content={
@@ -140,7 +140,7 @@ class NegotiationAgent(BaseAgent):
                     "constraints": constraints,
                 },
             )
-            # Wait for proposals (simplified - real implementation would be async)
+            # Wait for proposals (simplified - real implementation async)
             proposals[agent] = None
 
         # Analyze proposals and find optimal solution

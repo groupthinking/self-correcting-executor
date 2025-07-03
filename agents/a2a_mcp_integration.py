@@ -16,19 +16,16 @@ Features:
 """
 
 import asyncio
-import json
 import logging
 import time
-import uuid
-from typing import Dict, List, Any, Optional, Callable, Union
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-import os
 
 # Import existing components
 from agents.a2a_framework import A2AMessage, BaseAgent, A2AMessageBus
-from connectors.mcp_base import MCPContext, MCPConnector
+from connectors.mcp_base import MCPContext
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +96,8 @@ class A2AMCPMessage:
 
 class MCPEnabledA2AAgent(BaseAgent):
     """
-    Enhanced agent that uses MCP for context and A2A for communication.
-    Integrates with the existing MCP server for tool access and context sharing.
+    Enhanced agent with MCP context and A2A communication.
+    Integrates with MCP server for tool access.
     """
 
     def __init__(
@@ -145,7 +142,7 @@ class MCPEnabledA2AAgent(BaseAgent):
 
     async def process_intent(self, intent: Dict) -> Dict:
         """
-        Process an intent and return result - required implementation of abstract method
+        Process intent and return result - abstract method implementation
         """
         try:
             action = intent.get("action", "unknown")
@@ -155,7 +152,7 @@ class MCPEnabledA2AAgent(BaseAgent):
                 if not recipient:
                     return {
                         "status": "error",
-                        "message": "recipient not specified for send_message intent",
+                        "message": "recipient not specified",
                     }
                 return await self.send_contextualized_message(
                     recipient=recipient,
@@ -181,7 +178,7 @@ class MCPEnabledA2AAgent(BaseAgent):
                 if not tool_name:
                     return {
                         "status": "error",
-                        "message": "tool_name not specified for tool_request intent",
+                        "message": "tool_name not specified",
                     }
                 return await self._execute_mcp_tool(
                     tool_name, intent.get("params", {})
@@ -211,7 +208,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         deadline_ms: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
-        Send message with MCP context and intelligent routing
+        Send message with MCP context and routing
         """
         start_time = time.time()
 
@@ -261,7 +258,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         if latency_ms > self.sla_requirements["max_latency_ms"]:
             self.performance_stats["sla_violations"] += 1
             logger.warning(
-                f"SLA violation: {latency_ms:.2f}ms > {self.sla_requirements['max_latency_ms']}ms"
+                f"SLA violation: latency exceeded"
             )
 
         return {
@@ -276,7 +273,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         self, message: A2AMCPMessage
     ) -> Dict[str, Any]:
         """
-        Intelligently route messages based on priority, size, and requirements
+        Route messages based on priority, size, requirements
         """
         message_size = len(str(message.to_dict()))
 
@@ -305,7 +302,7 @@ class MCPEnabledA2AAgent(BaseAgent):
             return await self._send_standard(message)
 
     async def _send_zero_copy(self, message: A2AMCPMessage) -> Dict[str, Any]:
-        """Zero-copy transfer for high-performance scenarios"""
+        """Zero-copy transfer for high-performance"""
         # In real implementation, this would use direct memory transfer
         # For now, simulate zero-copy behavior by directly calling receive on the bus
         if self.message_bus:
@@ -548,8 +545,6 @@ class MCPEnabledA2AAgent(BaseAgent):
             # Use MCP data processing tool
             from config.mcp_config import MCPConfig
 
-            config = MCPConfig()
-
             # Call real MCP server for data analysis
             result = await self._execute_mcp_tool(
                 "process_data",
@@ -652,8 +647,8 @@ async def process_data(request: RequestModel):
 
 class A2AMCPOrchestrator:
     """
-    Orchestrates A2A communication with MCP integration.
-    Manages agent registration, message routing, and performance monitoring.
+    Orchestrates A2A communication with MCP.
+    Manages agents, routing, and monitoring.
     """
 
     def __init__(self):
