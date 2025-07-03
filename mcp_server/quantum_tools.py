@@ -21,7 +21,10 @@ from datetime import datetime
 import numpy as np
 
 # Import D-Wave connector
-from connectors.dwave_quantum_connector import DWaveQuantumConnector, QuantumResult
+from connectors.dwave_quantum_connector import (
+    DWaveQuantumConnector,
+    QuantumResult,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +56,9 @@ class QuantumMCPTools:
                     f"Connected to quantum solver: {self.solver_info.get('name', 'Unknown')}"
                 )
             else:
-                logger.warning("Quantum connector not available, using simulation mode")
+                logger.warning(
+                    "Quantum connector not available, using simulation mode"
+                )
 
             return True
 
@@ -85,7 +90,9 @@ class QuantumMCPTools:
                 "annealing_time": annealing_time,
             }
 
-            result = await self.quantum_connector.execute_action("solve_qubo", params)
+            result = await self.quantum_connector.execute_action(
+                "solve_qubo", params
+            )
 
             if "error" in result:
                 return {
@@ -130,7 +137,11 @@ class QuantumMCPTools:
 
         except Exception as e:
             logger.error(f"QUBO solving failed: {e}")
-            return {"success": False, "error": str(e), "method": "quantum_annealing"}
+            return {
+                "success": False,
+                "error": str(e),
+                "method": "quantum_annealing",
+            }
 
     async def optimize_tsp(
         self, distances: List[List[float]], num_reads: int = 100
@@ -190,9 +201,15 @@ class QuantumMCPTools:
             Dictionary with optimal cut and weight
         """
         try:
-            params = {"graph": graph, "weights": weights or {}, "num_reads": num_reads}
+            params = {
+                "graph": graph,
+                "weights": weights or {},
+                "num_reads": num_reads,
+            }
 
-            result = await self.quantum_connector.execute_action("max_cut", params)
+            result = await self.quantum_connector.execute_action(
+                "max_cut", params
+            )
 
             if "error" in result:
                 return {
@@ -213,7 +230,11 @@ class QuantumMCPTools:
 
         except Exception as e:
             logger.error(f"Max Cut optimization failed: {e}")
-            return {"success": False, "error": str(e), "method": "quantum_max_cut"}
+            return {
+                "success": False,
+                "error": str(e),
+                "method": "quantum_max_cut",
+            }
 
     async def accelerate_llm_training(
         self, training_data: Dict[str, Any], model_config: Dict[str, Any]
@@ -347,7 +368,9 @@ class QuantumMCPTools:
         # Learning rate optimization (discrete values)
         lr_values = [0.0001, 0.0005, 0.001, 0.005, 0.01]
         for i, lr in enumerate(lr_values):
-            qubo[f"x{i}"] = abs(lr - learning_rate) * 1000  # Penalty for deviation
+            qubo[f"x{i}"] = (
+                abs(lr - learning_rate) * 1000
+            )  # Penalty for deviation
 
         # Batch size optimization
         batch_values = [16, 32, 64, 128]
@@ -357,7 +380,9 @@ class QuantumMCPTools:
         # Add constraints (only one value per parameter)
         for i in range(len(lr_values)):
             for j in range(i + 1, len(lr_values)):
-                qubo[f"x{i}*x{j}"] = 1000  # Large penalty for multiple selections
+                qubo[f"x{i}*x{j}"] = (
+                    1000  # Large penalty for multiple selections
+                )
 
         for i in range(len(batch_values)):
             for j in range(i + 1, len(batch_values)):
@@ -390,7 +415,8 @@ class QuantumMCPTools:
                 break
 
         return {
-            "learning_rate": selected_lr or model_config.get("learning_rate", 0.001),
+            "learning_rate": selected_lr
+            or model_config.get("learning_rate", 0.001),
             "batch_size": selected_batch or model_config.get("batch_size", 32),
             "epochs": model_config.get("epochs", 10),
             "optimization_method": "quantum_annealing",
@@ -453,8 +479,12 @@ async def demonstrate_quantum_tools():
     )
     print(f"   - Success: {llm_result['success']}")
     if llm_result["success"]:
-        print(f"   - Optimized parameters: {llm_result['optimized_parameters']}")
-        print(f"   - Expected improvement: {llm_result['expected_improvement']}")
+        print(
+            f"   - Optimized parameters: {llm_result['optimized_parameters']}"
+        )
+        print(
+            f"   - Expected improvement: {llm_result['expected_improvement']}"
+        )
     else:
         print(f"   - Error: {llm_result['error']}")
     print()

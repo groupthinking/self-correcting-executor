@@ -112,7 +112,9 @@ class GitHubMCPConnector(MCPConnector):
                     self.breaker.record_success()
                     return True
                 else:
-                    logger.error(f"GitHub API connection failed: {response.status}")
+                    logger.error(
+                        f"GitHub API connection failed: {response.status}"
+                    )
                     # Connection failed, record failure
                     self.breaker.record_failure()
                     return False
@@ -143,7 +145,9 @@ class GitHubMCPConnector(MCPConnector):
     ) -> Dict[str, Any]:
         """Execute GitHub action, now protected by a circuit breaker."""
         if self.breaker.state == "OPEN":
-            logger.warning(f"Circuit breaker is open. Action '{action}' blocked.")
+            logger.warning(
+                f"Circuit breaker is open. Action '{action}' blocked."
+            )
             return {
                 "error": (
                     "Circuit breaker is open due to repeated failures. "
@@ -184,24 +188,30 @@ class GitHubMCPConnector(MCPConnector):
                 return result
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                 logger.error(
-                    f"API call for action '{action}' failed with " f"network error: {e}"
+                    f"API call for action '{action}' failed with "
+                    f"network error: {e}"
                 )
                 self.breaker.record_failure()
                 return {"success": False, "error": str(e), "action": action}
             except Exception as e:
                 logger.error(
-                    f"An unexpected error occurred during action " f"'{action}': {e}"
+                    f"An unexpected error occurred during action "
+                    f"'{action}': {e}"
                 )
                 self.breaker.record_failure()
                 return {"success": False, "error": str(e), "action": action}
 
         return {"success": False, "error": f"Unknown action: {action}"}
 
-    async def search_repositories(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def search_repositories(
+        self, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         try:
             query = params.get("query", "")
             search_query = query + (
-                f" language:{params['language']}" if params.get("language") else ""
+                f" language:{params['language']}"
+                if params.get("language")
+                else ""
             )
             url = f"{self.base_url}/search/repositories"
             params_dict = {
@@ -301,7 +311,9 @@ class GitHubMCPConnector(MCPConnector):
             logger.error(f"Get issues failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def get_pull_requests(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def get_pull_requests(
+        self, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         try:
             owner, repo = params.get("owner"), params.get("repo")
             if not owner or not repo:
@@ -325,7 +337,9 @@ class GitHubMCPConnector(MCPConnector):
                 else:
                     return {
                         "success": False,
-                        "error": (f"Failed to get pull requests: {response.status}"),
+                        "error": (
+                            f"Failed to get pull requests: {response.status}"
+                        ),
                         "status_code": response.status,
                     }
         except Exception as e:
@@ -462,7 +476,9 @@ class GitHubMCPConnector(MCPConnector):
             logger.error(f"Create issue failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def get_rate_limit(self, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def get_rate_limit(
+        self, params: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """Get GitHub API rate limit information"""
         try:
             url = f"{self.base_url}/rate_limit"
@@ -476,7 +492,9 @@ class GitHubMCPConnector(MCPConnector):
                 else:
                     return {
                         "success": False,
-                        "error": (f"Failed to get rate limit: {response.status}"),
+                        "error": (
+                            f"Failed to get rate limit: {response.status}"
+                        ),
                         "status_code": response.status,
                     }
         except Exception as e:
@@ -488,7 +506,9 @@ class GitHubMCPConnector(MCPConnector):
         try:
             rate_limit = await self.get_rate_limit()
             if rate_limit["success"]:
-                self.rate_limit_remaining = rate_limit["rate_limit"]["remaining"]
+                self.rate_limit_remaining = rate_limit["rate_limit"][
+                    "remaining"
+                ]
                 self.rate_limit_reset = rate_limit["rate_limit"]["reset"]
         except Exception as e:
             logger.warning(f"Failed to update rate limit: {e}")
@@ -554,7 +574,9 @@ async def demonstrate_github_connector():
 
     # Demo 3: Get rate limit
     print("3. Rate limit information:")
-    rate_limit_result = await github_connector.execute_action("get_rate_limit", {})
+    rate_limit_result = await github_connector.execute_action(
+        "get_rate_limit", {}
+    )
     if rate_limit_result.get("success"):
         rl = rate_limit_result.get("rate_limit", {})
         reset_time = datetime.fromtimestamp(rl.get("reset", 0))
@@ -577,5 +599,8 @@ if __name__ == "__main__":
     )
     # To run the demo, ensure you have a GITHUB_TOKEN environment variable set
     if not os.environ.get("GITHUB_TOKEN"):
-        print("Warning: GITHUB_TOKEN environment variable not set. " "Demo may fail.")
+        print(
+            "Warning: GITHUB_TOKEN environment variable not set. "
+            "Demo may fail."
+        )
     asyncio.run(demonstrate_github_connector())

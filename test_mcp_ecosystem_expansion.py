@@ -70,7 +70,9 @@ class MCPEcosystemTester:
 
         logger.info("\n" + "=" * 60)
         logger.info("🎯 MCP Ecosystem Expansion Test Suite Complete")
-        logger.info(f"⏱️  Total time: {time.time() - self.start_time:.2f} seconds")
+        logger.info(
+            f"⏱️  Total time: {time.time() - self.start_time:.2f} seconds"
+        )
 
         return final_report
 
@@ -85,8 +87,12 @@ class MCPEcosystemTester:
             )
 
             # Create test agents
-            analyzer = MCPEnabledA2AAgent("test_analyzer", ["analyze", "process"])
-            generator = MCPEnabledA2AAgent("test_generator", ["generate", "create"])
+            analyzer = MCPEnabledA2AAgent(
+                "test_analyzer", ["analyze", "process"]
+            )
+            generator = MCPEnabledA2AAgent(
+                "test_generator", ["generate", "create"]
+            )
 
             # Register agents
             a2a_mcp_orchestrator.register_agent(analyzer)
@@ -135,7 +141,9 @@ class MCPEcosystemTester:
         try:
             # Import quantum components
             from mcp_server.quantum_tools import quantum_tools
-            from connectors.dwave_quantum_connector import DWaveQuantumConnector
+            from connectors.dwave_quantum_connector import (
+                DWaveQuantumConnector,
+            )
 
             # Test 1: Quantum connector initialization
             quantum_connector = DWaveQuantumConnector()
@@ -147,14 +155,18 @@ class MCPEcosystemTester:
             qubo_result = await quantum_tools.solve_qubo(qubo, num_reads=10)
 
             # Test 3: Resource management
-            resource_result = await quantum_tools.manage_quantum_resources("get_status")
+            resource_result = await quantum_tools.manage_quantum_resources(
+                "get_status"
+            )
 
             return {
                 "status": "PASSED",
                 "tests": {
                     "connector_initialization": True,  # Always pass as it handles missing tokens gracefully
                     "qubo_solving": qubo_result.get("success", False),
-                    "resource_management": resource_result.get("success", False),
+                    "resource_management": resource_result.get(
+                        "success", False
+                    ),
                 },
                 "metrics": {
                     "quantum_connected": connected,
@@ -203,18 +215,22 @@ class MCPEcosystemTester:
                 "tests": {
                     "connector_initialization": True,  # Always pass as it handles missing tokens gracefully
                     "repository_search": (
-                        search_result.get("success", False) if search_result else False
+                        search_result.get("success", False)
+                        if search_result
+                        else False
                     ),
                     "rate_limit_check": rate_limit.get("success", False),
                 },
                 "metrics": {
                     "github_connected": connected,
                     "search_results": (
-                        search_result.get("total_count", 0) if search_result else 0
+                        search_result.get("total_count", 0)
+                        if search_result
+                        else 0
                     ),
-                    "rate_limit_remaining": rate_limit.get("rate_limit", {}).get(
-                        "remaining", 0
-                    ),
+                    "rate_limit_remaining": rate_limit.get(
+                        "rate_limit", {}
+                    ).get("remaining", 0),
                 },
                 "timestamp": datetime.utcnow().isoformat(),
             }
@@ -233,7 +249,9 @@ class MCPEcosystemTester:
             from llm.continuous_learning_system import continuous_learner
 
             # Test 1: System initialization
-            config = {"quantum": {"api_token": os.environ.get("DWAVE_API_TOKEN")}}
+            config = {
+                "quantum": {"api_token": os.environ.get("DWAVE_API_TOKEN")}
+            }
 
             initialized = await continuous_learner.initialize(config)
 
@@ -254,7 +272,9 @@ class MCPEcosystemTester:
                 },
                 "metrics": {
                     "model_name": model_info.get("model_name", "unknown"),
-                    "current_version": model_info.get("current_version", "unknown"),
+                    "current_version": model_info.get(
+                        "current_version", "unknown"
+                    ),
                     "total_samples": model_info.get("training_stats", {}).get(
                         "total_samples_processed", 0
                     ),
@@ -284,7 +304,10 @@ class MCPEcosystemTester:
 
             # Test 2: Tool execution
             code_analyzer_result = await server._execute_code_analyzer(
-                {"code": 'def hello(): print("Hello, MCP!")', "language": "python"}
+                {
+                    "code": 'def hello(): print("Hello, MCP!")',
+                    "language": "python",
+                }
             )
 
             # Test 3: Resource listing
@@ -301,7 +324,9 @@ class MCPEcosystemTester:
                 "metrics": {
                     "available_tools": len(tools),
                     "available_resources": len(resources),
-                    "code_analysis_lines": code_analyzer_result.get("lines_of_code", 0),
+                    "code_analysis_lines": code_analyzer_result.get(
+                        "lines_of_code", 0
+                    ),
                 },
                 "timestamp": datetime.utcnow().isoformat(),
             }
@@ -319,7 +344,10 @@ class MCPEcosystemTester:
             benchmarks = {}
 
             # Benchmark 1: A2A message latency
-            from agents.a2a_mcp_integration import MCPEnabledA2AAgent, MessagePriority
+            from agents.a2a_mcp_integration import (
+                MCPEnabledA2AAgent,
+                MessagePriority,
+            )
 
             agent = MCPEnabledA2AAgent("benchmark_agent", ["test"])
             start_time = time.time()
@@ -407,7 +435,9 @@ class MCPEcosystemTester:
 
         # Calculate overall success rate
         success_rate = (
-            (passed_tests + partial_tests * 0.5) / total_tests if total_tests > 0 else 0
+            (passed_tests + partial_tests * 0.5) / total_tests
+            if total_tests > 0
+            else 0
         )
 
         # Collect all metrics

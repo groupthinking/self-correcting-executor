@@ -27,7 +27,9 @@ def mutate_protocol(protocol_name):
     )
 
     if failure_rate < 0.5:
-        log(f"Mutation not needed. Failure rate acceptable: {failure_rate:.2%}")
+        log(
+            f"Mutation not needed. Failure rate acceptable: {failure_rate:.2%}"
+        )
         return False
 
     # Rewrite protocol file with improved logic
@@ -46,7 +48,8 @@ def mutate_protocol(protocol_name):
 
     # Check if this is a simple random protocol or a complex one
     is_simple_protocol = any(
-        keyword in original_code for keyword in ["randint", "random()", "bool(randint"]
+        keyword in original_code
+        for keyword in ["randint", "random()", "bool(randint"]
     )
 
     if is_simple_protocol:
@@ -86,7 +89,9 @@ def task():
 
         # Track mutation in database if available
         if track_mutation:
-            track_mutation(protocol_name, failure_rate, mutated_logic, original_code)
+            track_mutation(
+                protocol_name, failure_rate, mutated_logic, original_code
+            )
 
         log(
             f"✅ Protocol {protocol_name} mutated successfully. Backup saved to {backup_file}"

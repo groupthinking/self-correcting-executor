@@ -9,8 +9,16 @@ def task():
 
     # Enhanced logic with better success probability
     if random() < 0.8:  # 80% success rate instead of 50%
-        result = {"success": True, "action": "optimized_execution", "mutation_gen": 1}
+        result = {
+            "success": True,
+            "action": "optimized_execution",
+            "mutation_gen": 1,
+        }
     else:
-        result = {"success": False, "action": "controlled_failure", "mutation_gen": 1}
+        result = {
+            "success": False,
+            "action": "controlled_failure",
+            "mutation_gen": 1,
+        }
 
     return result

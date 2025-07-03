@@ -84,7 +84,9 @@ def task():
                         row_count = sum(1 for row in reader)
                         total_records += row_count
                         processed_count += 1
-                        insights.append(f"{filename}: CSV with {row_count} rows")
+                        insights.append(
+                            f"{filename}: CSV with {row_count} rows"
+                        )
                 except:
                     pass
 
@@ -96,7 +98,9 @@ def task():
             "files_processed": processed_count,
             "total_records": total_records,
             "insights": (
-                insights[:5] if insights else ["No data files found to process"]
+                insights[:5]
+                if insights
+                else ["No data files found to process"]
             ),
             "timestamp": datetime.utcnow().isoformat(),
         }

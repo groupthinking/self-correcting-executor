@@ -167,7 +167,8 @@ class RealQuantumTest:
 
         try:
             result = await self.connector.execute_action(
-                "max_cut", {"edges": edges, "weights": weights, "num_reads": 30}
+                "max_cut",
+                {"edges": edges, "weights": weights, "num_reads": 30},
             )
 
             if result.get("success"):

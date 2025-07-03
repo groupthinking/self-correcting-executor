@@ -43,7 +43,9 @@ class VectorClock:
 
     def concurrent_with(self, other: "VectorClock") -> bool:
         """Check if two clocks are concurrent"""
-        return not self.happens_before(other) and not other.happens_before(self)
+        return not self.happens_before(other) and not other.happens_before(
+            self
+        )
 
 
 @dataclass
@@ -150,7 +152,9 @@ class DifferentialStateEngine:
 
         # Resolve conflicts if any
         if concurrent_states:
-            resolver = self.conflict_handlers.get(strategy, self._resolve_merge)
+            resolver = self.conflict_handlers.get(
+                strategy, self._resolve_merge
+            )
             merged_data = resolver(
                 self.states[self.current_state_id], concurrent_states
             )
@@ -173,7 +177,9 @@ class DifferentialStateEngine:
         latest = max(all_states, key=lambda s: s.timestamp)
         return latest.data
 
-    def _resolve_merge(self, local: StateNode, remotes: List[StateNode]) -> Dict:
+    def _resolve_merge(
+        self, local: StateNode, remotes: List[StateNode]
+    ) -> Dict:
         """Merge all concurrent states"""
         merged = local.data.copy()
 
@@ -194,7 +200,9 @@ class DifferentialStateEngine:
 
         return merged
 
-    def _resolve_user_defined(self, local: StateNode, remotes: List[StateNode]) -> Dict:
+    def _resolve_user_defined(
+        self, local: StateNode, remotes: List[StateNode]
+    ) -> Dict:
         """Placeholder for user-defined conflict resolution"""
         # This would call a user-provided function
         return self._resolve_merge(local, remotes)
@@ -226,7 +234,8 @@ class StateContinuityFabric:
         if mcp_server_url:
             # Use mcp-use to connect to MCP server
             self.mcp_client = await create_client(
-                server_url=mcp_server_url, client_name=f"fabric_{self.fabric_id}"
+                server_url=mcp_server_url,
+                client_name=f"fabric_{self.fabric_id}",
             )
 
             # Discover available tools
@@ -284,7 +293,9 @@ class StateContinuityFabric:
 
         return enriched
 
-    def _apply_privacy_filters(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _apply_privacy_filters(
+        self, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Apply privacy rules to context"""
         filtered = {}
 
@@ -299,9 +310,14 @@ class StateContinuityFabric:
 
         return filtered
 
-    async def sync_devices(self, source_device: str, target_device: str) -> StateNode:
+    async def sync_devices(
+        self, source_device: str, target_device: str
+    ) -> StateNode:
         """Synchronize state between devices"""
-        if source_device not in self.engines or target_device not in self.engines:
+        if (
+            source_device not in self.engines
+            or target_device not in self.engines
+        ):
             raise ValueError("Both devices must be registered")
 
         source_engine = self.engines[source_device]
@@ -321,7 +337,11 @@ class StateContinuityFabric:
 
     def get_continuity_graph(self) -> Dict[str, Any]:
         """Get the full continuity graph for visualization"""
-        graph = {"nodes": [], "edges": [], "devices": list(self.device_registry.keys())}
+        graph = {
+            "nodes": [],
+            "edges": [],
+            "devices": list(self.device_registry.keys()),
+        }
 
         # Collect all states
         for device_id, engine in self.engines.items():
@@ -338,7 +358,11 @@ class StateContinuityFabric:
 
                 if state.parent_id:
                     graph["edges"].append(
-                        {"from": state.parent_id, "to": state_id, "type": "evolution"}
+                        {
+                            "from": state.parent_id,
+                            "to": state_id,
+                            "type": "evolution",
+                        }
                     )
 
         return graph
@@ -394,7 +418,9 @@ async def demonstrate_fabric():
 
     # Get continuity graph
     graph = fabric.get_continuity_graph()
-    print(f"Continuity graph: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges")
+    print(
+        f"Continuity graph: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges"
+    )
 
 
 if __name__ == "__main__":

@@ -112,7 +112,9 @@ class CodeGeneratorAgent:
             "generated_code": code,
             "generation_type": generation_type,
             "files_created": self._get_file_list(code),
-            "instructions": self._get_implementation_instructions(generation_type),
+            "instructions": self._get_implementation_instructions(
+                generation_type
+            ),
             "timestamp": datetime.utcnow().isoformat(),
         }
 
@@ -132,8 +134,12 @@ class CodeGeneratorAgent:
     def _generate_api_endpoint(self, context: Dict) -> str:
         """Generate a single API endpoint"""
         endpoint_name = context.get("endpoint_name", "process")
-        function_name = context.get("function_name", endpoint_name.replace("-", "_"))
-        description = context.get("description", f"Process {endpoint_name} request")
+        function_name = context.get(
+            "function_name", endpoint_name.replace("-", "_")
+        )
+        description = context.get(
+            "description", f"Process {endpoint_name} request"
+        )
 
         # Generate parameter list
         params = context.get("parameters", {})
@@ -209,9 +215,7 @@ class {model_name}(BaseModel):
             optional = "Optional[" if field_name != "id" else ""
             close_bracket = "]" if optional else ""
             default = " = None" if optional else ""
-            model_code += (
-                f"    {field_name}: {optional}{field_type}{close_bracket}{default}\n"
-            )
+            model_code += f"    {field_name}: {optional}{field_type}{close_bracket}{default}\n"
 
         return model_code
 

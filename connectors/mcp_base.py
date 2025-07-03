@@ -94,7 +94,10 @@ class MCPConnector(ABC):
         merged.task = {**remote_context.task, **local_context.task}
         merged.intent = {**remote_context.intent, **local_context.intent}
         merged.env = {**remote_context.env, **local_context.env}
-        merged.code_state = {**remote_context.code_state, **local_context.code_state}
+        merged.code_state = {
+            **remote_context.code_state,
+            **local_context.code_state,
+        }
 
         # Update history
         merged.history = remote_context.history + [
@@ -264,7 +267,10 @@ class ClaudeMCPConnector(MCPConnector):
             "tokens_used": 1500,
         }
 
-        context.intent = {"detected_intent": "code_generation", "confidence": 0.95}
+        context.intent = {
+            "detected_intent": "code_generation",
+            "confidence": 0.95,
+        }
 
         return context
 
@@ -352,7 +358,11 @@ class MCPConnectorRegistry:
         return success
 
     async def execute_cross_service_action(
-        self, source_connector: str, target_connector: str, action: str, params: Dict
+        self,
+        source_connector: str,
+        target_connector: str,
+        action: str,
+        params: Dict,
     ) -> Dict:
         """Execute action across services using MCP context sharing"""
 

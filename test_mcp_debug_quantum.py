@@ -15,7 +15,11 @@ import logging
 # Add project root to path
 sys.path.append(str(Path(__file__).parent))
 
-from connectors.mcp_debug_tool import MCPDebugTool, MCPDebugContext, DebugResponse
+from connectors.mcp_debug_tool import (
+    MCPDebugTool,
+    MCPDebugContext,
+    DebugResponse,
+)
 from quantum_mcp_server.quantum_mcp import QuantumMCPServer
 
 # Configure logging
@@ -41,15 +45,24 @@ class QuantumDebugTestSuite:
             ("Basic Debug Tool Initialization", self.test_debug_tool_init),
             ("Quantum Code Analysis", self.test_quantum_code_analysis),
             ("Qubit State Debugging", self.test_qubit_state_debugging),
-            ("Entanglement Pattern Detection", self.test_entanglement_detection),
+            (
+                "Entanglement Pattern Detection",
+                self.test_entanglement_detection,
+            ),
             ("Decoherence Risk Assessment", self.test_decoherence_analysis),
             ("Gate Fidelity Analysis", self.test_gate_fidelity),
             ("Error Pattern Recognition", self.test_error_patterns),
             ("Performance Metrics Calculation", self.test_performance_metrics),
-            ("Quantum Teleportation Debug", self.test_quantum_teleportation_debug),
+            (
+                "Quantum Teleportation Debug",
+                self.test_quantum_teleportation_debug,
+            ),
             ("Fallback Reasoning", self.test_fallback_reasoning),
             ("MCP Context Creation", self.test_mcp_context_creation),
-            ("Quantum MCP Server Integration", self.test_quantum_mcp_integration),
+            (
+                "Quantum MCP Server Integration",
+                self.test_quantum_mcp_integration,
+            ),
         ]
 
         for test_name, test_func in test_cases:
@@ -119,7 +132,11 @@ class QuantumDebugTestSuite:
             has_quantum_elements = len(analysis["quantum_elements"]) > 0
             has_quantum_pattern = "quantum_computing" in analysis["patterns"]
 
-            return has_required_keys and has_quantum_elements and has_quantum_pattern
+            return (
+                has_required_keys
+                and has_quantum_elements
+                and has_quantum_pattern
+            )
 
     async def test_qubit_state_debugging(self) -> bool:
         """Test qubit state analysis capabilities"""
@@ -131,7 +148,9 @@ class QuantumDebugTestSuite:
         """
 
         async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
-            result = await debug_tool._analyze_qubit_state(problematic_quantum_code, {})
+            result = await debug_tool._analyze_qubit_state(
+                problematic_quantum_code, {}
+            )
 
             has_operations = len(result["operations"]) > 0
             has_issues = len(result["issues"]) > 0
@@ -152,7 +171,9 @@ class QuantumDebugTestSuite:
         """
 
         async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
-            result = await debug_tool._analyze_entanglement(entanglement_code, {})
+            result = await debug_tool._analyze_entanglement(
+                entanglement_code, {}
+            )
 
             has_operations = len(result["entanglement_operations"]) > 0
             high_density = result["warning"] is not None
@@ -200,7 +221,9 @@ class QuantumDebugTestSuite:
         """
 
         async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
-            result = await debug_tool._analyze_gate_fidelity(gate_heavy_code, {})
+            result = await debug_tool._analyze_gate_fidelity(
+                gate_heavy_code, {}
+            )
 
             has_gates = result["total_gates"] > 5
             has_types = len(result["gate_types"]) > 3
@@ -229,7 +252,9 @@ class QuantumDebugTestSuite:
             all_patterns_detected = True
 
             for error in errors:
-                fixes = await debug_tool._generate_general_fixes(buggy_code, error)
+                fixes = await debug_tool._generate_general_fixes(
+                    buggy_code, error
+                )
                 if not fixes:
                     all_patterns_detected = False
                     break
@@ -257,7 +282,9 @@ class QuantumDebugTestSuite:
 
         async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
             debug_context = MCPDebugContext(
-                file="test.py", line=1, timestamp=datetime.now(timezone.utc).isoformat()
+                file="test.py",
+                line=1,
+                timestamp=datetime.now(timezone.utc).isoformat(),
             )
 
             metrics = await debug_tool._calculate_performance_metrics(
@@ -353,9 +380,7 @@ class QuantumDebugTestSuite:
     async def test_fallback_reasoning(self) -> bool:
         """Test fallback reasoning when GCP is unavailable"""
         async with MCPDebugTool("https://invalid-endpoint") as debug_tool:
-            quantum_error = (
-                "QuantumError: Circuit execution failed due to quantum decoherence"
-            )
+            quantum_error = "QuantumError: Circuit execution failed due to quantum decoherence"
 
             fallback_result = await debug_tool._fallback_reasoning(
                 "quantum_code", quantum_error
@@ -432,12 +457,18 @@ class QuantumDebugTestSuite:
         logger.info(f"📊 Total Tests: {self.total_tests}")
         logger.info(f"✅ Passed: {self.passed_tests}")
         logger.info(f"❌ Failed: {self.total_tests - self.passed_tests}")
-        logger.info(f"📈 Success Rate: {(self.passed_tests/self.total_tests)*100:.1f}%")
+        logger.info(
+            f"📈 Success Rate: {(self.passed_tests/self.total_tests)*100:.1f}%"
+        )
 
         if self.passed_tests == self.total_tests:
-            logger.info("🎉 ALL TESTS PASSED! MCP Debug Tool is fully functional.")
+            logger.info(
+                "🎉 ALL TESTS PASSED! MCP Debug Tool is fully functional."
+            )
         else:
-            logger.warning("⚠️  Some tests failed. Please review and fix issues.")
+            logger.warning(
+                "⚠️  Some tests failed. Please review and fix issues."
+            )
 
         logger.info("=" * 80)
 
@@ -468,7 +499,9 @@ async def run_debug_tool_demo():
         return qc
     """
 
-    async with MCPDebugTool("https://demo-gcp-api", "demo-token") as debug_tool:
+    async with MCPDebugTool(
+        "https://demo-gcp-api", "demo-token"
+    ) as debug_tool:
         result = await debug_tool.debug_code(
             code=demo_code,
             error="NameError: name 'undefined_qubits' is not defined",

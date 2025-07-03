@@ -14,7 +14,8 @@ from mcp_use.tools import ToolExecutor
 
 # Configure production logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,9 @@ class MCPStateFabric:
 
             self.state_fabric = StateContinuityFabric(fabric_id)
         except ImportError:
-            logger.error("State Continuity Fabric not found. Creating minimal version.")
+            logger.error(
+                "State Continuity Fabric not found. Creating minimal version."
+            )
             self.state_fabric = None
 
     async def initialize(self, mcp_servers: List[Dict[str, Any]]) -> bool:
@@ -64,7 +67,9 @@ class MCPStateFabric:
 
                 # Verify connection by listing tools
                 tools = await client.list_tools()
-                logger.info(f"Connected to {name} at {url} with {len(tools)} tools")
+                logger.info(
+                    f"Connected to {name} at {url} with {len(tools)} tools"
+                )
 
                 self.mcp_clients[name] = client
                 connected_count += 1
@@ -88,7 +93,9 @@ class MCPStateFabric:
             Dict mapping server names to their tool lists
         """
         if not self._initialized:
-            raise RuntimeError("Fabric not initialized. Call initialize() first.")
+            raise RuntimeError(
+                "Fabric not initialized. Call initialize() first."
+            )
 
         capabilities = {}
 
@@ -96,9 +103,13 @@ class MCPStateFabric:
             try:
                 tools = await client.list_tools()
                 capabilities[server_name] = [tool.name for tool in tools]
-                logger.info(f"{server_name} capabilities: {capabilities[server_name]}")
+                logger.info(
+                    f"{server_name} capabilities: {capabilities[server_name]}"
+                )
             except Exception as e:
-                logger.error(f"Failed to get capabilities from {server_name}: {e}")
+                logger.error(
+                    f"Failed to get capabilities from {server_name}: {e}"
+                )
                 capabilities[server_name] = []
 
         return capabilities
@@ -169,7 +180,11 @@ class MCPStateFabric:
                 await self.state_fabric.capture_context(
                     device_id=context.get("device_id", "unknown"),
                     app_id=context.get("app_id", "mcp_fabric"),
-                    context={"tool": tool_name, "error": str(e), "success": False},
+                    context={
+                        "tool": tool_name,
+                        "error": str(e),
+                        "success": False,
+                    },
                 )
 
             return {
@@ -194,7 +209,9 @@ class MCPStateFabric:
 
         # Get all devices or specific device
         devices = (
-            [device_id] if device_id else list(self.state_fabric.device_registry.keys())
+            [device_id]
+            if device_id
+            else list(self.state_fabric.device_registry.keys())
         )
 
         for dev_id in devices:
@@ -292,7 +309,10 @@ async def production_example():
                 server_name="local",
                 tool_name=tool_name,
                 params={},  # Tool-specific params
-                context={"device_id": "macbook_pro", "app_id": "production_demo"},
+                context={
+                    "device_id": "macbook_pro",
+                    "app_id": "production_demo",
+                },
             )
 
             logger.info(f"Execution result: {result}")

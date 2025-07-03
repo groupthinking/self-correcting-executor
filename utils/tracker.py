@@ -20,7 +20,9 @@ def track_outcome(protocol_name, outcome):
     try:
         with open(memory_file, "a") as f:
             f.write(json.dumps(enhanced_outcome) + "\n")
-        log(f"Outcome tracked for {protocol_name}: {outcome.get('success', 'unknown')}")
+        log(
+            f"Outcome tracked for {protocol_name}: {outcome.get('success', 'unknown')}"
+        )
     except Exception as e:
         log(f"Failed to track outcome for {protocol_name}: {e}")
 

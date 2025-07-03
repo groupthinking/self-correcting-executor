@@ -16,7 +16,8 @@ from datetime import datetime
 
 # Configure production logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,10 @@ class ProductionMCPDeployment:
                         "args": ["/app/mcp_server/main.js"],
                         "env": {"NODE_ENV": "production"},
                     },
-                    "github": {"command": "npx", "args": ["@github/mcp-server-github"]},
+                    "github": {
+                        "command": "npx",
+                        "args": ["@github/mcp-server-github"],
+                    },
                 }
             }
 
@@ -84,7 +88,9 @@ class ProductionMCPDeployment:
 
             # Step 3: Initialize Unified Transport Layer
             try:
-                from agents.unified_transport_layer import UnifiedTransportLayer
+                from agents.unified_transport_layer import (
+                    UnifiedTransportLayer,
+                )
 
                 self.unified_transport = UnifiedTransportLayer()
                 await self.unified_transport.initialize()
@@ -143,7 +149,8 @@ class ProductionMCPDeployment:
                         "query": query,
                         "result": final_result.get("output"),
                         "success": True,
-                        "execution_time": asyncio.get_event_loop().time() - start_time,
+                        "execution_time": asyncio.get_event_loop().time()
+                        - start_time,
                     },
                 )
                 logger.info(f"Captured post-execution state: {post_state.id}")
@@ -151,10 +158,14 @@ class ProductionMCPDeployment:
             return {
                 "success": True,
                 "result": final_result.get("output") if final_result else None,
-                "execution_time_ms": (asyncio.get_event_loop().time() - start_time)
+                "execution_time_ms": (
+                    asyncio.get_event_loop().time() - start_time
+                )
                 * 1000,
                 "has_state_continuity": self.state_fabric is not None,
-                "transport_type": "unified" if self.unified_transport else "standard",
+                "transport_type": (
+                    "unified" if self.unified_transport else "standard"
+                ),
             }
 
         except Exception as e:
@@ -165,13 +176,19 @@ class ProductionMCPDeployment:
                 await self.state_fabric.capture_context(
                     device_id=context.get("device_id", "server"),
                     app_id=context.get("app_id", "production"),
-                    context={"query": query, "error": str(e), "success": False},
+                    context={
+                        "query": query,
+                        "error": str(e),
+                        "success": False,
+                    },
                 )
 
             return {
                 "success": False,
                 "error": str(e),
-                "execution_time_ms": (asyncio.get_event_loop().time() - start_time)
+                "execution_time_ms": (
+                    asyncio.get_event_loop().time() - start_time
+                )
                 * 1000,
             }
 
@@ -194,7 +211,8 @@ class ProductionMCPDeployment:
             # Execute from different devices
             for device in devices:
                 await self.execute_with_state_continuity(
-                    f"Test from {device}", {"device_id": device, "app_id": "demo"}
+                    f"Test from {device}",
+                    {"device_id": device, "app_id": "demo"},
                 )
 
             # Sync states between devices
@@ -208,13 +226,19 @@ class ProductionMCPDeployment:
 
             # Zero-copy for same process
             result = await self.unified_transport.send(
-                test_message, source="agent1", target="agent2", same_process=True
+                test_message,
+                source="agent1",
+                target="agent2",
+                same_process=True,
             )
             logger.info(f"✓ Zero-copy transport: {result['latency_us']}μs")
 
             # Mojo pipes for cross-process
             result = await self.unified_transport.send(
-                test_message, source="agent1", target="agent3", same_process=False
+                test_message,
+                source="agent1",
+                target="agent3",
+                same_process=False,
             )
             logger.info(f"✓ Mojo pipe transport: {result['latency_us']}μs")
 
@@ -231,7 +255,9 @@ class ProductionMCPDeployment:
                 "public_data": "can be shared",
             }
 
-            filtered = self.state_fabric._apply_privacy_filters(sensitive_context)
+            filtered = self.state_fabric._apply_privacy_filters(
+                sensitive_context
+            )
             assert "api_key" not in filtered
             assert "<encrypted>" in filtered.get("user_data", "")
             logger.info("✓ Privacy-aware filtering working")
@@ -267,7 +293,8 @@ async def deploy_production():
         for query in queries:
             logger.info(f"\nProcessing: {query}")
             result = await deployment.execute_with_state_continuity(
-                query, {"device_id": "production_server", "session_id": "prod_001"}
+                query,
+                {"device_id": "production_server", "session_id": "prod_001"},
             )
             logger.info(f"Result: {result}")
 

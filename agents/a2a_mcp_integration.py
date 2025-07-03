@@ -89,7 +89,9 @@ class A2AMCPMessage:
             a2a_message=a2a_msg,
             mcp_context=mcp_context,
             priority=MessagePriority(data["transport"]["priority"]),
-            transport_strategy=TransportStrategy(data["transport"]["strategy"]),
+            transport_strategy=TransportStrategy(
+                data["transport"]["strategy"]
+            ),
             deadline_ms=data["transport"].get("deadline_ms"),
             performance_requirements=data["transport"].get("requirements", {}),
         )
@@ -110,7 +112,9 @@ class MCPEnabledA2AAgent(BaseAgent):
         super().__init__(agent_id, capabilities)
         self.mcp_context = MCPContext()
         self.mcp_server_url = mcp_server_url
-        self.message_bus: Optional[A2AMessageBus] = None  # Allow message bus injection
+        self.message_bus: Optional[A2AMessageBus] = (
+            None  # Allow message bus injection
+        )
         self.performance_stats = {
             "messages_sent": 0,
             "messages_received": 0,
@@ -125,7 +129,9 @@ class MCPEnabledA2AAgent(BaseAgent):
         }
 
         # Register handlers for common message types
-        self.register_handler("negotiate_request", self.handle_negotiation_request)
+        self.register_handler(
+            "negotiate_request", self.handle_negotiation_request
+        )
         self.register_handler("context_share", self.handle_context_share)
         self.register_handler("tool_request", self.handle_tool_request)
         self.register_handler(
@@ -177,7 +183,9 @@ class MCPEnabledA2AAgent(BaseAgent):
                         "status": "error",
                         "message": "tool_name not specified for tool_request intent",
                     }
-                return await self._execute_mcp_tool(tool_name, intent.get("params", {}))
+                return await self._execute_mcp_tool(
+                    tool_name, intent.get("params", {})
+                )
             else:
                 return {
                     "status": "error",
@@ -302,14 +310,24 @@ class MCPEnabledA2AAgent(BaseAgent):
         # For now, simulate zero-copy behavior by directly calling receive on the bus
         if self.message_bus:
             await self.message_bus.send(message.a2a_message)
-        return {"strategy": "zero_copy", "status": "delivered", "latency_ms": 0.1}
+        return {
+            "strategy": "zero_copy",
+            "status": "delivered",
+            "latency_ms": 0.1,
+        }
 
-    async def _send_shared_memory(self, message: A2AMCPMessage) -> Dict[str, Any]:
+    async def _send_shared_memory(
+        self, message: A2AMCPMessage
+    ) -> Dict[str, Any]:
         """Shared memory transfer for large messages"""
         # Simulate shared memory transfer
         if self.message_bus:
             await self.message_bus.send(message.a2a_message)
-        return {"strategy": "shared_memory", "status": "delivered", "latency_ms": 5.0}
+        return {
+            "strategy": "shared_memory",
+            "status": "delivered",
+            "latency_ms": 5.0,
+        }
 
     async def _send_mcp_pipe(self, message: A2AMCPMessage) -> Dict[str, Any]:
         """MCP-optimized pipe transfer"""
@@ -318,7 +336,11 @@ class MCPEnabledA2AAgent(BaseAgent):
             # Send through MCP server (simulated)
             if self.message_bus:
                 await self.message_bus.send(message.a2a_message)
-            return {"strategy": "mcp_pipe", "status": "delivered", "latency_ms": 2.0}
+            return {
+                "strategy": "mcp_pipe",
+                "status": "delivered",
+                "latency_ms": 2.0,
+            }
         except Exception as e:
             logger.error(f"MCP pipe transfer failed: {e}")
             return await self._send_standard(message)
@@ -327,14 +349,23 @@ class MCPEnabledA2AAgent(BaseAgent):
         """Standard transport fallback"""
         if self.message_bus:
             await self.message_bus.send(message.a2a_message)
-        return {"strategy": "standard", "status": "delivered", "latency_ms": 10.0}
+        return {
+            "strategy": "standard",
+            "status": "delivered",
+            "latency_ms": 10.0,
+        }
 
-    async def handle_negotiation_request(self, message: A2AMessage) -> Dict[str, Any]:
+    async def handle_negotiation_request(
+        self, message: A2AMessage
+    ) -> Dict[str, Any]:
         """Handle incoming negotiation request"""
         content = message.content
 
         # Use MCP context to understand negotiation context
-        self.mcp_context.task = {"type": "negotiation", "topic": content.get("topic")}
+        self.mcp_context.task = {
+            "type": "negotiation",
+            "topic": content.get("topic"),
+        }
 
         # Generate response based on agent capabilities
         response = {
@@ -347,7 +378,9 @@ class MCPEnabledA2AAgent(BaseAgent):
         self.performance_stats["negotiations_completed"] += 1
         return response
 
-    async def handle_context_share(self, message: A2AMessage) -> Dict[str, Any]:
+    async def handle_context_share(
+        self, message: A2AMessage
+    ) -> Dict[str, Any]:
         """Handle MCP context sharing"""
         # Merge incoming context with local context
         incoming_context = message.content.get("context", {})
@@ -380,20 +413,30 @@ class MCPEnabledA2AAgent(BaseAgent):
         # Execute tool through MCP server
         try:
             result = await self._execute_mcp_tool(tool_name, tool_params)
-            return {"status": "tool_executed", "tool": tool_name, "result": result}
+            return {
+                "status": "tool_executed",
+                "tool": tool_name,
+                "result": result,
+            }
         except Exception as e:
             return {"status": "tool_error", "tool": tool_name, "error": str(e)}
 
-    async def handle_collaboration_request(self, message: A2AMessage) -> Dict[str, Any]:
+    async def handle_collaboration_request(
+        self, message: A2AMessage
+    ) -> Dict[str, Any]:
         """Handle collaboration requests"""
         collaboration_type = message.content.get("type")
         data = message.content.get("data", {})
 
         # Process collaboration based on agent capabilities
-        if collaboration_type == "data_analysis" and "analyze" in self.capabilities:
+        if (
+            collaboration_type == "data_analysis"
+            and "analyze" in self.capabilities
+        ):
             result = await self._analyze_data(data)
         elif (
-            collaboration_type == "code_generation" and "generate" in self.capabilities
+            collaboration_type == "code_generation"
+            and "generate" in self.capabilities
         ):
             result = await self._generate_code(data)
         else:
@@ -414,7 +457,9 @@ class MCPEnabledA2AAgent(BaseAgent):
         else:
             return {"status": "unknown_tool"}
 
-    def _generate_negotiation_proposal(self, content: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_negotiation_proposal(
+        self, content: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Generate negotiation proposal based on agent capabilities"""
         return {
             "resources": self._get_available_resources(),
@@ -490,7 +535,9 @@ class A2AMCPOrchestrator:
         monitor_task = asyncio.create_task(self.performance_monitor.start())
 
         # Start negotiation manager
-        negotiation_task = asyncio.create_task(self.negotiation_manager.start())
+        negotiation_task = asyncio.create_task(
+            self.negotiation_manager.start()
+        )
 
         return bus_task, monitor_task, negotiation_task
 
@@ -592,7 +639,9 @@ async def demonstrate_a2a_mcp_integration():
     a2a_mcp_orchestrator.register_agent(negotiator)
 
     # Start orchestrator
-    bus_task, monitor_task, negotiation_task = await a2a_mcp_orchestrator.start()
+    bus_task, monitor_task, negotiation_task = (
+        await a2a_mcp_orchestrator.start()
+    )
 
     # Demo 1: Contextualized message sending
     print("1. Sending contextualized message:")

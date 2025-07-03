@@ -113,12 +113,16 @@ class ContinuousLearningLLM:
 
             # Initialize quantum connector
             quantum_config = config.get("quantum", {}) if config else {}
-            quantum_connected = await self.quantum_connector.connect(quantum_config)
+            quantum_connected = await self.quantum_connector.connect(
+                quantum_config
+            )
 
             if quantum_connected:
                 logger.info("✅ Quantum computing resources available")
             else:
-                logger.info("⚠️  Quantum computing not available, using classical only")
+                logger.info(
+                    "⚠️  Quantum computing not available, using classical only"
+                )
 
             # Load or create initial model
             await self._load_or_create_model()
@@ -130,7 +134,9 @@ class ContinuousLearningLLM:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to initialize continuous learning system: {e}")
+            logger.error(
+                f"Failed to initialize continuous learning system: {e}"
+            )
             return False
 
     async def ingest_data(
@@ -147,8 +153,13 @@ class ContinuousLearningLLM:
             logger.info(f"Ingesting data from: {data_source}")
 
             # Analyze massive dataset if it's a large collection
-            if data_source.endswith("/gptdata") or "massive" in data_source.lower():
-                analysis_result = await self._analyze_massive_dataset(data_source)
+            if (
+                data_source.endswith("/gptdata")
+                or "massive" in data_source.lower()
+            ):
+                analysis_result = await self._analyze_massive_dataset(
+                    data_source
+                )
                 return await self._process_massive_data(analysis_result)
 
             # Process regular data
@@ -184,12 +195,16 @@ class ContinuousLearningLLM:
             )
 
             # Preprocess training data
-            processed_data = await self._preprocess_training_data(training_data)
+            processed_data = await self._preprocess_training_data(
+                training_data
+            )
 
             # Use quantum optimization for hyperparameter tuning
             if self.quantum_connector.connected:
-                optimized_params = await self._quantum_hyperparameter_optimization(
-                    processed_data
+                optimized_params = (
+                    await self._quantum_hyperparameter_optimization(
+                        processed_data
+                    )
                 )
             else:
                 optimized_params = self._classical_hyperparameter_optimization(
@@ -206,7 +221,9 @@ class ContinuousLearningLLM:
 
             # Update performance tracking
             training_time = time.time() - start_time
-            self.training_stats["total_samples_processed"] += len(training_data)
+            self.training_stats["total_samples_processed"] += len(
+                training_data
+            )
             self.training_stats["total_training_time"] += training_time
             self.training_stats["model_versions"] += 1
 
@@ -218,7 +235,9 @@ class ContinuousLearningLLM:
                 "training_time": training_time,
                 "samples_processed": len(training_data),
                 "new_model_version": new_version.version_id,
-                "performance_improvement": training_result.get("improvement", 0.0),
+                "performance_improvement": training_result.get(
+                    "improvement", 0.0
+                ),
                 "quantum_optimized": self.quantum_connector.connected,
             }
 
@@ -277,7 +296,9 @@ class ContinuousLearningLLM:
             logger.error(f"Model rollback failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def _analyze_massive_dataset(self, data_source: str) -> Dict[str, Any]:
+    async def _analyze_massive_dataset(
+        self, data_source: str
+    ) -> Dict[str, Any]:
         """Analyze massive dataset using existing analyzer"""
         try:
             # Use the existing multimodal LLM analyzer
@@ -320,7 +341,10 @@ class ContinuousLearningLLM:
                     training_data.append(
                         TrainingData(
                             text=str(insight),
-                            metadata={"type": "insight", "category": insight_type},
+                            metadata={
+                                "type": "insight",
+                                "category": insight_type,
+                            },
                             source="massive_analysis",
                             timestamp=datetime.utcnow(),
                             quality_score=0.9,
@@ -387,13 +411,18 @@ class ContinuousLearningLLM:
                     content = f.read()
 
                 # Split into chunks
-                chunks = self._split_text_into_chunks(content, max_chunk_size=1000)
+                chunks = self._split_text_into_chunks(
+                    content, max_chunk_size=1000
+                )
 
                 for i, chunk in enumerate(chunks):
                     training_data.append(
                         TrainingData(
                             text=chunk,
-                            metadata={"chunk_id": i, "source_file": data_source},
+                            metadata={
+                                "chunk_id": i,
+                                "source_file": data_source,
+                            },
                             source=data_source,
                             timestamp=datetime.utcnow(),
                             quality_score=0.7,
@@ -453,14 +482,18 @@ class ContinuousLearningLLM:
         """Use quantum computing for hyperparameter optimization"""
         try:
             # Create optimization problem for hyperparameters
-            optimization_problem = self._create_hyperparameter_optimization_problem(
-                training_data
+            optimization_problem = (
+                self._create_hyperparameter_optimization_problem(training_data)
             )
 
             # Solve using quantum annealer
             result = await self.quantum_connector.execute_action(
                 "solve_qubo",
-                {"qubo": optimization_problem, "num_reads": 200, "annealing_time": 50},
+                {
+                    "qubo": optimization_problem,
+                    "num_reads": 200,
+                    "annealing_time": 50,
+                },
             )
 
             if result.get("success", False):
@@ -468,8 +501,12 @@ class ContinuousLearningLLM:
                 solution = result.get("best_solution", {})
                 return self._extract_hyperparameters_from_solution(solution)
             else:
-                logger.warning("Quantum optimization failed, using classical fallback")
-                return self._classical_hyperparameter_optimization(training_data)
+                logger.warning(
+                    "Quantum optimization failed, using classical fallback"
+                )
+                return self._classical_hyperparameter_optimization(
+                    training_data
+                )
 
         except Exception as e:
             logger.error(f"Quantum hyperparameter optimization failed: {e}")
@@ -514,7 +551,9 @@ class ContinuousLearningLLM:
         self, training_result: Dict[str, Any]
     ) -> ModelVersion:
         """Create a new model version"""
-        version_id = f"v{self.training_stats['model_versions'] + 1}_{int(time.time())}"
+        version_id = (
+            f"v{self.training_stats['model_versions'] + 1}_{int(time.time())}"
+        )
 
         # Create version info
         version = ModelVersion(
@@ -554,7 +593,10 @@ class ContinuousLearningLLM:
                 training_data = []
 
                 # Collect data from queue
-                while not self.training_queue.empty() and len(training_data) < 100:
+                while (
+                    not self.training_queue.empty()
+                    and len(training_data) < 100
+                ):
                     data = await self.training_queue.get()
                     training_data.append(data)
 
@@ -681,12 +723,16 @@ class ContinuousLearningLLM:
         # Batch size options: 16, 32, 64, 128
         batch_values = [16, 32, 64, 128]
         for i, bs in enumerate(batch_values):
-            qubo[f"batch_{i}"] = abs(bs - 32) * 10  # Penalty for deviation from default
+            qubo[f"batch_{i}"] = (
+                abs(bs - 32) * 10
+            )  # Penalty for deviation from default
 
         # Add constraints (only one value per parameter)
         for i in range(len(lr_values)):
             for j in range(i + 1, len(lr_values)):
-                qubo[f"lr_{i}*lr_{j}"] = 1000  # Large penalty for multiple selections
+                qubo[f"lr_{i}*lr_{j}"] = (
+                    1000  # Large penalty for multiple selections
+                )
 
         for i in range(len(batch_values)):
             for j in range(i + 1, len(batch_values)):
@@ -744,7 +790,9 @@ async def demonstrate_continuous_learning():
 
     # Demo 1: Ingest massive dataset
     print("1. Ingesting massive dataset:")
-    ingest_result = await continuous_learner.ingest_data("/data/gptdata", "massive")
+    ingest_result = await continuous_learner.ingest_data(
+        "/data/gptdata", "massive"
+    )
 
     if ingest_result["success"]:
         print(f"   - Data ingested: {ingest_result['data_ingested']}")

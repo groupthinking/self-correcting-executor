@@ -117,7 +117,9 @@ class NegotiationAgent(BaseAgent):
         """Process negotiation intent"""
         if intent.get("action") == "negotiate":
             return await self.negotiate_between_agents(
-                intent["agents"], intent["topic"], intent.get("constraints", {})
+                intent["agents"],
+                intent["topic"],
+                intent.get("constraints", {}),
             )
         return {"error": "Unknown intent"}
 
@@ -150,7 +152,10 @@ class NegotiationAgent(BaseAgent):
             await self.send_message(
                 recipient=agent,
                 message_type="negotiation_result",
-                content={"negotiation_id": negotiation_id, "solution": solution},
+                content={
+                    "negotiation_id": negotiation_id,
+                    "solution": solution,
+                },
             )
 
         return {
@@ -160,7 +165,9 @@ class NegotiationAgent(BaseAgent):
             "status": "completed",
         }
 
-    async def find_optimal_solution(self, proposals: Dict, constraints: Dict) -> Dict:
+    async def find_optimal_solution(
+        self, proposals: Dict, constraints: Dict
+    ) -> Dict:
         """Find optimal solution from proposals"""
         # This would use optimization algorithms
         # For now, return a simple solution
@@ -232,7 +239,9 @@ class A2AMessageBus:
         self.running = True
         while self.running:
             try:
-                message = await asyncio.wait_for(self.message_queue.get(), timeout=1.0)
+                message = await asyncio.wait_for(
+                    self.message_queue.get(), timeout=1.0
+                )
 
                 # Deliver to recipient
                 recipient = self.agents.get(message.recipient)

@@ -140,9 +140,15 @@ class MojoTransportLayer:
         # In real Mojo, this would be direct memory transfer
         await asyncio.sleep(0.00001)  # Simulate 10 microsecond transfer
 
-        return {"status": "delivered", "method": "zero_copy", "zero_copy": True}
+        return {
+            "status": "delivered",
+            "method": "zero_copy",
+            "zero_copy": True,
+        }
 
-    async def _shared_memory_send(self, message: UnifiedMessage) -> Dict[str, Any]:
+    async def _shared_memory_send(
+        self, message: UnifiedMessage
+    ) -> Dict[str, Any]:
         """Shared memory for large transfers"""
         # Simulate shared memory allocation and mapping
         await asyncio.sleep(0.0001)  # Simulate 100 microsecond transfer
@@ -164,7 +170,9 @@ class MojoTransportLayer:
             "pipe_id": f"pipe_{id(message)}",
         }
 
-    async def _handle_passing_send(self, message: UnifiedMessage) -> Dict[str, Any]:
+    async def _handle_passing_send(
+        self, message: UnifiedMessage
+    ) -> Dict[str, Any]:
         """Handle passing for resources (GPU memory, file descriptors, etc)"""
         # Simulate handle duplication and passing
         await asyncio.sleep(0.00005)  # Simulate 50 microsecond transfer
@@ -172,10 +180,18 @@ class MojoTransportLayer:
         handles = []
         for handle in message.resource_handles or []:
             handles.append(
-                {"type": type(handle).__name__, "id": id(handle), "transferred": True}
+                {
+                    "type": type(handle).__name__,
+                    "id": id(handle),
+                    "transferred": True,
+                }
             )
 
-        return {"status": "delivered", "method": "handle_passing", "handles": handles}
+        return {
+            "status": "delivered",
+            "method": "handle_passing",
+            "handles": handles,
+        }
 
 
 class IntelligentUnifiedAgent(BaseAgent):
@@ -253,7 +269,10 @@ class IntelligentUnifiedAgent(BaseAgent):
         )
 
         # Verify SLA compliance
-        if transport_result["transport_latency_ms"] > self.sla["max_latency_ms"]:
+        if (
+            transport_result["transport_latency_ms"]
+            > self.sla["max_latency_ms"]
+        ):
             print(
                 f"⚠️  SLA violation: {transport_result['transport_latency_ms']:.2f}ms > {self.sla['max_latency_ms']}ms"
             )
@@ -284,7 +303,9 @@ class IntelligentUnifiedAgent(BaseAgent):
             "context": self.mcp_context.to_dict(),
         }
 
-    async def negotiate_with_agents(self, partners: List[str], topic: str) -> Dict:
+    async def negotiate_with_agents(
+        self, partners: List[str], topic: str
+    ) -> Dict:
         """High-performance multi-agent negotiation"""
         tasks = []
 
@@ -302,7 +323,9 @@ class IntelligentUnifiedAgent(BaseAgent):
         results = await asyncio.gather(*tasks)
 
         # Analyze transport performance
-        total_latency = sum(r["transport"]["transport_latency_ms"] for r in results)
+        total_latency = sum(
+            r["transport"]["transport_latency_ms"] for r in results
+        )
         strategies_used = [r["transport"]["strategy"] for r in results]
 
         return {
@@ -408,7 +431,9 @@ async def demonstrate_unified_architecture():
     print(f"  - Transport: {result['transport']['strategy']}")
     print(f"  - Latency: {result['transport']['transport_latency_ms']:.3f}ms")
     print(f"  - Zero-copy: {result['transport'].get('zero_copy', False)}")
-    print(f"  - GPU handle passed: {result['transport'].get('handles') is not None}")
+    print(
+        f"  - GPU handle passed: {result['transport'].get('handles') is not None}"
+    )
     print(f"  - MCP context size: {result['mcp_context_size']} bytes")
     print()
 
@@ -416,13 +441,17 @@ async def demonstrate_unified_architecture():
     print("2. HIGH-PERFORMANCE MULTI-AGENT NEGOTIATION")
     print("-" * 50)
 
-    coordinator = IntelligentUnifiedAgent("coordinator", ["coordinate", "allocate"])
+    coordinator = IntelligentUnifiedAgent(
+        "coordinator", ["coordinate", "allocate"]
+    )
 
     negotiation_result = await coordinator.negotiate_with_agents(
         ["resource_manager", "scheduler", "optimizer"], "datacenter_resources"
     )
 
-    print(f"✓ Negotiation completed with {len(negotiation_result['partners'])} agents")
+    print(
+        f"✓ Negotiation completed with {len(negotiation_result['partners'])} agents"
+    )
     print(
         f"  - Total latency: {negotiation_result['performance']['total_latency_ms']:.3f}ms"
     )
@@ -445,13 +474,17 @@ async def demonstrate_unified_architecture():
             if strategy not in all_stats:
                 all_stats[strategy] = {"count": 0, "total_latency_ms": 0}
             all_stats[strategy]["count"] += stats["count"]
-            all_stats[strategy]["total_latency_ms"] += stats["total_latency_ms"]
+            all_stats[strategy]["total_latency_ms"] += stats[
+                "total_latency_ms"
+            ]
 
     print("Transport Strategy Usage:")
     for strategy, stats in all_stats.items():
         if stats["count"] > 0:
             avg_latency = stats["total_latency_ms"] / stats["count"]
-            print(f"  - {strategy}: {stats['count']} calls, avg {avg_latency:.3f}ms")
+            print(
+                f"  - {strategy}: {stats['count']} calls, avg {avg_latency:.3f}ms"
+            )
 
     print()
     print("KEY INSIGHTS:")

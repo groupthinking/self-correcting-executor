@@ -77,7 +77,9 @@ def task():
             "success": True,
             "action": "database_health_check",
             "database_info": {
-                "version": db_version.split(",")[0],  # Truncate long version string
+                "version": db_version.split(",")[
+                    0
+                ],  # Truncate long version string
                 "size_bytes": db_size,
                 "size_mb": round(db_size / (1024 * 1024), 2),
                 "connection_count": connection_count,

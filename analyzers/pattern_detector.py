@@ -18,7 +18,9 @@ class PatternDetector:
         self.insights = []
         self.mutation_recommendations = []
 
-    async def analyze_execution_patterns(self, time_window: timedelta = None) -> Dict:
+    async def analyze_execution_patterns(
+        self, time_window: timedelta = None
+    ) -> Dict:
         """Analyze execution patterns from database"""
         # Get execution history
         history = await self._get_execution_data(time_window)
@@ -34,7 +36,9 @@ class PatternDetector:
         )
 
         # Generate mutation recommendations
-        recommendations = await self._generate_mutation_recommendations(insights)
+        recommendations = await self._generate_mutation_recommendations(
+            insights
+        )
 
         return {
             "patterns": {
@@ -47,7 +51,9 @@ class PatternDetector:
             "analysis_timestamp": datetime.utcnow().isoformat(),
         }
 
-    async def _get_execution_data(self, time_window: timedelta = None) -> List[Dict]:
+    async def _get_execution_data(
+        self, time_window: timedelta = None
+    ) -> List[Dict]:
         """Get execution data from database"""
         # In real implementation, would query database
         # For now, return mock data
@@ -114,7 +120,9 @@ class PatternDetector:
         protocol_durations = defaultdict(list)
         for execution in history:
             if "duration" in execution:
-                protocol_durations[execution["protocol"]].append(execution["duration"])
+                protocol_durations[execution["protocol"]].append(
+                    execution["duration"]
+                )
 
         # Find slow protocols
         for protocol, durations in protocol_durations.items():
@@ -139,7 +147,8 @@ class PatternDetector:
                     performance_patterns["performance_degradation"].append(
                         {
                             "protocol": protocol,
-                            "degradation_factor": np.mean(recent) / np.mean(older),
+                            "degradation_factor": np.mean(recent)
+                            / np.mean(older),
                             "trend": "increasing",
                         }
                     )
@@ -161,7 +170,9 @@ class PatternDetector:
             protocol_usage[execution["protocol"]] += 1
 
         # Sort by usage
-        sorted_usage = sorted(protocol_usage.items(), key=lambda x: x[1], reverse=True)
+        sorted_usage = sorted(
+            protocol_usage.items(), key=lambda x: x[1], reverse=True
+        )
         usage_patterns["most_used_protocols"] = [
             {"protocol": p, "usage_count": c} for p, c in sorted_usage[:5]
         ]
@@ -169,7 +180,10 @@ class PatternDetector:
         return usage_patterns
 
     async def _generate_insights(
-        self, failure_patterns: Dict, performance_patterns: Dict, usage_patterns: Dict
+        self,
+        failure_patterns: Dict,
+        performance_patterns: Dict,
+        usage_patterns: Dict,
     ) -> List[Dict]:
         """Generate actionable insights from patterns"""
         insights = []
@@ -293,7 +307,9 @@ class InsightDrivenMutator:
 
         # Generate mutated code based on type
         if mutation_type == "error_handling":
-            mutated_code = await self._add_error_handling(current_code, recommendation)
+            mutated_code = await self._add_error_handling(
+                current_code, recommendation
+            )
         elif mutation_type == "performance_optimization":
             mutated_code = await self._add_performance_optimization(
                 current_code, recommendation
@@ -323,7 +339,9 @@ def task():
     return random.random() > 0.5
 """
 
-    async def _add_error_handling(self, code: str, recommendation: Dict) -> str:
+    async def _add_error_handling(
+        self, code: str, recommendation: Dict
+    ) -> str:
         """Add error handling to code"""
         # In real implementation, would use AST manipulation
         return f"""
