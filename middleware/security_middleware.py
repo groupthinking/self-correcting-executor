@@ -80,7 +80,7 @@ class SecurityMiddleware:
                                       provided_password.encode('utf-8'),
                                       salt,
                                       100000)
-        return pwdhash.hex() == stored_hash
+        return hashlib.compare_digest(pwdhash.hex(), stored_hash)
     
     def extract_token_from_request(self) -> Optional[str]:
         """Extract JWT token from request headers"""
