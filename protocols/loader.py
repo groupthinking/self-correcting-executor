@@ -3,28 +3,24 @@ import importlib
 import os
 from utils.logger import log
 
+
 def load_protocol(name):
     """Dynamically load a protocol module by name"""
     try:
         module = importlib.import_module(f"protocols.{name}")
-        return {
-            'name': name,
-            'task': module.task
-        }
+        return {"name": name, "task": module.task}
     except ImportError as e:
         log(f"Failed to load protocol {name}: {e}")
         # Create default protocol if it doesn't exist
         create_default_protocol(name)
         # Try loading again
         module = importlib.import_module(f"protocols.{name}")
-        return {
-            'name': name,
-            'task': module.task
-        }
+        return {"name": name, "task": module.task}
+
 
 def create_default_protocol(name):
     """Create a default protocol file if it doesn't exist"""
-    protocol_file = f'protocols/{name}.py'
+    protocol_file = f"protocols/{name}.py"
     if not os.path.exists(protocol_file):
         log(f"Creating default protocol: {name}")
         default_content = f'''# Default protocol: {name}
@@ -36,17 +32,18 @@ def task():
     result = {{'success': bool(randint(0, 1)), 'action': 'default_execution'}}
     return result
 '''
-        with open(protocol_file, 'w') as f:
+        with open(protocol_file, "w") as f:
             f.write(default_content)
         log(f"Default protocol {name} created successfully")
+
 
 def list_protocols():
     """List all available protocols"""
     protocols = []
-    protocols_dir = 'protocols'
+    protocols_dir = "protocols"
     if os.path.exists(protocols_dir):
         for filename in os.listdir(protocols_dir):
-            if filename.endswith('.py') and not filename.startswith('__'):
+            if filename.endswith(".py") and not filename.startswith("__"):
                 protocol_name = filename[:-3]  # Remove .py extension
                 protocols.append(protocol_name)
     return protocols

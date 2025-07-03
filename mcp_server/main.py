@@ -83,7 +83,10 @@ class MCPServer:
                 input_schema={
                     "type": "object",
                     "properties": {
-                        "code": {"type": "string", "description": "The code to analyze"},
+                        "code": {
+                            "type": "string",
+                            "description": "The code to analyze",
+                        },
                         "language": {
                             "type": "string",
                             "description": "Programming language",
@@ -206,9 +209,7 @@ class MCPServer:
             raise Exception(f"Unknown method: {method}")
         return handlers[method]
 
-    async def _handle_initialize(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _handle_initialize(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle the 'initialize' request."""
         client_info = params.get("clientInfo", {})
         LOGGER.info("Initializing session for client: %s", client_info.get("name"))
@@ -250,16 +251,12 @@ class MCPServer:
             "timestamp": datetime.utcnow().isoformat(),
         }
 
-    async def _handle_resources_list(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _handle_resources_list(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle the 'resources/list' request."""
         _ = params  # Unused
         return {"resources": [resource.to_dict() for resource in self.resources]}
 
-    async def _handle_resources_read(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _handle_resources_read(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle the 'resources/read' request."""
         uri = params.get("uri")
         content = ""
@@ -297,9 +294,7 @@ class MCPServer:
         _ = params  # Unused
         return {"status": "subscribed"}
 
-    async def _execute_code_analyzer(
-        self, arguments: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _execute_code_analyzer(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the 'code_analyzer' tool."""
         code = arguments.get("code")
         if not code:
@@ -308,7 +303,9 @@ class MCPServer:
         try:
             tree = ast.parse(code)
             lines_of_code = len(code.splitlines())
-            num_functions = sum(1 for node in ast.walk(tree) if isinstance(node, ast.FunctionDef))
+            num_functions = sum(
+                1 for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
+            )
             complexity = self._calculate_complexity(tree)
 
             result = {
@@ -369,7 +366,11 @@ class MCPServer:
 
             if message.get("jsonrpc") != "2.0":
                 issues.append("Invalid 'jsonrpc' version")
-            if "method" not in message and "result" not in message and "error" not in message:
+            if (
+                "method" not in message
+                and "result" not in message
+                and "error" not in message
+            ):
                 issues.append("Missing 'method', 'result', or 'error' field")
             if "id" not in message:
                 issues.append("Missing 'id' field for request/response")
@@ -406,17 +407,12 @@ class MCPServer:
                     "Found 'time.sleep'. Consider using 'asyncio.sleep' in async code."
                 )
             if re.search(r"except\s*:", code):
-                suggestions.append(
-                    "Found broad 'except:'. Specify the exception type."
-                )
+                suggestions.append("Found broad 'except:'. Specify the exception type.")
 
         except SyntaxError as e:
             suggestions.append(f"Syntax Error: {e}")
 
-        result = {
-            "issues_found": len(suggestions),
-            "suggestions": suggestions
-        }
+        result = {"issues_found": len(suggestions), "suggestions": suggestions}
         return {
             "content": [
                 {
@@ -452,7 +448,9 @@ async def handle_stdin_stdout():
         w_transport, w_protocol = await asyncio.get_event_loop().connect_write_pipe(
             asyncio.Protocol, sys.stdout
         )
-        writer = asyncio.StreamWriter(w_transport, w_protocol, None, asyncio.get_event_loop())
+        writer = asyncio.StreamWriter(
+            w_transport, w_protocol, None, asyncio.get_event_loop()
+        )
 
     while not reader.at_eof():
         line = await reader.readline()
@@ -467,7 +465,7 @@ async def handle_stdin_stdout():
             if writer:
                 writer.write(response_str.encode())
                 await writer.drain()
-            else: # Fallback for Windows
+            else:  # Fallback for Windows
                 print(response_str, flush=True)
 
         except json.JSONDecodeError:
@@ -483,4 +481,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(handle_stdin_stdout())
     except KeyboardInterrupt:
-        LOGGER.info("MCP Server deactivated.") 
+        LOGGER.info("MCP Server deactivated.")
