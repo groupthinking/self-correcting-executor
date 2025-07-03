@@ -10,7 +10,7 @@ on:
       - '**.py'
 
 jobs:
-  lint-test:
+  actions:
     runs-on: ubuntu-latest
     strategy:
       matrix:
