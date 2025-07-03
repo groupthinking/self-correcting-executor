@@ -65,7 +65,6 @@ class BaseAgent(ABC):
     @abstractmethod
     async def process_intent(self, intent: Dict) -> Dict:
         """Process an intent and return result"""
-        pass
 
     async def send_message(
         self, recipient: str, message_type: str, content: Dict
@@ -165,8 +164,9 @@ class NegotiationAgent(BaseAgent):
         }
 
     async def find_optimal_solution(
-        self, proposals: Dict, constraints: Dict
-    ) -> Dict:
+            self,
+            proposals: Dict,
+            constraints: Dict) -> Dict:
         """Find optimal solution from proposals"""
         # This would use optimization algorithms
         # For now, return a simple solution
@@ -238,9 +238,7 @@ class A2AMessageBus:
         self.running = True
         while self.running:
             try:
-                message = await asyncio.wait_for(
-                    self.message_queue.get(), timeout=1.0
-                )
+                message = await asyncio.wait_for(self.message_queue.get(), timeout=1.0)
 
                 # Deliver to recipient
                 recipient = self.agents.get(message.recipient)

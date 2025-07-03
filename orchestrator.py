@@ -1,12 +1,10 @@
 # Intelligent Orchestration Engine
 # Coordinates agents, protocols, and services based on intent
 
-import json
 import asyncio
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from utils.logger import log
-from utils.db_tracker import track_outcome, get_protocol_stats
 
 # Import specialized agents
 try:
@@ -75,9 +73,7 @@ class OrchestrationEngine:
         )
 
         # 3. Workflow Generation
-        workflow = await self.generate_workflow(
-            analyzed_intent, required_components
-        )
+        workflow = await self.generate_workflow(analyzed_intent, required_components)
 
         # 4. Execute Workflow
         result = await self.execute_workflow(workflow)
@@ -105,8 +101,7 @@ class OrchestrationEngine:
             action = "list_directory"
             target = "filesystem"
         elif any(
-            keyword in intent_lower
-            for keyword in ["read", "open", "cat", "show file"]
+            keyword in intent_lower for keyword in ["read", "open", "cat", "show file"]
         ):
             action = "read_file"
             target = "filesystem"
@@ -117,15 +112,11 @@ class OrchestrationEngine:
             action = "multimodal_analysis"
             target = "llm"
         elif any(
-            keyword in intent_lower
-            for keyword in ["analyze", "pattern", "insight"]
+            keyword in intent_lower for keyword in ["analyze", "pattern", "insight"]
         ):
             action = "analyze"
             target = "data"
-        elif any(
-            keyword in intent_lower
-            for keyword in ["check", "health", "status"]
-        ):
+        elif any(keyword in intent_lower for keyword in ["check", "health", "status"]):
             action = "monitor"
             target = "system"
         else:
@@ -151,13 +142,15 @@ class OrchestrationEngine:
             # Simple path extraction: assumes path is the last word
             parts = intent.split()
             path = parts[-1] if len(parts) > 1 and "/" in parts[-1] else "."
-            # A more robust NLP/regex solution would be better here in a real system
+            # A more robust NLP/regex solution would be better here in a real
+            # system
             return {"path": path}
         return {}
 
     async def discover_components(
-        self, intent: Dict, sources: List[str]
-    ) -> Dict:
+            self,
+            intent: Dict,
+            sources: List[str]) -> Dict:
         """Discover which components are needed"""
         components = {
             "agents": [],
@@ -206,10 +199,7 @@ class OrchestrationEngine:
         # Build workflow steps based on action
         action = intent["parsed_intent"]["action"]
 
-        if (
-            action == "generate_code"
-            and "code_generator" in components["agents"]
-        ):
+        if action == "generate_code" and "code_generator" in components["agents"]:
             # Code generation workflow
             workflow["steps"].append(
                 {
@@ -280,17 +270,11 @@ class OrchestrationEngine:
         for step in workflow["steps"]:
             try:
                 if step["type"] == "protocol":
-                    result = await self.execute_protocol(
-                        step["name"], step["inputs"]
-                    )
+                    result = await self.execute_protocol(step["name"], step["inputs"])
                 elif step["type"] == "analyzer":
-                    result = await self.execute_analyzer(
-                        step["name"], step["inputs"]
-                    )
+                    result = await self.execute_analyzer(step["name"], step["inputs"])
                 elif step["type"] == "agent":
-                    result = await self.execute_agent(
-                        step["name"], step["inputs"]
-                    )
+                    result = await self.execute_agent(step["name"], step["inputs"])
 
                 results["steps_completed"].append(
                     {
@@ -364,7 +348,6 @@ class OrchestrationEngine:
         # - Mutate protocols
         # - Adjust workflow generation
         # - Update component selection logic
-        pass
 
 
 class MessageBus:
@@ -433,8 +416,9 @@ class KnowledgeGraph:
 
 # CLI Interface matching your example
 async def run_mcp(
-    intent: str, sources: List[str], quantum: bool = False
-) -> Dict:
+        intent: str,
+        sources: List[str],
+        quantum: bool = False) -> Dict:
     """Run MCP orchestration from CLI"""
     engine = OrchestrationEngine()
 

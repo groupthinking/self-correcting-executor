@@ -14,16 +14,13 @@ Tools:
 """
 
 import asyncio
-import json
 import logging
-from typing import Dict, List, Any, Optional
-from datetime import datetime
+from typing import Dict, List, Any
 import numpy as np
 
 # Import D-Wave connector
 from connectors.dwave_quantum_connector import (
     DWaveQuantumConnector,
-    QuantumResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,12 +50,12 @@ class QuantumMCPTools:
                 )
                 self.solver_info = solver_result.get("solver_info", {})
                 logger.info(
-                    f"Connected to quantum solver: {self.solver_info.get('name', 'Unknown')}"
-                )
+                    f"Connected to quantum solver: {
+                        self.solver_info.get(
+                            'name', 'Unknown')}")
             else:
                 logger.warning(
-                    "Quantum connector not available, using simulation mode"
-                )
+                    "Quantum connector not available, using simulation mode")
 
             return True
 
@@ -90,9 +87,7 @@ class QuantumMCPTools:
                 "annealing_time": annealing_time,
             }
 
-            result = await self.quantum_connector.execute_action(
-                "solve_qubo", params
-            )
+            result = await self.quantum_connector.execute_action("solve_qubo", params)
 
             if "error" in result:
                 return {
@@ -207,9 +202,7 @@ class QuantumMCPTools:
                 "num_reads": num_reads,
             }
 
-            result = await self.quantum_connector.execute_action(
-                "max_cut", params
-            )
+            result = await self.quantum_connector.execute_action("max_cut", params)
 
             if "error" in result:
                 return {
@@ -355,12 +348,13 @@ class QuantumMCPTools:
         self, training_data: Dict[str, Any], model_config: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Convert LLM training problem to QUBO optimization"""
-        # This is a simplified conversion - real implementation would be more sophisticated
+        # This is a simplified conversion - real implementation would be more
+        # sophisticated
 
         # Extract training parameters
         learning_rate = model_config.get("learning_rate", 0.001)
         batch_size = model_config.get("batch_size", 32)
-        epochs = model_config.get("epochs", 10)
+        model_config.get("epochs", 10)
 
         # Create QUBO for hyperparameter optimization
         qubo = {}
@@ -368,9 +362,8 @@ class QuantumMCPTools:
         # Learning rate optimization (discrete values)
         lr_values = [0.0001, 0.0005, 0.001, 0.005, 0.01]
         for i, lr in enumerate(lr_values):
-            qubo[f"x{i}"] = (
-                abs(lr - learning_rate) * 1000
-            )  # Penalty for deviation
+            qubo[f"x{i}"] = abs(lr - learning_rate) * \
+                1000  # Penalty for deviation
 
         # Batch size optimization
         batch_values = [16, 32, 64, 128]
@@ -380,9 +373,8 @@ class QuantumMCPTools:
         # Add constraints (only one value per parameter)
         for i in range(len(lr_values)):
             for j in range(i + 1, len(lr_values)):
-                qubo[f"x{i}*x{j}"] = (
-                    1000  # Large penalty for multiple selections
-                )
+                # Large penalty for multiple selections
+                qubo[f"x{i}*x{j}"] = 1000
 
         for i in range(len(batch_values)):
             for j in range(i + 1, len(batch_values)):
@@ -415,12 +407,10 @@ class QuantumMCPTools:
                 break
 
         return {
-            "learning_rate": selected_lr
-            or model_config.get("learning_rate", 0.001),
-            "batch_size": selected_batch or model_config.get("batch_size", 32),
-            "epochs": model_config.get("epochs", 10),
-            "optimization_method": "quantum_annealing",
-        }
+            "learning_rate": selected_lr or model_config.get(
+                "learning_rate", 0.001), "batch_size": selected_batch or model_config.get(
+                "batch_size", 32), "epochs": model_config.get(
+                "epochs", 10), "optimization_method": "quantum_annealing", }
 
     def _estimate_training_improvement(
         self, qubo_result: Dict[str, Any]
@@ -480,11 +470,9 @@ async def demonstrate_quantum_tools():
     print(f"   - Success: {llm_result['success']}")
     if llm_result["success"]:
         print(
-            f"   - Optimized parameters: {llm_result['optimized_parameters']}"
-        )
+            f"   - Optimized parameters: {llm_result['optimized_parameters']}")
         print(
-            f"   - Expected improvement: {llm_result['expected_improvement']}"
-        )
+            f"   - Expected improvement: {llm_result['expected_improvement']}")
     else:
         print(f"   - Error: {llm_result['error']}")
     print()

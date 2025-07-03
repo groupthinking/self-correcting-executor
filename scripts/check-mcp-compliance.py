@@ -4,7 +4,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 
 def check_no_mock_endpoints() -> Tuple[bool, List[str]]:
@@ -33,8 +33,7 @@ def check_no_mock_endpoints() -> Tuple[bool, List[str]]:
                 for indicator in mock_indicators:
                     if indicator in url_lower and "localhost" not in url_lower:
                         issues.append(
-                            f"Mock indicator '{indicator}' found in {name}: {url}"
-                        )
+                            f"Mock indicator '{indicator}' found in {name}: {url}")
 
         # Run built-in check
         try:
@@ -83,9 +82,8 @@ def check_mock_implementations_in_code() -> Tuple[bool, List[str]]:
                             # Count occurrences
                             count = content.count(pattern)
                             issues.append(
-                                f"{py_file}: {count} occurrences of '{pattern}'"
-                            )
-                except Exception as e:
+                                f"{py_file}: {count} occurrences of '{pattern}'")
+                except Exception:
                     pass
 
             # Check TypeScript files
@@ -99,9 +97,8 @@ def check_mock_implementations_in_code() -> Tuple[bool, List[str]]:
                         if pattern in content:
                             count = content.count(pattern)
                             issues.append(
-                                f"{ts_file}: {count} occurrences of '{pattern}'"
-                            )
-                except Exception as e:
+                                f"{ts_file}: {count} occurrences of '{pattern}'")
+                except Exception:
                     pass
 
     return len(issues) == 0, issues
@@ -132,9 +129,7 @@ def check_placeholder_code() -> Tuple[bool, List[str]]:
                     lines = content.splitlines()
                     for i, line in enumerate(lines, 1):
                         for pattern in placeholder_patterns:
-                            if pattern in line and not line.strip().startswith(
-                                "#"
-                            ):
+                            if pattern in line and not line.strip().startswith("#"):
                                 issues.append(f"{py_file}:{i} - {pattern}")
                 except Exception:
                     pass
@@ -168,8 +163,8 @@ def check_environment_setup() -> Tuple[bool, List[str]]:
 
     if missing_vars:
         issues.append(
-            f"Missing environment variables: {', '.join(missing_vars)}"
-        )
+            f"Missing environment variables: {
+                ', '.join(missing_vars)}")
 
     return len(issues) == 0, issues
 
@@ -188,14 +183,12 @@ def check_quantum_no_simulation() -> Tuple[bool, List[str]]:
             and "removed - real QPU only" not in content
         ):
             issues.append(
-                "Quantum connector still imports SimulatedAnnealingSampler"
-            )
+                "Quantum connector still imports SimulatedAnnealingSampler")
 
         # Should require real QPU
         if "Real QPU required" not in content:
             issues.append(
-                "Quantum connector doesn't enforce real QPU requirement"
-            )
+                "Quantum connector doesn't enforce real QPU requirement")
     else:
         issues.append("Quantum connector file not found")
 
@@ -211,10 +204,7 @@ def check_data_processor_real() -> Tuple[bool, List[str]]:
         content = data_file.read_text()
 
         # Should NOT return simulated results
-        if (
-            "simulated results" in content.lower()
-            and "NO SIMULATIONS" not in content
-        ):
+        if "simulated results" in content.lower() and "NO SIMULATIONS" not in content:
             issues.append("Data processor still returns simulated results")
     else:
         issues.append("Data processor file not found")

@@ -54,14 +54,14 @@ def ensure_tables_exist():
         # Create indexes for better performance
         cursor.execute(
             """
-            CREATE INDEX IF NOT EXISTS idx_executions_protocol 
+            CREATE INDEX IF NOT EXISTS idx_executions_protocol
             ON protocol_executions(protocol_name);
         """
         )
 
         cursor.execute(
             """
-            CREATE INDEX IF NOT EXISTS idx_executions_time 
+            CREATE INDEX IF NOT EXISTS idx_executions_time
             ON protocol_executions(execution_time);
         """
         )
@@ -89,7 +89,7 @@ def track_outcome(protocol_name, outcome):
         # Insert execution record
         cursor.execute(
             """
-            INSERT INTO protocol_executions 
+            INSERT INTO protocol_executions
             (protocol_name, execution_time, success, details)
             VALUES (%s, %s, %s, %s)
         """,
@@ -103,8 +103,10 @@ def track_outcome(protocol_name, outcome):
 
         conn.commit()
         log(
-            f"Outcome tracked in database for {protocol_name}: {outcome.get('success', 'unknown')}"
-        )
+            f"Outcome tracked in database for {protocol_name}: {
+                outcome.get(
+                    'success',
+                    'unknown')}")
 
     except Exception as e:
         log(f"Failed to track outcome in database: {e}")
@@ -129,9 +131,7 @@ def _track_to_file(protocol_name, outcome):
     try:
         with open(memory_file, "a") as f:
             f.write(json.dumps(enhanced_outcome) + "\n")
-        log(
-            f"Outcome tracked to file for {protocol_name} (database unavailable)"
-        )
+        log(f"Outcome tracked to file for {protocol_name} (database unavailable)")
     except Exception as e:
         log(f"Failed to track outcome to file: {e}")
 
@@ -144,7 +144,7 @@ def get_protocol_stats(protocol_name):
     try:
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 COUNT(*) as total,
                 SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes,
                 SUM(CASE WHEN NOT success THEN 1 ELSE 0 END) as failures,
@@ -223,7 +223,7 @@ def get_all_stats():
     try:
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 protocol_name,
                 COUNT(*) as total,
                 SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes,
@@ -284,7 +284,7 @@ def track_mutation(protocol_name, failure_rate, new_code, backup_code):
     try:
         cursor.execute(
             """
-            INSERT INTO protocol_mutations 
+            INSERT INTO protocol_mutations
             (protocol_name, mutation_time, previous_failure_rate, new_code, backup_code)
             VALUES (%s, %s, %s, %s, %s)
         """,
@@ -316,7 +316,7 @@ def get_mutation_history(protocol_name):
     try:
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 mutation_time,
                 previous_failure_rate,
                 new_code
@@ -336,9 +336,7 @@ def get_mutation_history(protocol_name):
                     "mutation_time": mutation_time.isoformat(),
                     "previous_failure_rate": failure_rate,
                     "code_preview": (
-                        new_code[:200] + "..."
-                        if len(new_code) > 200
-                        else new_code
+                        new_code[:200] + "..." if len(new_code) > 200 else new_code
                     ),
                 }
             )

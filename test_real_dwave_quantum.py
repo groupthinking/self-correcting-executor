@@ -61,11 +61,11 @@ class RealQuantumTest:
 
                 if solver_info["solver_info"]["type"] == "QPU":
                     logger.info(
-                        f"⚛️  Qubits: {solver_info['solver_info']['num_qubits']}"
-                    )
+                        f"⚛️  Qubits: {
+                            solver_info['solver_info']['num_qubits']}")
                     logger.info(
-                        f"🔗 Couplers: {solver_info['solver_info']['num_couplers']}"
-                    )
+                        f"🔗 Couplers: {
+                            solver_info['solver_info']['num_couplers']}")
 
                 return True
             else:
@@ -105,8 +105,7 @@ class RealQuantumTest:
                     return True
                 else:
                     logger.warning(
-                        f"⚠️  Energy {energy} not optimal (expected ~{expected_energy})"
-                    )
+                        f"⚠️  Energy {energy} not optimal (expected ~{expected_energy})")
                     return True  # Still counts as working
             else:
                 logger.error(f"❌ QUBO failed: {result.get('error')}")
@@ -186,7 +185,8 @@ class RealQuantumTest:
                     logger.info("🎯 Good cut found!")
                     return True
                 else:
-                    logger.warning(f"⚠️  Cut value {cut_value} could be better")
+                    logger.warning(
+                        f"⚠️  Cut value {cut_value} could be better")
                     return True  # Still working
             else:
                 logger.error(f"❌ Max-Cut failed: {result.get('error')}")
@@ -236,7 +236,7 @@ class RealQuantumTest:
         logger.info(f"📊 Total Tests: {total}")
         logger.info(f"✅ Passed: {passed}")
         logger.info(f"❌ Failed: {total - passed}")
-        logger.info(f"📈 Success Rate: {(passed/total)*100:.1f}%")
+        logger.info(f"📈 Success Rate: {(passed / total) * 100:.1f}%")
 
         if passed == total:
             logger.info("🎉 ALL TESTS PASSED! Real quantum computing working!")

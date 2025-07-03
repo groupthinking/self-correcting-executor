@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Replace all mock implementations with real endpoints"""
 
-import os
 import re
 from pathlib import Path
 from typing import List, Tuple
@@ -51,8 +50,10 @@ def update_file(file_path: Path, replacements: List[Tuple[str, str]]) -> int:
             matches = len(re.findall(pattern, content, re.IGNORECASE))
             if matches > 0:
                 content = re.sub(
-                    pattern, replacement, content, flags=re.IGNORECASE
-                )
+                    pattern,
+                    replacement,
+                    content,
+                    flags=re.IGNORECASE)
                 changes += matches
 
         # Only write if changes were made
@@ -116,11 +117,8 @@ def main():
     python_files = find_python_files(workspace)
 
     # Skip virtual environments and cache
-    python_files = [
-        f
-        for f in python_files
-        if "venv" not in str(f) and "__pycache__" not in str(f)
-    ]
+    python_files = [f for f in python_files if "venv" not in str(
+        f) and "__pycache__" not in str(f)]
 
     for file_path in python_files:
         # Add imports to test files

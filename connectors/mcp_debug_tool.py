@@ -3,15 +3,12 @@ MCP Debug Tool - Advanced debugging capabilities with GCP integration
 Supports quantum agent applications and real-time code analysis
 """
 
-import json
 import asyncio
-import traceback
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 import aiohttp
 import logging
-from pathlib import Path
 
 from connectors.mcp_base import MCPConnector
 
@@ -207,9 +204,7 @@ class MCPDebugTool(MCPConnector):
         return MCPDebugContext(
             file=mcp_data.get("file", "unknown"),
             line=mcp_data.get("line", 0),
-            timestamp=mcp_data.get(
-                "timestamp", datetime.now(timezone.utc).isoformat()
-            ),
+            timestamp=mcp_data.get("timestamp", datetime.now(timezone.utc).isoformat()),
             stack_trace=error.split("\n") if error else None,
         )
 
@@ -269,16 +264,15 @@ class MCPDebugTool(MCPConnector):
                     return await response.json()
                 else:
                     self.logger.warning(
-                        f"GCP API returned status {response.status}"
-                    )
+                        f"GCP API returned status {
+                            response.status}")
                     return await self._fallback_reasoning(code, error)
         except Exception as e:
             self.logger.error(f"GCP API call failed: {str(e)}")
             return await self._fallback_reasoning(code, error)
 
     async def _fallback_reasoning(
-        self, code: str, error: str
-    ) -> Dict[str, Any]:
+            self, code: str, error: str) -> Dict[str, Any]:
         """Fallback reasoning when GCP is unavailable"""
         suggestions = []
 
@@ -298,8 +292,7 @@ class MCPDebugTool(MCPConnector):
 
         return {
             "reasoning": "Local analysis performed (GCP unavailable)",
-            "suggestions": suggestions
-            or ["Review code logic and error patterns"],
+            "suggestions": suggestions or ["Review code logic and error patterns"],
         }
 
     async def _generate_fixes(
@@ -326,14 +319,11 @@ class MCPDebugTool(MCPConnector):
 
         # Performance optimization fixes
         if code_analysis.get("complexity", 0) > 10:
-            fixes.append(
-                {
-                    "type": "optimization",
-                    "description": "Reduce code complexity",
-                    "suggestion": "Break down complex functions into smaller ones",
-                    "priority": "medium",
-                }
-            )
+            fixes.append({"type": "optimization",
+                          "description": "Reduce code complexity",
+                          "suggestion": "Break down complex functions into smaller ones",
+                          "priority": "medium",
+                          })
 
         return fixes
 
@@ -349,8 +339,7 @@ class MCPDebugTool(MCPConnector):
         for insight_type, insight_data in quantum_insights.items():
             if isinstance(insight_data, dict) and "error" not in insight_data:
                 if insight_type == "qubit_state" and insight_data.get(
-                    "issues"
-                ):
+                        "issues"):
                     fixes.append(
                         {
                             "type": "quantum_state",
@@ -358,12 +347,10 @@ class MCPDebugTool(MCPConnector):
                             "suggestion": "Initialize qubits properly and check measurement timing",
                             "priority": "high",
                             "quantum_specific": True,
-                        }
-                    )
+                        })
 
                 if insight_type == "entanglement" and insight_data.get(
-                    "warning"
-                ):
+                        "warning"):
                     fixes.append(
                         {
                             "type": "quantum_entanglement",
@@ -371,8 +358,7 @@ class MCPDebugTool(MCPConnector):
                             "suggestion": "Review gate sequence and timing",
                             "priority": "medium",
                             "quantum_specific": True,
-                        }
-                    )
+                        })
 
         return fixes
 
@@ -418,10 +404,11 @@ class MCPDebugTool(MCPConnector):
         """Calculate performance metrics for the code"""
         return {
             "complexity_score": self._calculate_complexity(code),
-            "line_count": len(code.split("\n")),
+            "line_count": len(
+                code.split("\n")),
             "estimated_runtime": (
-                "low" if len(code.split("\n")) < 100 else "medium"
-            ),
+                "low" if len(
+                    code.split("\n")) < 100 else "medium"),
             "memory_usage": "estimated_low",
             "quantum_efficiency": self._estimate_quantum_efficiency(code),
         }
@@ -438,14 +425,13 @@ class MCPDebugTool(MCPConnector):
         for i, line in enumerate(lines):
             if "qubits" in line.lower() or "qubit" in line.lower():
                 qubit_operations.append(
-                    {"line": i + 1, "operation": line.strip()}
-                )
+                    {"line": i + 1, "operation": line.strip()})
 
             if "measure" in line.lower() and "before" not in line.lower():
                 if i > 0 and "gate" not in lines[i - 1].lower():
                     issues.append(
-                        f"Potential premature measurement at line {i+1}"
-                    )
+                        f"Potential premature measurement at line {
+                            i + 1}")
 
         return {
             "operations": qubit_operations,
@@ -475,10 +461,7 @@ class MCPDebugTool(MCPConnector):
             "entanglement_operations": entanglement_ops,
             "count": len(entanglement_ops),
             "warning": (
-                "High entanglement density"
-                if len(entanglement_ops) > 5
-                else None
-            ),
+                "High entanglement density" if len(entanglement_ops) > 5 else None),
         }
 
     async def _analyze_decoherence(
@@ -489,8 +472,7 @@ class MCPDebugTool(MCPConnector):
 
         if "sleep" in code or "wait" in code:
             decoherence_risks.append(
-                "Timing delays detected - may cause decoherence"
-            )
+                "Timing delays detected - may cause decoherence")
 
         if code.count("\n") > 50:  # Long quantum programs
             decoherence_risks.append(
@@ -573,9 +555,8 @@ class MCPDebugTool(MCPConnector):
         functions = []
         for line in code.split("\n"):
             stripped = line.strip()
-            if stripped.startswith("def ") or stripped.startswith(
-                "async def "
-            ):
+            if stripped.startswith(
+                    "def ") or stripped.startswith("async def "):
                 functions.append(stripped)
         return functions
 
@@ -606,16 +587,8 @@ class MCPDebugTool(MCPConnector):
     def _estimate_quantum_efficiency(self, code: str) -> str:
         """Estimate quantum algorithm efficiency"""
         quantum_elements = self._detect_quantum_elements(code)
-        gate_density = len(
-            [
-                line
-                for line in code.split("\n")
-                if any(
-                    gate in line.lower()
-                    for gate in ["h", "x", "y", "z", "cnot"]
-                )
-            ]
-        )
+        gate_density = len([line for line in code.split("\n") if any(
+            gate in line.lower() for gate in ["h", "x", "y", "z", "cnot"])])
 
         if not quantum_elements:
             return "n/a"
@@ -708,7 +681,7 @@ async def example_usage():
         quantum_code = """
         import qiskit
         from qiskit import QuantumCircuit, execute
-        
+
         def quantum_teleportation():
             qc = QuantumCircuit(3, 3)
             # Bell state preparation

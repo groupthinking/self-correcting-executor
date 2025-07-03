@@ -1,8 +1,7 @@
 # Database-Powered Protocol: Execution Analytics
 import psycopg2
 import os
-from datetime import datetime, timedelta
-import json
+from datetime import datetime
 
 
 def task():
@@ -21,7 +20,7 @@ def task():
         # Get overall statistics
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 COUNT(*) as total_executions,
                 SUM(CASE WHEN success THEN 1 ELSE 0 END) as successful_runs,
                 COUNT(DISTINCT protocol_name) as unique_protocols,
@@ -32,14 +31,12 @@ def task():
         )
 
         overall_stats = cursor.fetchone()
-        total, successes, unique_protocols, first_exec, last_exec = (
-            overall_stats
-        )
+        total, successes, unique_protocols, first_exec, last_exec = overall_stats
 
         # Get per-protocol performance
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 protocol_name,
                 COUNT(*) as runs,
                 SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes,
@@ -65,12 +62,12 @@ def task():
         # Get recent failure patterns
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 protocol_name,
                 (details->>'error')::text as error_message,
                 COUNT(*) as occurrences
             FROM protocol_executions
-            WHERE success = false 
+            WHERE success = false
             AND execution_time > NOW() - INTERVAL '1 hour'
             AND details->>'error' IS NOT NULL
             GROUP BY protocol_name, error_message
@@ -89,19 +86,19 @@ def task():
         # Get mutation effectiveness
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 pm.protocol_name,
                 pm.previous_failure_rate * 100 as before_mutation,
                 COALESCE(current_stats.success_rate, 0) as after_mutation
             FROM protocol_mutations pm
             LEFT JOIN (
-                SELECT 
+                SELECT
                     protocol_name,
                     AVG(CASE WHEN success THEN 1 ELSE 0 END) * 100 as success_rate
                 FROM protocol_executions
                 WHERE execution_time > (
-                    SELECT MAX(mutation_time) 
-                    FROM protocol_mutations 
+                    SELECT MAX(mutation_time)
+                    FROM protocol_mutations
                     WHERE protocol_name = protocol_executions.protocol_name
                 )
                 GROUP BY protocol_name
@@ -131,8 +128,8 @@ def task():
         if total > 0:
             overall_success_rate = (successes / total) * 100
             insights.append(
-                f"Overall success rate: {overall_success_rate:.1f}%"
-            )
+                f"Overall success rate: {
+                    overall_success_rate:.1f}%")
 
             if overall_success_rate < 50:
                 insights.append(
@@ -140,13 +137,13 @@ def task():
                 )
             elif overall_success_rate > 80:
                 insights.append(
-                    "✅ System performing well with >80% success rate"
-                )
+                    "✅ System performing well with >80% success rate")
 
             if len(failure_patterns) > 0:
                 insights.append(
-                    f"Most common error: '{failure_patterns[0]['error']}' ({failure_patterns[0]['occurrences']} times)"
-                )
+                    f"Most common error: '{
+                        failure_patterns[0]['error']}' ({
+                        failure_patterns[0]['occurrences']} times)")
 
         return {
             "success": True,

@@ -2,18 +2,15 @@
 """MCP Compliance Tests - Ensure all components use real MCP, no mocks"""
 
 import pytest
-import asyncio
 import os
-import json
 from pathlib import Path
-from typing import Dict, Any, List
 import aiohttp
 
 # Import MCP components
 from config.mcp_config import MCPConfig
 from mcp_server.real_mcp_server import RealMCPServer
 from connectors.dwave_quantum_connector import DWaveQuantumConnector
-from agents.a2a_mcp_integration import MCPEnabledA2AAgent, a2a_mcp_orchestrator
+from agents.a2a_mcp_integration import MCPEnabledA2AAgent
 
 
 class TestMCPCompliance:
@@ -33,7 +30,7 @@ class TestMCPCompliance:
     def test_no_mock_endpoints(self, mcp_config):
         """Test that no mock endpoints are configured"""
         # This should raise an exception if any mock URLs are found
-        assert mcp_config.check_no_mocks() == True
+        assert mcp_config.check_no_mocks()
 
         # Verify all endpoints are real
         endpoints = mcp_config.get_endpoints()
@@ -67,8 +64,7 @@ class TestMCPCompliance:
         for feature in critical_features:
             if not validation.get(feature, False):
                 pytest.skip(
-                    f"{feature} not configured - set required environment variables"
-                )
+                    f"{feature} not configured - set required environment variables")
 
     @pytest.mark.asyncio
     async def test_quantum_requires_real_qpu(self):
@@ -133,9 +129,7 @@ class TestMCPCompliance:
         assert "confidence" in result
 
         # Test code generation
-        result = await agent._generate_code(
-            {"type": "function", "language": "python"}
-        )
+        result = await agent._generate_code({"type": "function", "language": "python"})
 
         assert result["code_type"] in ["function", "error"]
         assert "code" in result
@@ -165,23 +159,17 @@ class TestMCPCompliance:
                     content = py_file.read_text()
                     for line_num, line in enumerate(content.splitlines(), 1):
                         for pattern in placeholder_patterns:
-                            if pattern in line and not line.strip().startswith(
-                                "#"
-                            ):
+                            if pattern in line and not line.strip().startswith("#"):
                                 issues.append(
-                                    f"{py_file}:{line_num} - {line.strip()}"
-                                )
+                                    f"{py_file}:{line_num} - {line.strip()}")
 
         # Report but don't fail - these need to be addressed
         if issues:
             print("\n⚠️  Placeholder code found in production files:")
             for issue in issues[:10]:  # Show first 10
                 print(f"  - {issue}")
-            (
-                print(f"  ... and {len(issues) - 10} more")
-                if len(issues) > 10
-                else None
-            )
+            (print(f"  ... and {len(issues) - 10} more")
+             if len(issues) > 10 else None)
 
     @pytest.mark.asyncio
     async def test_mcp_http_endpoints(self, mcp_config):
@@ -231,9 +219,8 @@ class TestMCPCompliance:
                             issues.append(f"{ts_file}:{i} - {line.strip()}")
 
             # These should all be replaced
-            assert (
-                len(issues) == 0
-            ), f"Found {len(issues)} mock references in UI"
+            assert len(issues) == 0, f"Found {
+                len(issues)} mock references in UI"
 
     def test_integration_points_documented(self):
         """Test that all MCP integration points are documented"""
@@ -249,10 +236,7 @@ class TestMCPCompliance:
 
                 # Check for required sections
                 assert "Real" in content or "real" in content
-                assert (
-                    "mock" not in content.lower()
-                    or "no mock" in content.lower()
-                )
+                assert "mock" not in content.lower() or "no mock" in content.lower()
                 assert "MCP" in content
 
     def test_env_template_exists(self):
@@ -306,11 +290,12 @@ def run_compliance_check():
                 content = py_file.read_text()
                 if "TODO:" in content or "FIXME:" in content:
                     placeholder_count += 1
-            except:
+            except BaseException:
                 pass
 
     if placeholder_count > 0:
-        print(f"   ⚠️  Found {placeholder_count} files with TODO/FIXME markers")
+        print(
+            f"   ⚠️  Found {placeholder_count} files with TODO/FIXME markers")
     else:
         print("   No placeholder code found!")
 

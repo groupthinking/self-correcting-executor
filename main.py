@@ -2,7 +2,7 @@
 # Integrates with UMDR MCP stack for full runtime capabilities
 
 from agents.executor import execute_task
-from agents.mutator import mutate_protocol, analyze_all_protocols
+from agents.mutator import mutate_protocol
 from utils.logger import log
 from utils.tracker import get_protocol_stats
 import sys
@@ -14,10 +14,10 @@ def run_self_correcting_executor(protocol="default_protocol", iterations=1):
     log(f"Protocol: {protocol}, Iterations: {iterations}")
 
     for i in range(iterations):
-        log(f"\n--- Iteration {i+1}/{iterations} ---")
+        log(f"\n--- Iteration {i + 1}/{iterations} ---")
 
         # Execute the protocol
-        outcome = execute_task(protocol)
+        execute_task(protocol)
 
         # Immediate mutation check after each execution
         mutated = mutate_protocol(protocol)
@@ -39,8 +39,7 @@ def run_self_correcting_executor(protocol="default_protocol", iterations=1):
     final_stats = get_protocol_stats(protocol)
     if final_stats:
         log(
-            f"Final performance - Success rate: {final_stats['success_rate']:.2%}"
-        )
+            f"Final performance - Success rate: {final_stats['success_rate']:.2%}")
 
     return final_stats
 

@@ -1,7 +1,6 @@
 # Real Protocol: System Monitor
 import psutil
 import platform
-import os
 
 
 def task():
@@ -16,15 +15,12 @@ def task():
         process_count = len(psutil.pids())
 
         # Check if system is healthy
-        is_healthy = (
-            cpu_percent < 90 and memory.percent < 90 and disk.percent < 95
-        )
+        is_healthy = cpu_percent < 90 and memory.percent < 90 and disk.percent < 95
 
         system_info = {
             "platform": platform.system(),
-            "platform_version": platform.version()[
-                :50
-            ],  # Truncate long versions
+            # Truncate long versions
+            "platform_version": platform.version()[:50],
             "cpu_cores": psutil.cpu_count(),
             "cpu_percent": cpu_percent,
             "memory_total_gb": round(memory.total / (1024**3), 2),

@@ -11,7 +11,7 @@ This demonstrates the strategic approach:
 
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime
 
 # Configure production logging
@@ -149,8 +149,7 @@ class ProductionMCPDeployment:
                         "query": query,
                         "result": final_result.get("output"),
                         "success": True,
-                        "execution_time": asyncio.get_event_loop().time()
-                        - start_time,
+                        "execution_time": asyncio.get_event_loop().time() - start_time,
                     },
                 )
                 logger.info(f"Captured post-execution state: {post_state.id}")
@@ -159,13 +158,12 @@ class ProductionMCPDeployment:
                 "success": True,
                 "result": final_result.get("output") if final_result else None,
                 "execution_time_ms": (
-                    asyncio.get_event_loop().time() - start_time
-                )
-                * 1000,
+                    asyncio.get_event_loop().time() -
+                    start_time) *
+                1000,
                 "has_state_continuity": self.state_fabric is not None,
                 "transport_type": (
-                    "unified" if self.unified_transport else "standard"
-                ),
+                    "unified" if self.unified_transport else "standard"),
             }
 
         except Exception as e:
@@ -187,9 +185,9 @@ class ProductionMCPDeployment:
                 "success": False,
                 "error": str(e),
                 "execution_time_ms": (
-                    asyncio.get_event_loop().time() - start_time
-                )
-                * 1000,
+                    asyncio.get_event_loop().time() -
+                    start_time) *
+                1000,
             }
 
     async def demonstrate_unique_capabilities(self):
@@ -256,8 +254,7 @@ class ProductionMCPDeployment:
             }
 
             filtered = self.state_fabric._apply_privacy_filters(
-                sensitive_context
-            )
+                sensitive_context)
             assert "api_key" not in filtered
             assert "<encrypted>" in filtered.get("user_data", "")
             logger.info("✓ Privacy-aware filtering working")
@@ -323,15 +320,15 @@ async def implement_contribution_strategy():
     # In mcp_use/mixins/state_continuity.py
     class StateContinuityMixin:
         """Adds state continuity capabilities to MCPAgent"""
-        
+
         async def capture_state(self, context: Dict[str, Any]):
             """Capture execution state for continuity"""
             # Our implementation
-        
+
         async def sync_across_devices(self, source: str, target: str):
             """Synchronize state between devices"""
             # Our implementation
-    
+
     # In mcp_use/agents/mcpagent.py
     class MCPAgent(BaseAgent, StateContinuityMixin):
         # Enhanced with our capabilities

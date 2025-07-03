@@ -3,8 +3,7 @@
 
 import os
 import json
-import asyncio
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any
 from datetime import datetime
 import aiohttp
 
@@ -19,8 +18,7 @@ class LLMConnector:
         self.anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
 
     async def analyze_multimodal(
-        self, inputs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Real multi-modal analysis using OpenAI GPT-4V"""
         if self.openai_key:
             return await self._openai_analyze(inputs)
@@ -51,24 +49,20 @@ Return a JSON response with:
 Format as valid JSON only.
 """
 
-        payload = {
-            "model": "gpt-4-turbo-preview",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a system analyst. Return only valid JSON.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-            "temperature": 0.3,
-            "max_tokens": 2000,
-        }
+        payload = {"model": "gpt-4-turbo-preview",
+                   "messages": [{"role": "system",
+                                 "content": "You are a system analyst. Return only valid JSON.",
+                                 },
+                                {"role": "user",
+                                 "content": prompt},
+                                ],
+                   "temperature": 0.3,
+                   "max_tokens": 2000,
+                   }
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    url, headers=headers, json=payload
-                ) as response:
+                async with session.post(url, headers=headers, json=payload) as response:
                     if response.status == 200:
                         data = await response.json()
                         content = data["choices"][0]["message"]["content"]
@@ -95,10 +89,13 @@ Format as valid JSON only.
                             "type": "high_performance",
                             "protocol": pattern["protocol"],
                             "success_rate": pattern["success_rate"],
-                            "insight": f"Protocol {pattern['protocol']} shows {pattern['success_rate']*100:.1f}% success rate",
-                            "recommendation": f"Use {pattern['protocol']} as template for similar tasks",
-                        }
-                    )
+                            "insight": f"Protocol {
+                                pattern['protocol']} shows {
+                                pattern['success_rate'] *
+                                100:.1f}% success rate",
+                            "recommendation": f"Use {
+                                pattern['protocol']} as template for similar tasks",
+                        })
 
         # Analyze system metrics
         metrics = inputs.get("system_metrics", {})
@@ -107,21 +104,23 @@ Format as valid JSON only.
                 optimizations.append(
                     {
                         "area": "memory",
-                        "current": f"{metrics['memory_usage']*100:.1f}%",
+                        "current": f"{
+                            metrics['memory_usage'] * 100:.1f}%",
                         "action": "Implement memory pooling and garbage collection optimization",
                         "priority": "high",
-                    }
-                )
+                    })
 
             if metrics.get("cache_hit_rate", 1.0) < 0.8:
                 optimizations.append(
                     {
                         "area": "caching",
-                        "current": f"{metrics.get('cache_hit_rate', 0)*100:.1f}%",
+                        "current": f"{
+                            metrics.get(
+                                'cache_hit_rate',
+                                0) * 100:.1f}%",
                         "action": "Implement predictive cache warming based on usage patterns",
                         "priority": "medium",
-                    }
-                )
+                    })
 
         # Generate new protocol ideas based on real data
         mutation_data = inputs.get("protocol_mutations", [])
@@ -134,10 +133,10 @@ Format as valid JSON only.
                 {
                     "name": "auto_mutation_engine",
                     "description": "Automatically apply successful mutation patterns to underperforming protocols",
-                    "rationale": f"Found {len(successful_mutations)} mutations with >20% improvement",
+                    "rationale": f"Found {
+                        len(successful_mutations)} mutations with >20% improvement",
                     "implementation": "Create ML model to predict beneficial mutations",
-                }
-            )
+                })
 
         # Add real protocol ideas based on actual system needs
         if exec_history.get("total_executions", 0) > 100:
@@ -145,10 +144,10 @@ Format as valid JSON only.
                 {
                     "name": "execution_pattern_predictor",
                     "description": "Predict optimal protocol selection based on historical patterns",
-                    "rationale": f"System has {exec_history.get('total_executions')} executions to learn from",
+                    "rationale": f"System has {
+                        exec_history.get('total_executions')} executions to learn from",
                     "implementation": "Train lightweight ML model on execution history",
-                }
-            )
+                })
 
         return {
             "patterns": patterns,

@@ -2,9 +2,7 @@
 # Universal context connection for all external systems
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional
-import json
-import asyncio
+from typing import Dict
 from datetime import datetime
 
 
@@ -61,34 +59,30 @@ class MCPConnector(ABC):
     @abstractmethod
     async def connect(self, config: Dict) -> bool:
         """Establish connection to external service"""
-        pass
 
     @abstractmethod
     async def disconnect(self) -> bool:
         """Disconnect from external service"""
-        pass
 
     @abstractmethod
     async def get_context(self) -> MCPContext:
         """Get current context from service"""
-        pass
 
     @abstractmethod
     async def send_context(self, context: MCPContext) -> bool:
         """Send context to service"""
-        pass
 
     @abstractmethod
     async def execute_action(self, action: str, params: Dict) -> Dict:
         """Execute action on external service"""
-        pass
 
     async def sync_context(self, local_context: MCPContext) -> MCPContext:
         """Synchronize context between local and remote"""
         # Get remote context
         remote_context = await self.get_context()
 
-        # Merge contexts (simplified - real implementation would handle conflicts)
+        # Merge contexts (simplified - real implementation would handle
+        # conflicts)
         merged = MCPContext()
         merged.user = {**remote_context.user, **local_context.user}
         merged.task = {**remote_context.task, **local_context.task}
@@ -301,7 +295,7 @@ class ClaudeMCPConnector(MCPConnector):
 
     async def _generate_code(self, params: Dict) -> Dict:
         """Generate code using Claude"""
-        prompt = params.get("prompt")
+        params.get("prompt")
         language = params.get("language", "python")
 
         # In real implementation, would call Claude API
@@ -313,7 +307,7 @@ class ClaudeMCPConnector(MCPConnector):
 
     async def _analyze_intent(self, params: Dict) -> Dict:
         """Analyze user intent"""
-        text = params.get("text")
+        params.get("text")
 
         # In real implementation, would use Claude for analysis
         return {
@@ -324,7 +318,7 @@ class ClaudeMCPConnector(MCPConnector):
 
     async def _reason_about(self, params: Dict) -> Dict:
         """Use Claude's reasoning capabilities"""
-        problem = params.get("problem")
+        params.get("problem")
 
         # In real implementation, would use Claude
         return {

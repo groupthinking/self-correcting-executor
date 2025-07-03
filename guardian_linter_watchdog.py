@@ -9,7 +9,6 @@ and runs a linter to provide immediate feedback on code quality.
 This is the first component of the Guardian Agent Protocol.
 """
 import asyncio
-import os
 import subprocess
 import logging
 from pathlib import Path
@@ -32,8 +31,8 @@ async def run_linter(file_path: Path):
     if not any(part in EXCLUDED_DIRS for part in file_path.parts):
         command = LINT_COMMAND + [str(file_path)]
         logger.info(
-            f"Guardian: Analyzing {file_path.relative_to(PROJECT_ROOT)}..."
-        )
+            f"Guardian: Analyzing {
+                file_path.relative_to(PROJECT_ROOT)}...")
 
         process = await asyncio.create_subprocess_exec(
             *command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -42,20 +41,21 @@ async def run_linter(file_path: Path):
 
         if process.returncode != 0:
             logger.warning(
-                f"Guardian: Found issues in {file_path.relative_to(PROJECT_ROOT)}"
-            )
+                f"Guardian: Found issues in {
+                    file_path.relative_to(PROJECT_ROOT)}")
             if stdout:
                 print("\n--- LINT REPORT ---")
                 print(stdout.decode().strip())
                 print("--- END REPORT ---\n")
             if stderr:
                 logger.error(
-                    f"Linter error on {file_path.relative_to(PROJECT_ROOT)}:\n{stderr.decode().strip()}"
-                )
+                    f"Linter error on {
+                        file_path.relative_to(PROJECT_ROOT)}:\n{
+                        stderr.decode().strip()}")
         else:
             logger.info(
-                f"Guardian: {file_path.relative_to(PROJECT_ROOT)} looks clean!"
-            )
+                f"Guardian: {
+                    file_path.relative_to(PROJECT_ROOT)} looks clean!")
 
 
 async def watch_directory():

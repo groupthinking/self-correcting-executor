@@ -16,11 +16,9 @@ Features:
 
 import asyncio
 import aiohttp
-import json
 import logging
 import os
-from typing import Dict, List, Any, Optional
-from datetime import datetime
+from typing import Dict, Any, Optional
 import base64
 
 from connectors.mcp_base import MCPConnector
@@ -70,8 +68,9 @@ class GitHubMCPConnector(MCPConnector):
                 if response.status == 200:
                     user_data = await response.json()
                     logger.info(
-                        f"Connected to GitHub as: {user_data.get('login', 'Unknown')}"
-                    )
+                        f"Connected to GitHub as: {
+                            user_data.get(
+                                'login', 'Unknown')}")
                     self.connected = True
 
                     # Get rate limit info
@@ -79,8 +78,8 @@ class GitHubMCPConnector(MCPConnector):
                     return True
                 else:
                     logger.error(
-                        f"GitHub API connection failed: {response.status}"
-                    )
+                        f"GitHub API connection failed: {
+                            response.status}")
                     return False
 
         except Exception as e:
@@ -133,8 +132,7 @@ class GitHubMCPConnector(MCPConnector):
         return {"error": f"Unknown action: {action}"}
 
     async def search_repositories(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Search GitHub repositories
 
@@ -295,19 +293,14 @@ class GitHubMCPConnector(MCPConnector):
                                 "body": issue["body"],
                                 "state": issue["state"],
                                 "labels": [
-                                    label["name"] for label in issue["labels"]
-                                ],
+                                    label["name"] for label in issue["labels"]],
                                 "assignee": (
-                                    issue["assignee"]["login"]
-                                    if issue["assignee"]
-                                    else None
-                                ),
+                                    issue["assignee"]["login"] if issue["assignee"] else None),
                                 "created_at": issue["created_at"],
                                 "updated_at": issue["updated_at"],
                                 "url": issue["html_url"],
                                 "api_url": issue["url"],
-                            }
-                        )
+                            })
 
                     return {
                         "success": True,
@@ -326,8 +319,7 @@ class GitHubMCPConnector(MCPConnector):
             return {"success": False, "error": str(e)}
 
     async def get_pull_requests(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Get repository pull requests
 
@@ -383,7 +375,8 @@ class GitHubMCPConnector(MCPConnector):
                 else:
                     return {
                         "success": False,
-                        "error": f"Failed to get pull requests: {response.status}",
+                        "error": f"Failed to get pull requests: {
+                            response.status}",
                         "status_code": response.status,
                     }
 
@@ -420,9 +413,8 @@ class GitHubMCPConnector(MCPConnector):
                     # Decode content if it's a file
                     content = None
                     if data.get("type") == "file":
-                        content = base64.b64decode(data["content"]).decode(
-                            "utf-8"
-                        )
+                        content = base64.b64decode(
+                            data["content"]).decode("utf-8")
 
                     return {
                         "success": True,
@@ -489,26 +481,17 @@ class GitHubMCPConnector(MCPConnector):
                                 "message": commit["commit"]["message"],
                                 "author": {
                                     "name": commit["commit"]["author"]["name"],
-                                    "email": commit["commit"]["author"][
-                                        "email"
-                                    ],
+                                    "email": commit["commit"]["author"]["email"],
                                     "date": commit["commit"]["author"]["date"],
                                 },
                                 "committer": {
-                                    "name": commit["commit"]["committer"][
-                                        "name"
-                                    ],
-                                    "email": commit["commit"]["committer"][
-                                        "email"
-                                    ],
-                                    "date": commit["commit"]["committer"][
-                                        "date"
-                                    ],
+                                    "name": commit["commit"]["committer"]["name"],
+                                    "email": commit["commit"]["committer"]["email"],
+                                    "date": commit["commit"]["committer"]["date"],
                                 },
                                 "url": commit["html_url"],
                                 "api_url": commit["url"],
-                            }
-                        )
+                            })
 
                     return {
                         "success": True,
@@ -619,9 +602,7 @@ class GitHubMCPConnector(MCPConnector):
                             "title": issue_data["title"],
                             "body": issue_data["body"],
                             "state": issue_data["state"],
-                            "labels": [
-                                label["name"] for label in issue_data["labels"]
-                            ],
+                            "labels": [label["name"] for label in issue_data["labels"]],
                             "assignee": (
                                 issue_data["assignee"]["login"]
                                 if issue_data["assignee"]
@@ -644,8 +625,7 @@ class GitHubMCPConnector(MCPConnector):
             return {"success": False, "error": str(e)}
 
     async def get_rate_limit(
-        self, params: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+            self, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Get GitHub API rate limit information"""
         try:
             url = f"{self.base_url}/rate_limit"
@@ -658,9 +638,7 @@ class GitHubMCPConnector(MCPConnector):
                         "success": True,
                         "rate_limit": {
                             "limit": data["resources"]["core"]["limit"],
-                            "remaining": data["resources"]["core"][
-                                "remaining"
-                            ],
+                            "remaining": data["resources"]["core"]["remaining"],
                             "reset": data["resources"]["core"]["reset"],
                             "used": data["resources"]["core"]["used"],
                         },
@@ -668,7 +646,8 @@ class GitHubMCPConnector(MCPConnector):
                 else:
                     return {
                         "success": False,
-                        "error": f"Failed to get rate limit: {response.status}",
+                        "error": f"Failed to get rate limit: {
+                            response.status}",
                         "status_code": response.status,
                     }
 
@@ -681,9 +660,7 @@ class GitHubMCPConnector(MCPConnector):
         try:
             rate_limit = await self.get_rate_limit()
             if rate_limit["success"]:
-                self.rate_limit_remaining = rate_limit["rate_limit"][
-                    "remaining"
-                ]
+                self.rate_limit_remaining = rate_limit["rate_limit"]["remaining"]
                 self.rate_limit_reset = rate_limit["rate_limit"]["reset"]
         except Exception as e:
             logger.warning(f"Failed to update rate limit: {e}")

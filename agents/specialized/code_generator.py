@@ -1,7 +1,6 @@
 # Code Generation Agent
 # Specialized agent for generating API endpoint code
 
-import json
 import textwrap
 from datetime import datetime
 from typing import Dict, Any
@@ -27,10 +26,10 @@ class CodeGeneratorAgent:
                     try:
                         # Validate input
                         {validation_logic}
-                        
+
                         # Process request
                         {processing_logic}
-                        
+
                         # Return response
                         return {{
                             "status": "success",
@@ -47,39 +46,39 @@ class CodeGeneratorAgent:
                 """
                 # {title}
                 # Generated API endpoint
-                
+
                 from fastapi import FastAPI, HTTPException
                 from pydantic import BaseModel
                 from datetime import datetime
                 from typing import Optional, List
-                
+
                 {models}
-                
+
                 {endpoints}
             """
             ),
             "crud_operations": textwrap.dedent(
                 """
                 # CRUD operations for {entity}
-                
+
                 @app.post("/{entity_plural}")
                 async def create_{entity}(item: {model_name}):
                     \"\"\"Create new {entity}\"\"\"
                     # Implementation here
                     pass
-                
+
                 @app.get("/{entity_plural}/{{id}}")
                 async def get_{entity}(id: int):
                     \"\"\"Get {entity} by ID\"\"\"
                     # Implementation here
                     pass
-                
+
                 @app.put("/{entity_plural}/{{id}}")
                 async def update_{entity}(id: int, item: {model_name}):
                     \"\"\"Update {entity}\"\"\"
                     # Implementation here
                     pass
-                
+
                 @app.delete("/{entity_plural}/{{id}}")
                 async def delete_{entity}(id: int):
                     \"\"\"Delete {entity}\"\"\"
@@ -112,9 +111,7 @@ class CodeGeneratorAgent:
             "generated_code": code,
             "generation_type": generation_type,
             "files_created": self._get_file_list(code),
-            "instructions": self._get_implementation_instructions(
-                generation_type
-            ),
+            "instructions": self._get_implementation_instructions(generation_type),
             "timestamp": datetime.utcnow().isoformat(),
         }
 
@@ -135,11 +132,13 @@ class CodeGeneratorAgent:
         """Generate a single API endpoint"""
         endpoint_name = context.get("endpoint_name", "process")
         function_name = context.get(
-            "function_name", endpoint_name.replace("-", "_")
-        )
+            "function_name",
+            endpoint_name.replace(
+                "-",
+                "_"))
         description = context.get(
-            "description", f"Process {endpoint_name} request"
-        )
+            "description",
+            f"Process {endpoint_name} request")
 
         # Generate parameter list
         params = context.get("parameters", {})
@@ -215,7 +214,8 @@ class {model_name}(BaseModel):
             optional = "Optional[" if field_name != "id" else ""
             close_bracket = "]" if optional else ""
             default = " = None" if optional else ""
-            model_code += f"    {field_name}: {optional}{field_type}{close_bracket}{default}\n"
+            model_code += (
+                f"    {field_name}: {optional}{field_type}{close_bracket}{default}\n")
 
         return model_code
 

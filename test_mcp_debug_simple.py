@@ -4,10 +4,13 @@ Simplified test suite for MCP Debug Tool
 Tests core debugging capabilities without complex dependencies
 """
 
+from connectors.mcp_debug_tool import (
+    MCPDebugTool,
+    MCPDebugContext,
+)
 import asyncio
 import json
 import sys
-import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 import logging
@@ -15,11 +18,6 @@ import logging
 # Add project root to path
 sys.path.append(str(Path(__file__).parent))
 
-from connectors.mcp_debug_tool import (
-    MCPDebugTool,
-    MCPDebugContext,
-    DebugResponse,
-)
 
 # Configure logging
 logging.basicConfig(
@@ -81,15 +79,10 @@ class SimpleMCPDebugTest:
         try:
             async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
                 has_quantum_analyzers = hasattr(
-                    debug_tool, "quantum_analyzers"
-                )
+                    debug_tool, "quantum_analyzers")
                 has_gcp_endpoint = hasattr(debug_tool, "gcp_endpoint")
                 has_connector_id = hasattr(debug_tool, "connector_id")
-                return (
-                    has_quantum_analyzers
-                    and has_gcp_endpoint
-                    and has_connector_id
-                )
+                return has_quantum_analyzers and has_gcp_endpoint and has_connector_id
         except Exception as e:
             logger.error(f"Initialization error: {e}")
             return False
@@ -99,14 +92,14 @@ class SimpleMCPDebugTest:
         quantum_code = """
         import qiskit
         from qiskit import QuantumCircuit, execute, Aer
-        
+
         def create_bell_state():
             qc = QuantumCircuit(2, 2)
             qc.h(0)
             qc.cx(0, 1)
             qc.measure_all()
             return qc
-        
+
         circuit = create_bell_state()
         backend = Aer.get_backend('qasm_simulator')
         result = execute(circuit, backend, shots=1024).result()
@@ -114,9 +107,7 @@ class SimpleMCPDebugTest:
 
         try:
             async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
-                analysis = await debug_tool._analyze_code_structure(
-                    quantum_code
-                )
+                analysis = await debug_tool._analyze_code_structure(quantum_code)
 
                 required_keys = [
                     "complexity",
@@ -126,21 +117,17 @@ class SimpleMCPDebugTest:
                     "quantum_elements",
                 ]
                 has_required_keys = all(
-                    key in analysis for key in required_keys
-                )
+                    key in analysis for key in required_keys)
                 has_quantum_elements = len(analysis["quantum_elements"]) > 0
-                has_quantum_pattern = (
-                    "quantum_computing" in analysis["patterns"]
-                )
+                has_quantum_pattern = "quantum_computing" in analysis["patterns"]
 
                 logger.info(
-                    f"Analysis result: {json.dumps(analysis, indent=2)}"
-                )
+                    f"Analysis result: {
+                        json.dumps(
+                            analysis,
+                            indent=2)}")
                 return (
-                    has_required_keys
-                    and has_quantum_elements
-                    and has_quantum_pattern
-                )
+                    has_required_keys and has_quantum_elements and has_quantum_pattern)
         except Exception as e:
             logger.error(f"Quantum analysis error: {e}")
             return False
@@ -160,7 +147,8 @@ class SimpleMCPDebugTest:
                     problematic_quantum_code, {}
                 )
 
-                # Updated to check for issues without requiring operations (which might be empty in this test case)
+                # Updated to check for issues without requiring operations
+                # (which might be empty in this test case)
                 has_issues = len(result["issues"]) > 0
                 needs_review = result["state_quality"] == "needs_review"
 
@@ -184,17 +172,17 @@ class SimpleMCPDebugTest:
 
         try:
             async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
-                result = await debug_tool._analyze_entanglement(
-                    entanglement_code, {}
-                )
+                result = await debug_tool._analyze_entanglement(entanglement_code, {})
 
                 has_operations = len(result["entanglement_operations"]) > 0
-                # Updated to check for high density (>5 operations) or count > 3
+                # Updated to check for high density (>5 operations) or count >
+                # 3
                 high_density_threshold_met = result["count"] > 3
 
                 logger.info(
-                    f"Entanglement analysis: {json.dumps(result, indent=2)}"
-                )
+                    f"Entanglement analysis: {
+                        json.dumps(
+                            result, indent=2)}")
                 return has_operations and high_density_threshold_met
         except Exception as e:
             logger.error(f"Entanglement analysis error: {e}")
@@ -222,16 +210,14 @@ class SimpleMCPDebugTest:
                 all_patterns_detected = True
 
                 for error in errors:
-                    fixes = await debug_tool._generate_general_fixes(
-                        buggy_code, error
-                    )
+                    fixes = await debug_tool._generate_general_fixes(buggy_code, error)
                     if not fixes:
                         all_patterns_detected = False
                         break
                     else:
                         logger.info(
-                            f"Generated fixes for {error}: {len(fixes)} fixes"
-                        )
+                            f"Generated fixes for {error}: {
+                                len(fixes)} fixes")
 
                 return all_patterns_detected
         except Exception as e:
@@ -276,14 +262,15 @@ class SimpleMCPDebugTest:
                     "quantum_efficiency",
                 ]
                 has_metrics = all(
-                    metric in metrics for metric in required_metrics
-                )
+                    metric in metrics for metric in required_metrics)
                 high_complexity = metrics["complexity_score"] > 5
                 correct_line_count = metrics["line_count"] > 100
 
                 logger.info(
-                    f"Performance metrics: {json.dumps(metrics, indent=2)}"
-                )
+                    f"Performance metrics: {
+                        json.dumps(
+                            metrics,
+                            indent=2)}")
                 return has_metrics and high_complexity and correct_line_count
         except Exception as e:
             logger.error(f"Performance metrics error: {e}")
@@ -309,9 +296,7 @@ class SimpleMCPDebugTest:
                 has_stack_trace = context.stack_trace is not None
 
                 logger.info(f"Created MCP context: {context.to_dict()}")
-                return (
-                    has_file and has_line and has_timestamp and has_stack_trace
-                )
+                return has_file and has_line and has_timestamp and has_stack_trace
         except Exception as e:
             logger.error(f"MCP context creation error: {e}")
             return False
@@ -320,7 +305,9 @@ class SimpleMCPDebugTest:
         """Test fallback reasoning when GCP is unavailable"""
         try:
             async with MCPDebugTool("https://invalid-endpoint") as debug_tool:
-                quantum_error = "QuantumError: Circuit execution failed due to quantum decoherence"
+                quantum_error = (
+                    "QuantumError: Circuit execution failed due to quantum decoherence"
+                )
 
                 fallback_result = await debug_tool._fallback_reasoning(
                     "quantum_code", quantum_error
@@ -334,11 +321,11 @@ class SimpleMCPDebugTest:
                 )
 
                 logger.info(
-                    f"Fallback reasoning: {json.dumps(fallback_result, indent=2)}"
-                )
-                return (
-                    has_reasoning and has_suggestions and quantum_suggestions
-                )
+                    f"Fallback reasoning: {
+                        json.dumps(
+                            fallback_result,
+                            indent=2)}")
+                return has_reasoning and has_suggestions and quantum_suggestions
         except Exception as e:
             logger.error(f"Fallback reasoning error: {e}")
             return False
@@ -356,16 +343,12 @@ class SimpleMCPDebugTest:
                 debug_tool_schema = schema["tools"][0]
                 has_name = debug_tool_schema.get("name") == "DebugTool"
                 has_schema = "schema" in debug_tool_schema
-                has_quantum_context = (
-                    "quantum_context"
-                    in debug_tool_schema.get("schema", {})
-                    .get("context", {})
-                    .get("properties", {})
-                )
+                has_quantum_context = "quantum_context" in debug_tool_schema.get(
+                    "schema", {}).get("context", {}).get("properties", {})
 
                 logger.info(
-                    f"Schema validation passed: {has_name and has_schema and has_quantum_context}"
-                )
+                    f"Schema validation passed: {
+                        has_name and has_schema and has_quantum_context}")
                 return (
                     has_tools
                     and has_debug_tool
@@ -393,17 +376,14 @@ class SimpleMCPDebugTest:
         logger.info(f"✅ Passed: {self.passed_tests}")
         logger.info(f"❌ Failed: {self.total_tests - self.passed_tests}")
         logger.info(
-            f"📈 Success Rate: {(self.passed_tests/self.total_tests)*100:.1f}%"
-        )
+            f"📈 Success Rate: {(self.passed_tests / self.total_tests) * 100:.1f}%")
 
         if self.passed_tests == self.total_tests:
             logger.info(
-                "🎉 ALL TESTS PASSED! MCP Debug Tool is fully functional."
-            )
+                "🎉 ALL TESTS PASSED! MCP Debug Tool is fully functional.")
         else:
             logger.warning(
-                "⚠️  Some tests failed. Please review and fix issues."
-            )
+                "⚠️  Some tests failed. Please review and fix issues.")
 
         logger.info("=" * 80)
 
@@ -416,23 +396,21 @@ async def run_debug_demo():
     demo_code = """
     import qiskit
     from qiskit import QuantumCircuit
-    
+
     def problematic_quantum_function():
         # Issue: Undefined variable
         qc = QuantumCircuit(undefined_qubits)
-        
+
         # Issue: Premature measurement
         qc.h(0)
         qc.measure(0, 0)
         qc.cx(0, 1)  # Operation after measurement
-        
+
         return qc
     """
 
     try:
-        async with MCPDebugTool(
-            "https://demo-gcp-api", "demo-token"
-        ) as debug_tool:
+        async with MCPDebugTool("https://demo-gcp-api", "demo-token") as debug_tool:
             result = await debug_tool.debug_code(
                 code=demo_code,
                 error="NameError: name 'undefined_qubits' is not defined",
@@ -452,8 +430,10 @@ async def run_debug_demo():
             logger.info(f"Status: {result.status}")
             logger.info(f"Reasoning: {result.reasoning}")
             logger.info(
-                f"Suggestions: {json.dumps(result.suggestions, indent=2)}"
-            )
+                f"Suggestions: {
+                    json.dumps(
+                        result.suggestions,
+                        indent=2)}")
             logger.info(f"Number of Fixes: {len(result.fixes)}")
 
             if result.quantum_insights:
@@ -463,8 +443,10 @@ async def run_debug_demo():
 
             if result.performance_metrics:
                 logger.info(
-                    f"Performance Metrics: {json.dumps(result.performance_metrics, indent=2)}"
-                )
+                    f"Performance Metrics: {
+                        json.dumps(
+                            result.performance_metrics,
+                            indent=2)}")
 
     except Exception as e:
         logger.error(f"Demo failed: {e}")

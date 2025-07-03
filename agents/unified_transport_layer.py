@@ -3,15 +3,14 @@
 
 import asyncio
 from typing import Dict, Any, Optional, List
-from abc import ABC, abstractmethod
 import time
 import mmap
 import pickle
 from dataclasses import dataclass
 
 # Import our existing components
-from agents.a2a_framework import A2AMessage, BaseAgent, A2AMessageBus
-from connectors.mcp_base import MCPContext, MCPConnector
+from agents.a2a_framework import A2AMessage, BaseAgent
+from connectors.mcp_base import MCPContext
 
 
 # Mojo-inspired transport abstractions (Python implementation)
@@ -153,8 +152,9 @@ class UnifiedTransportLayer:
         return result
 
     async def _zero_copy_transfer(
-        self, pipe: MojoMessagePipe, payload: Dict
-    ) -> Dict:
+            self,
+            pipe: MojoMessagePipe,
+            payload: Dict) -> Dict:
         """Zero-copy transfer for same-process communication"""
         # In real Mojo, this would be direct memory transfer
         # Python simulation: direct object passing
@@ -194,8 +194,9 @@ class UnifiedTransportLayer:
             return await self._zero_copy_transfer(pipe, payload)
 
     async def _pipe_transfer(
-        self, pipe: MojoMessagePipe, payload: Dict
-    ) -> Dict:
+            self,
+            pipe: MojoMessagePipe,
+            payload: Dict) -> Dict:
         """Standard pipe transfer for small cross-process messages"""
         # In real Mojo, this would use message pipes
         # Python simulation: asyncio queue
@@ -320,9 +321,11 @@ class UnifiedAgent(BaseAgent):
             "participants": other_agents,
             "results": results,
             "total_latency_ms": sum(
-                r.get("transport_latency_ms", 0) for r in results
-            ),
-            "transport_methods": [r["method"] for r in results],
+                r.get(
+                    "transport_latency_ms",
+                    0) for r in results),
+            "transport_methods": [
+                r["method"] for r in results],
         }
 
     def _generate_proposal(self, topic: str) -> Dict:
@@ -364,8 +367,8 @@ class TradingAgent(UnifiedAgent):
         if result["transport_latency_ms"] > 0.1:
             # Fallback or alert
             print(
-                f"WARNING: High latency detected: {result['transport_latency_ms']}ms"
-            )
+                f"WARNING: High latency detected: {
+                    result['transport_latency_ms']}ms")
 
         return result
 
@@ -383,7 +386,7 @@ async def demonstrate_unified_architecture():
     # Create agents
     trader = TradingAgent("trader_1")
     analyzer = UnifiedAgent("analyzer_1", ["analyze", "predict"])
-    executor = UnifiedAgent("executor_1", ["execute", "confirm"])
+    UnifiedAgent("executor_1", ["execute", "confirm"])
 
     # Test 1: Ultra-low latency trading
     print("1. Ultra-low latency trading:")
@@ -406,11 +409,9 @@ async def demonstrate_unified_architecture():
     )
     print(f"   - Participants: {negotiation_result['participants']}")
     print(
-        f"   - Total latency: {negotiation_result['total_latency_ms']:.3f}ms"
-    )
+        f"   - Total latency: {negotiation_result['total_latency_ms']:.3f}ms")
     print(
-        f"   - Methods used: {set(negotiation_result['transport_methods'])}\n"
-    )
+        f"   - Methods used: {set(negotiation_result['transport_methods'])}\n")
 
     # Test 3: Large context transfer
     print("3. Large context transfer:")
@@ -430,8 +431,7 @@ async def demonstrate_unified_architecture():
     )
     print(f"   - Method: {result['method']}")
     print(
-        f"   - Handle type: {result.get('handle', {}).get('handle_type', 'N/A')}"
-    )
+        f"   - Handle type: {result.get('handle', {}).get('handle_type', 'N/A')}")
     print(f"   - Status: {result['status']}\n")
 
     # Print performance summary

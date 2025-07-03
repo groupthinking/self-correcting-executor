@@ -72,13 +72,13 @@ class SecurityMiddleware:
         """Hash a password using SHA256 with salt"""
         salt = os.urandom(32)
         pwdhash = hashlib.pbkdf2_hmac(
-            "sha256", password.encode("utf-8"), salt, 100000
-        )
+            "sha256", password.encode("utf-8"), salt, 100000)
         return salt.hex() + pwdhash.hex()
 
     def verify_password(
-        self, stored_password: str, provided_password: str
-    ) -> bool:
+            self,
+            stored_password: str,
+            provided_password: str) -> bool:
         """Verify a password against the stored hash"""
         salt = bytes.fromhex(stored_password[:64])
         stored_hash = stored_password[64:]
@@ -91,8 +91,8 @@ class SecurityMiddleware:
         """Extract JWT token from request headers"""
         # This is a placeholder - implement based on your framework
         # For FastAPI: request.headers.get('Authorization', '').replace('Bearer ', '')
-        # For Flask: request.headers.get('Authorization', '').replace('Bearer ', '')
-        pass
+        # For Flask: request.headers.get('Authorization', '').replace('Bearer
+        # ', '')
 
 
 # Initialize security middleware

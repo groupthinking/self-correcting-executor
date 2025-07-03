@@ -1,13 +1,13 @@
 # Pattern Detection and Analysis Engine
 # Drives intelligent mutations based on execution patterns
 
-import json
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List
 from datetime import datetime, timedelta
 import numpy as np
 from collections import defaultdict
 
-# from utils.db_tracker import get_execution_history  # TODO: implement when db_tracker has this function
+# from utils.db_tracker import get_execution_history  # TODO: implement
+# when db_tracker has this function
 
 
 class PatternDetector:
@@ -19,8 +19,7 @@ class PatternDetector:
         self.mutation_recommendations = []
 
     async def analyze_execution_patterns(
-        self, time_window: timedelta = None
-    ) -> Dict:
+            self, time_window: timedelta = None) -> Dict:
         """Analyze execution patterns from database"""
         # Get execution history
         history = await self._get_execution_data(time_window)
@@ -36,9 +35,7 @@ class PatternDetector:
         )
 
         # Generate mutation recommendations
-        recommendations = await self._generate_mutation_recommendations(
-            insights
-        )
+        recommendations = await self._generate_mutation_recommendations(insights)
 
         return {
             "patterns": {
@@ -52,8 +49,7 @@ class PatternDetector:
         }
 
     async def _get_execution_data(
-        self, time_window: timedelta = None
-    ) -> List[Dict]:
+            self, time_window: timedelta = None) -> List[Dict]:
         """Get execution data from database"""
         # In real implementation, would query database
         # For now, return mock data
@@ -121,8 +117,7 @@ class PatternDetector:
         for execution in history:
             if "duration" in execution:
                 protocol_durations[execution["protocol"]].append(
-                    execution["duration"]
-                )
+                    execution["duration"])
 
         # Find slow protocols
         for protocol, durations in protocol_durations.items():
@@ -147,11 +142,10 @@ class PatternDetector:
                     performance_patterns["performance_degradation"].append(
                         {
                             "protocol": protocol,
-                            "degradation_factor": np.mean(recent)
-                            / np.mean(older),
+                            "degradation_factor": np.mean(recent) /
+                            np.mean(older),
                             "trend": "increasing",
-                        }
-                    )
+                        })
 
         return performance_patterns
 
@@ -171,8 +165,9 @@ class PatternDetector:
 
         # Sort by usage
         sorted_usage = sorted(
-            protocol_usage.items(), key=lambda x: x[1], reverse=True
-        )
+            protocol_usage.items(),
+            key=lambda x: x[1],
+            reverse=True)
         usage_patterns["most_used_protocols"] = [
             {"protocol": p, "usage_count": c} for p, c in sorted_usage[:5]
         ]
@@ -194,11 +189,12 @@ class PatternDetector:
                 {
                     "type": "repeated_failure",
                     "severity": repeated["severity"],
-                    "message": f"Protocol {repeated['protocol']} has failed {repeated['failure_count']} times",
+                    "message": f"Protocol {
+                        repeated['protocol']} has failed {
+                        repeated['failure_count']} times",
                     "recommendation": "Consider mutation or redesign",
                     "data": repeated,
-                }
-            )
+                })
 
         # Performance insights
         for slow in performance_patterns["slow_protocols"]:
@@ -206,11 +202,12 @@ class PatternDetector:
                 {
                     "type": "performance_issue",
                     "severity": "medium",
-                    "message": f"Protocol {slow['protocol']} averages {slow['avg_duration']:.2f}s execution time",
+                    "message": f"Protocol {
+                        slow['protocol']} averages {
+                        slow['avg_duration']:.2f}s execution time",
                     "recommendation": "Optimize algorithm or add caching",
                     "data": slow,
-                }
-            )
+                })
 
         # Usage insights
         if usage_patterns["most_used_protocols"]:
@@ -219,11 +216,12 @@ class PatternDetector:
                 {
                     "type": "high_usage",
                     "severity": "info",
-                    "message": f"Protocol {top_protocol['protocol']} is most used ({top_protocol['usage_count']} times)",
+                    "message": f"Protocol {
+                        top_protocol['protocol']} is most used ({
+                        top_protocol['usage_count']} times)",
                     "recommendation": "Ensure robustness and consider optimization",
                     "data": top_protocol,
-                }
-            )
+                })
 
         return insights
 
@@ -301,15 +299,12 @@ class InsightDrivenMutator:
         mutation_type = recommendation["mutation_type"]
 
         # Load current protocol code
-        from protocols.loader import load_protocol
 
         current_code = await self._get_protocol_code(protocol)
 
         # Generate mutated code based on type
         if mutation_type == "error_handling":
-            mutated_code = await self._add_error_handling(
-                current_code, recommendation
-            )
+            mutated_code = await self._add_error_handling(current_code, recommendation)
         elif mutation_type == "performance_optimization":
             mutated_code = await self._add_performance_optimization(
                 current_code, recommendation
@@ -340,17 +335,18 @@ def task():
 """
 
     async def _add_error_handling(
-        self, code: str, recommendation: Dict
-    ) -> str:
+            self,
+            code: str,
+            recommendation: Dict) -> str:
         """Add error handling to code"""
         # In real implementation, would use AST manipulation
-        return f"""
+        return """
 import time
 
 def task():
     max_retries = 3
     retry_delay = 1
-    
+
     for attempt in range(max_retries):
         try:
             # Original code with error handling
@@ -362,9 +358,9 @@ def task():
                 continue
             else:
                 # Log error and return failure
-                print(f"Failed after {{max_retries}} attempts: {{e}}")
+                print(f"Failed after {max_retries} attempts: {e}")
                 return False
-    
+
 def _original_task():
     # Original code moved here
     return random.random() > 0.5
@@ -375,14 +371,14 @@ def _original_task():
     ) -> str:
         """Add performance optimization to code"""
         # In real implementation, would analyze and optimize
-        return f"""
+        return """
 from functools import lru_cache
 
 @lru_cache(maxsize=128)
 def task():
     # Cached version of original code
     return _compute_result()
-    
+
 def _compute_result():
     # Original computation
     return random.random() > 0.5

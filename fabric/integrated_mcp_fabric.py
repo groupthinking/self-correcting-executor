@@ -39,8 +39,7 @@ class MCPStateFabric:
             self.state_fabric = StateContinuityFabric(fabric_id)
         except ImportError:
             logger.error(
-                "State Continuity Fabric not found. Creating minimal version."
-            )
+                "State Continuity Fabric not found. Creating minimal version.")
             self.state_fabric = None
 
     async def initialize(self, mcp_servers: List[Dict[str, Any]]) -> bool:
@@ -68,8 +67,8 @@ class MCPStateFabric:
                 # Verify connection by listing tools
                 tools = await client.list_tools()
                 logger.info(
-                    f"Connected to {name} at {url} with {len(tools)} tools"
-                )
+                    f"Connected to {name} at {url} with {
+                        len(tools)} tools")
 
                 self.mcp_clients[name] = client
                 connected_count += 1
@@ -94,8 +93,7 @@ class MCPStateFabric:
         """
         if not self._initialized:
             raise RuntimeError(
-                "Fabric not initialized. Call initialize() first."
-            )
+                "Fabric not initialized. Call initialize() first.")
 
         capabilities = {}
 
@@ -104,12 +102,11 @@ class MCPStateFabric:
                 tools = await client.list_tools()
                 capabilities[server_name] = [tool.name for tool in tools]
                 logger.info(
-                    f"{server_name} capabilities: {capabilities[server_name]}"
-                )
+                    f"{server_name} capabilities: {
+                        capabilities[server_name]}")
             except Exception as e:
                 logger.error(
-                    f"Failed to get capabilities from {server_name}: {e}"
-                )
+                    f"Failed to get capabilities from {server_name}: {e}")
                 capabilities[server_name] = []
 
         return capabilities
@@ -208,11 +205,8 @@ class MCPStateFabric:
         history = []
 
         # Get all devices or specific device
-        devices = (
-            [device_id]
-            if device_id
-            else list(self.state_fabric.device_registry.keys())
-        )
+        devices = ([device_id] if device_id else list(
+            self.state_fabric.device_registry.keys()))
 
         for dev_id in devices:
             if dev_id in self.state_fabric.engines:
@@ -248,8 +242,8 @@ class MCPStateFabric:
                 source_device, target_device
             )
             logger.info(
-                f"Synced state from {source_device} to {target_device}: {merged_state.id}"
-            )
+                f"Synced state from {source_device} to {target_device}: {
+                    merged_state.id}")
             return True
         except Exception as e:
             logger.error(f"State sync failed: {e}")

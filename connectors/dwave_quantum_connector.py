@@ -19,25 +19,20 @@ References:
 
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 import numpy as np
-from datetime import datetime
 
 # Real D-Wave imports (requires: pip install dwave-ocean-sdk)
 try:
     from dwave.system import (
         DWaveSampler,
         EmbeddingComposite,
-        FixedEmbeddingComposite,
     )
-    from dwave.system.composites import LazyFixedEmbeddingComposite
     from dwave.cloud import Client
 
     # SimulatedAnnealingSampler removed - real QPU only
     import dimod
-    from dimod import BinaryQuadraticModel, ConstrainedQuadraticModel
-    import dwave.inspector
 
     DWAVE_AVAILABLE = True
 except ImportError:
@@ -77,7 +72,9 @@ class DWaveQuantumConnector(MCPConnector):
     ):
         super().__init__("dwave_quantum", "quantum_computing")
         self.api_token = api_token
-        self.solver_name = solver_name  # e.g., "Advantage_system6.4" or "Advantage2_prototype"
+        self.solver_name = (
+            solver_name  # e.g., "Advantage_system6.4" or "Advantage2_prototype"
+        )
         self.sampler = None
         self.client = None
         self.solver_info = {}
@@ -111,8 +108,7 @@ class DWaveQuantumConnector(MCPConnector):
 
             if not qpu_solvers:
                 logger.warning(
-                    "No QPU solvers available, using simulated annealing"
-                )
+                    "No QPU solvers available, using simulated annealing")
                 raise RuntimeError("Real QPU required - no simulations")
                 self.solver_info = {
                     "name": "SimulatedAnnealingSampler",
@@ -131,8 +127,7 @@ class DWaveQuantumConnector(MCPConnector):
                     solver = qpu_solvers[0]
 
                 self.sampler = EmbeddingComposite(
-                    DWaveSampler(solver=solver.id)
-                )
+                    DWaveSampler(solver=solver.id))
                 self.solver_info = {
                     "name": solver.id,
                     "type": "QPU",
@@ -149,8 +144,7 @@ class DWaveQuantumConnector(MCPConnector):
 
             self.connected = True
             logger.info(
-                f"Connected to D-Wave solver: {self.solver_info['name']}"
-            )
+                f"Connected to D-Wave solver: {self.solver_info['name']}")
             return True
 
         except Exception as e:
@@ -236,10 +230,9 @@ class DWaveQuantumConnector(MCPConnector):
                 bqm,
                 num_reads=num_reads,
                 annealing_time=(
-                    annealing_time
-                    if hasattr(self.sampler, "annealing_time")
-                    else None
-                ),
+                    annealing_time if hasattr(
+                        self.sampler,
+                        "annealing_time") else None),
                 return_embedding=True,
             )
 
@@ -423,11 +416,9 @@ class DWaveQuantumConnector(MCPConnector):
                 cut_value = 0
                 for u, v in graph_edges:
                     if (u in set_a and v in set_b) or (
-                        u in set_b and v in set_a
-                    ):
-                        cut_value += weights.get(
-                            (u, v), weights.get((v, u), 1)
-                        )
+                            u in set_b and v in set_a):
+                        cut_value += weights.get((u, v),
+                                                 weights.get((v, u), 1))
 
                 result["partition_a"] = set_a
                 result["partition_b"] = set_b
@@ -448,9 +439,8 @@ class DWaveQuantumConnector(MCPConnector):
         Solve 0-1 Knapsack problem using quantum annealing
         """
         try:
-            items = params.get(
-                "items", []
-            )  # List of {'weight': w, 'value': v}
+            # List of {'weight': w, 'value': v}
+            items = params.get("items", [])
             capacity = params.get("capacity", 10)
 
             n = len(items)
@@ -506,8 +496,7 @@ class DWaveQuantumConnector(MCPConnector):
             }
 
     async def get_solver_info(
-        self, params: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+            self, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Get information about the connected D-Wave solver"""
         if not self.connected:
             return {"error": "Not connected to D-Wave service"}
@@ -517,8 +506,7 @@ class DWaveQuantumConnector(MCPConnector):
             "solver_info": self.solver_info,
             "available": DWAVE_AVAILABLE,
             "connection_status": (
-                "connected" if self.connected else "disconnected"
-            ),
+                "connected" if self.connected else "disconnected"),
         }
 
 

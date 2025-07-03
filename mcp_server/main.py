@@ -14,7 +14,7 @@ import logging
 import sys
 import ast
 import re
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 # Configure logging
@@ -29,9 +29,8 @@ PROTOCOL_VERSION = "2024-11-05"
 class MCPTool:
     """Represents an MCP tool that can be called by clients."""
 
-    def __init__(
-        self, name: str, description: str, input_schema: Dict[str, Any]
-    ):
+    def __init__(self, name: str, description: str,
+                 input_schema: Dict[str, Any]):
         self.name = name
         self.description = description
         self.input_schema = input_schema
@@ -97,8 +96,7 @@ class MCPServer:
                     },
                     "required": ["code"],
                 },
-            )
-        )
+            ))
 
         # Protocol Validator Tool
         self.tools.append(
@@ -120,8 +118,7 @@ class MCPServer:
                     },
                     "required": ["message"],
                 },
-            )
-        )
+            ))
 
         # Self Corrector Tool
         self.tools.append(
@@ -148,8 +145,7 @@ class MCPServer:
                     },
                     "required": ["code"],
                 },
-            )
-        )
+            ))
 
     def _setup_resources(self):
         """Initialize available resources."""
@@ -173,8 +169,7 @@ class MCPServer:
         )
 
     async def handle_request(
-        self, request_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle incoming JSON-RPC requests."""
 
         request_id = request_data.get("id")
@@ -214,13 +209,12 @@ class MCPServer:
         return handlers[method]
 
     async def _handle_initialize(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle the 'initialize' request."""
         client_info = params.get("clientInfo", {})
         LOGGER.info(
-            "Initializing session for client: %s", client_info.get("name")
-        )
+            "Initializing session for client: %s",
+            client_info.get("name"))
 
         return {
             "serverInfo": {
@@ -229,23 +223,21 @@ class MCPServer:
                 "mcpVersion": MCP_VERSION,
             },
             "capabilities": {
-                "tools": [tool.to_dict() for tool in self.tools],
+                "tools": [
+                    tool.to_dict() for tool in self.tools],
                 "resources": [
-                    resource.to_dict() for resource in self.resources
-                ],
+                    resource.to_dict() for resource in self.resources],
             },
         }
 
     async def _handle_tools_list(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle the 'tools/list' request."""
         _ = params  # Unused
         return {"tools": [tool.to_dict() for tool in self.tools]}
 
     async def _handle_tools_call(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle the 'tools/call' request."""
         tool_name = params.get("name")
         arguments = params.get("arguments", {})
@@ -266,24 +258,19 @@ class MCPServer:
         }
 
     async def _handle_resources_list(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle the 'resources/list' request."""
         _ = params  # Unused
-        return {
-            "resources": [resource.to_dict() for resource in self.resources]
-        }
+        return {"resources": [resource.to_dict()
+                              for resource in self.resources]}
 
     async def _handle_resources_read(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle the 'resources/read' request."""
         uri = params.get("uri")
         content = ""
         if uri == "file:///mcp/protocol-spec.md":
-            content = (
-                f"# MCP Protocol Specification\n\nVersion: {PROTOCOL_VERSION}"
-            )
+            content = f"# MCP Protocol Specification\n\nVersion: {PROTOCOL_VERSION}"
         elif uri == "file:///mcp/tools.json":
             content = json.dumps(
                 {"tools": [tool.to_dict() for tool in self.tools]}, indent=2
@@ -317,8 +304,7 @@ class MCPServer:
         return {"status": "subscribed"}
 
     async def _execute_code_analyzer(
-        self, arguments: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the 'code_analyzer' tool."""
         code = arguments.get("code")
         if not code:
@@ -328,10 +314,8 @@ class MCPServer:
             tree = ast.parse(code)
             lines_of_code = len(code.splitlines())
             num_functions = sum(
-                1
-                for node in ast.walk(tree)
-                if isinstance(node, ast.FunctionDef)
-            )
+                1 for node in ast.walk(tree) if isinstance(
+                    node, ast.FunctionDef))
             complexity = self._calculate_complexity(tree)
 
             result = {
@@ -382,8 +366,7 @@ class MCPServer:
         message_str = arguments.get("message")
         if not message_str:
             raise ValueError(
-                "'message' argument is required for protocol_validator"
-            )
+                "'message' argument is required for protocol_validator")
 
         issues = []
         try:
@@ -436,8 +419,7 @@ class MCPServer:
                 )
             if re.search(r"except\s*:", code):
                 suggestions.append(
-                    "Found broad 'except:'. Specify the exception type."
-                )
+                    "Found broad 'except:'. Specify the exception type.")
 
         except SyntaxError as e:
             suggestions.append(f"Syntax Error: {e}")
@@ -471,9 +453,7 @@ async def handle_stdin_stdout():
 
     reader = asyncio.StreamReader()
     protocol = asyncio.StreamReaderProtocol(reader)
-    await asyncio.get_event_loop().connect_read_pipe(
-        lambda: protocol, sys.stdin
-    )
+    await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin)
 
     writer = None
     if sys.platform != "win32":

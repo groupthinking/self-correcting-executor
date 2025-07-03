@@ -1,7 +1,6 @@
 # Real Protocol: Log Analyzer
 import os
 import re
-from datetime import datetime
 from collections import Counter
 
 
@@ -26,14 +25,10 @@ def task():
                         total_lines += 1
 
                         # Check for errors
-                        if (
-                            "error" in line.lower()
-                            or "exception" in line.lower()
-                        ):
+                        if "error" in line.lower() or "exception" in line.lower():
                             error_count += 1
                             error_patterns.append(
-                                line.strip()[:100]
-                            )  # First 100 chars
+                                line.strip()[:100])  # First 100 chars
 
                         # Check for warnings
                         if "warning" in line.lower() or "warn" in line.lower():

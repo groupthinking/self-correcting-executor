@@ -85,12 +85,14 @@ class A2AMCPMessage:
         return cls(
             a2a_message=a2a_msg,
             mcp_context=mcp_context,
-            priority=MessagePriority(data["transport"]["priority"]),
+            priority=MessagePriority(
+                data["transport"]["priority"]),
             transport_strategy=TransportStrategy(
-                data["transport"]["strategy"]
-            ),
+                data["transport"]["strategy"]),
             deadline_ms=data["transport"].get("deadline_ms"),
-            performance_requirements=data["transport"].get("requirements", {}),
+            performance_requirements=data["transport"].get(
+                "requirements",
+                {}),
         )
 
 
@@ -109,9 +111,8 @@ class MCPEnabledA2AAgent(BaseAgent):
         super().__init__(agent_id, capabilities)
         self.mcp_context = MCPContext()
         self.mcp_server_url = mcp_server_url
-        self.message_bus: Optional[A2AMessageBus] = (
-            None  # Allow message bus injection
-        )
+        # Allow message bus injection
+        self.message_bus: Optional[A2AMessageBus] = None
         self.performance_stats = {
             "messages_sent": 0,
             "messages_received": 0,
@@ -127,8 +128,8 @@ class MCPEnabledA2AAgent(BaseAgent):
 
         # Register handlers for common message types
         self.register_handler(
-            "negotiate_request", self.handle_negotiation_request
-        )
+            "negotiate_request",
+            self.handle_negotiation_request)
         self.register_handler("context_share", self.handle_context_share)
         self.register_handler("tool_request", self.handle_tool_request)
         self.register_handler(
@@ -180,9 +181,7 @@ class MCPEnabledA2AAgent(BaseAgent):
                         "status": "error",
                         "message": "tool_name not specified",
                     }
-                return await self._execute_mcp_tool(
-                    tool_name, intent.get("params", {})
-                )
+                return await self._execute_mcp_tool(tool_name, intent.get("params", {}))
             else:
                 return {
                     "status": "error",
@@ -257,9 +256,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         # 6. Check SLA compliance
         if latency_ms > self.sla_requirements["max_latency_ms"]:
             self.performance_stats["sla_violations"] += 1
-            logger.warning(
-                f"SLA violation: latency exceeded"
-            )
+            logger.warning("SLA violation: latency exceeded")
 
         return {
             "message_id": a2a_msg.id,
@@ -304,7 +301,8 @@ class MCPEnabledA2AAgent(BaseAgent):
     async def _send_zero_copy(self, message: A2AMCPMessage) -> Dict[str, Any]:
         """Zero-copy transfer for high-performance"""
         # In real implementation, this would use direct memory transfer
-        # For now, simulate zero-copy behavior by directly calling receive on the bus
+        # For now, simulate zero-copy behavior by directly calling receive on
+        # the bus
         if self.message_bus:
             await self.message_bus.send(message.a2a_message)
         return {
@@ -314,8 +312,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         }
 
     async def _send_shared_memory(
-        self, message: A2AMCPMessage
-    ) -> Dict[str, Any]:
+            self, message: A2AMCPMessage) -> Dict[str, Any]:
         """Shared memory transfer for large messages"""
         # Simulate shared memory transfer
         if self.message_bus:
@@ -353,8 +350,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         }
 
     async def handle_negotiation_request(
-        self, message: A2AMessage
-    ) -> Dict[str, Any]:
+            self, message: A2AMessage) -> Dict[str, Any]:
         """Handle incoming negotiation request"""
         content = message.content
 
@@ -376,8 +372,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         return response
 
     async def handle_context_share(
-        self, message: A2AMessage
-    ) -> Dict[str, Any]:
+            self, message: A2AMessage) -> Dict[str, Any]:
         """Handle MCP context sharing"""
         # Merge incoming context with local context
         incoming_context = message.content.get("context", {})
@@ -419,21 +414,16 @@ class MCPEnabledA2AAgent(BaseAgent):
             return {"status": "tool_error", "tool": tool_name, "error": str(e)}
 
     async def handle_collaboration_request(
-        self, message: A2AMessage
-    ) -> Dict[str, Any]:
+            self, message: A2AMessage) -> Dict[str, Any]:
         """Handle collaboration requests"""
         collaboration_type = message.content.get("type")
         data = message.content.get("data", {})
 
         # Process collaboration based on agent capabilities
-        if (
-            collaboration_type == "data_analysis"
-            and "analyze" in self.capabilities
-        ):
+        if collaboration_type == "data_analysis" and "analyze" in self.capabilities:
             result = await self._analyze_data(data)
         elif (
-            collaboration_type == "code_generation"
-            and "generate" in self.capabilities
+            collaboration_type == "code_generation" and "generate" in self.capabilities
         ):
             result = await self._generate_code(data)
         else:
@@ -469,8 +459,8 @@ class MCPEnabledA2AAgent(BaseAgent):
                         return result.get("result", {})
                     else:
                         logger.error(
-                            f"MCP tool call failed: {response.status}"
-                        )
+                            f"MCP tool call failed: {
+                                response.status}")
                         return {
                             "status": "error",
                             "error": f"HTTP {response.status}",
@@ -510,8 +500,7 @@ class MCPEnabledA2AAgent(BaseAgent):
             return {"status": "unknown_tool", "tool": tool_name}
 
     def _generate_negotiation_proposal(
-        self, content: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, content: Dict[str, Any]) -> Dict[str, Any]:
         """Generate negotiation proposal based on agent capabilities"""
         return {
             "resources": self._get_available_resources(),
@@ -543,7 +532,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         """Analyze data using real MCP tools"""
         try:
             # Use MCP data processing tool
-            from config.mcp_config import MCPConfig
+            pass
 
             # Call real MCP server for data analysis
             result = await self._execute_mcp_tool(
@@ -611,10 +600,8 @@ class MCPEnabledA2AAgent(BaseAgent):
         language = spec.get("language", "python")
 
         if language == "python":
-            if (
-                code_type == "api_endpoint"
-                and spec.get("framework") == "fastapi"
-            ):
+            if code_type == "api_endpoint" and spec.get(
+                    "framework") == "fastapi":
                 return '''from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any
@@ -635,10 +622,17 @@ async def process_data(request: RequestModel):
         raise HTTPException(status_code=500, detail=str(e))
 '''
             elif code_type == "function":
-                return f'''def {spec.get('name', 'process')}(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Generated function: {spec.get('description', 'Process data')}"""
+                return f'''def {
+                    spec.get(
+                        'name',
+                        'process')}(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Generated function: {
+                    spec.get(
+                        'description',
+                        'Process data')}"""
     # Implementation
-    result = {{"processed": True, "input": data}}
+    result = {
+                    "processed": True, "input": data}
     return result
 '''
 
@@ -677,8 +671,7 @@ class A2AMCPOrchestrator:
 
         # Start negotiation manager
         negotiation_task = asyncio.create_task(
-            self.negotiation_manager.start()
-        )
+            self.negotiation_manager.start())
 
         return bus_task, monitor_task, negotiation_task
 
@@ -728,7 +721,6 @@ class PerformanceMonitor:
     async def _update_stats(self):
         """Update performance statistics"""
         # This would collect stats from all agents
-        pass
 
     def get_stats(self) -> Dict[str, Any]:
         """Get current performance statistics"""
@@ -756,7 +748,6 @@ class NegotiationManager:
     async def _process_negotiations(self):
         """Process active negotiations"""
         # This would handle ongoing negotiations
-        pass
 
 
 # Global orchestrator instance
@@ -780,9 +771,7 @@ async def demonstrate_a2a_mcp_integration():
     a2a_mcp_orchestrator.register_agent(negotiator)
 
     # Start orchestrator
-    bus_task, monitor_task, negotiation_task = (
-        await a2a_mcp_orchestrator.start()
-    )
+    bus_task, monitor_task, negotiation_task = await a2a_mcp_orchestrator.start()
 
     # Demo 1: Contextualized message sending
     print("1. Sending contextualized message:")

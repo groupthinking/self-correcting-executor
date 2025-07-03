@@ -28,8 +28,10 @@ class BasicAuth:
             json.dump(self.users, f, indent=2)
 
     def create_user(
-        self, username: str, password: str, role: str = "viewer"
-    ) -> bool:
+            self,
+            username: str,
+            password: str,
+            role: str = "viewer") -> bool:
         """Create a new user"""
         if username in self.users:
             return False
@@ -83,16 +85,13 @@ if not auth.users:
     import string
 
     secure_password = "".join(
-        secrets.choice(
-            string.ascii_letters + string.digits + string.punctuation
-        )
+        secrets.choice(string.ascii_letters + string.digits + string.punctuation)
         for _ in range(16)
     )
     auth.create_user("admin", secure_password, "admin")
     auth.enforce_password_reset("admin")
     print(
-        f"⚠️  Default admin user created with a secure password: {secure_password}"
-    )
+        f"⚠️  Default admin user created with a secure password: {secure_password}")
     print("⚠️  You must change this password on first login!")
 
 # (Removed redundant block)

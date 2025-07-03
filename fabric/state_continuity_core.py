@@ -10,10 +10,8 @@ import asyncio
 import time
 import json
 import hashlib
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
-from collections import defaultdict
-import numpy as np
 
 # We'll use mcp-use for MCP protocol handling
 from mcp_use import MCPClient, create_client
@@ -43,9 +41,8 @@ class VectorClock:
 
     def concurrent_with(self, other: "VectorClock") -> bool:
         """Check if two clocks are concurrent"""
-        return not self.happens_before(other) and not other.happens_before(
-            self
-        )
+        return not self.happens_before(
+            other) and not other.happens_before(self)
 
 
 @dataclass
@@ -153,8 +150,7 @@ class DifferentialStateEngine:
         # Resolve conflicts if any
         if concurrent_states:
             resolver = self.conflict_handlers.get(
-                strategy, self._resolve_merge
-            )
+                strategy, self._resolve_merge)
             merged_data = resolver(
                 self.states[self.current_state_id], concurrent_states
             )
@@ -178,8 +174,9 @@ class DifferentialStateEngine:
         return latest.data
 
     def _resolve_merge(
-        self, local: StateNode, remotes: List[StateNode]
-    ) -> Dict:
+            self,
+            local: StateNode,
+            remotes: List[StateNode]) -> Dict:
         """Merge all concurrent states"""
         merged = local.data.copy()
 
@@ -201,8 +198,9 @@ class DifferentialStateEngine:
         return merged
 
     def _resolve_user_defined(
-        self, local: StateNode, remotes: List[StateNode]
-    ) -> Dict:
+            self,
+            local: StateNode,
+            remotes: List[StateNode]) -> Dict:
         """Placeholder for user-defined conflict resolution"""
         # This would call a user-provided function
         return self._resolve_merge(local, remotes)
@@ -294,8 +292,7 @@ class StateContinuityFabric:
         return enriched
 
     def _apply_privacy_filters(
-        self, context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+            self, context: Dict[str, Any]) -> Dict[str, Any]:
         """Apply privacy rules to context"""
         filtered = {}
 
@@ -311,13 +308,11 @@ class StateContinuityFabric:
         return filtered
 
     async def sync_devices(
-        self, source_device: str, target_device: str
-    ) -> StateNode:
+            self,
+            source_device: str,
+            target_device: str) -> StateNode:
         """Synchronize state between devices"""
-        if (
-            source_device not in self.engines
-            or target_device not in self.engines
-        ):
+        if source_device not in self.engines or target_device not in self.engines:
             raise ValueError("Both devices must be registered")
 
         source_engine = self.engines[source_device]
@@ -378,7 +373,7 @@ async def demonstrate_fabric():
     # Initialize with MCP server (if available)
     try:
         await fabric.initialize("http://localhost:8080")
-    except:
+    except Exception:
         print("Running without MCP server")
 
     # Register devices
@@ -419,8 +414,7 @@ async def demonstrate_fabric():
     # Get continuity graph
     graph = fabric.get_continuity_graph()
     print(
-        f"Continuity graph: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges"
-    )
+        f"Continuity graph: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges")
 
 
 if __name__ == "__main__":

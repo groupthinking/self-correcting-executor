@@ -72,9 +72,11 @@ def task():
                             total_records += 1
                         processed_count += 1
                         insights.append(
-                            f"{filename}: {type(data).__name__} with {len(data) if isinstance(data, (list, dict)) else 1} items"
-                        )
-                except:
+                            f"{filename}: {
+                                type(data).__name__} with {
+                                len(data) if isinstance(
+                                    data, (list, dict)) else 1} items")
+                except BaseException:
                     pass
 
             elif filename.endswith(".csv"):
@@ -85,9 +87,8 @@ def task():
                         total_records += row_count
                         processed_count += 1
                         insights.append(
-                            f"{filename}: CSV with {row_count} rows"
-                        )
-                except:
+                            f"{filename}: CSV with {row_count} rows")
+                except BaseException:
                     pass
 
         # Always return success if we got this far
@@ -98,9 +99,7 @@ def task():
             "files_processed": processed_count,
             "total_records": total_records,
             "insights": (
-                insights[:5]
-                if insights
-                else ["No data files found to process"]
+                insights[:5] if insights else ["No data files found to process"]
             ),
             "timestamp": datetime.utcnow().isoformat(),
         }
