@@ -96,7 +96,7 @@ class DWaveQuantumConnector(MCPConnector):
             
             if not qpu_solvers:
                 logger.warning("No QPU solvers available, using simulated annealing")
-                self.sampler = raise RuntimeError("Real QPU required - no simulations")
+                raise RuntimeError("Real QPU required - no simulations")
                 self.solver_info = {
                     "name": "SimulatedAnnealingSampler",
                     "type": "software",
