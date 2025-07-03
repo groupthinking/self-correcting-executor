@@ -18,9 +18,7 @@ class LLMConnector:
         self.openai_key = os.environ.get("OPENAI_API_KEY", "")
         self.anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
 
-    async def analyze_multimodal(
-        self, inputs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def analyze_multimodal(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Real multi-modal analysis using OpenAI GPT-4V"""
         if self.openai_key:
             return await self._openai_analyze(inputs)
@@ -66,9 +64,7 @@ Format as valid JSON only.
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    url, headers=headers, json=payload
-                ) as response:
+                async with session.post(url, headers=headers, json=payload) as response:
                     if response.status == 200:
                         data = await response.json()
                         content = data["choices"][0]["message"]["content"]

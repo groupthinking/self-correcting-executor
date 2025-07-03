@@ -32,9 +32,7 @@ def task():
         )
 
         overall_stats = cursor.fetchone()
-        total, successes, unique_protocols, first_exec, last_exec = (
-            overall_stats
-        )
+        total, successes, unique_protocols, first_exec, last_exec = overall_stats
 
         # Get per-protocol performance
         cursor.execute(
@@ -130,18 +128,14 @@ def task():
         insights = []
         if total > 0:
             overall_success_rate = (successes / total) * 100
-            insights.append(
-                f"Overall success rate: {overall_success_rate:.1f}%"
-            )
+            insights.append(f"Overall success rate: {overall_success_rate:.1f}%")
 
             if overall_success_rate < 50:
                 insights.append(
                     "⚠️ System performance below 50% - review failing protocols"
                 )
             elif overall_success_rate > 80:
-                insights.append(
-                    "✅ System performing well with >80% success rate"
-                )
+                insights.append("✅ System performing well with >80% success rate")
 
             if len(failure_patterns) > 0:
                 insights.append(

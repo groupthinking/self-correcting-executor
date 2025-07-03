@@ -38,9 +38,7 @@ class MCPStateFabric:
 
             self.state_fabric = StateContinuityFabric(fabric_id)
         except ImportError:
-            logger.error(
-                "State Continuity Fabric not found. Creating minimal version."
-            )
+            logger.error("State Continuity Fabric not found. Creating minimal version.")
             self.state_fabric = None
 
     async def initialize(self, mcp_servers: List[Dict[str, Any]]) -> bool:
@@ -67,9 +65,7 @@ class MCPStateFabric:
 
                 # Verify connection by listing tools
                 tools = await client.list_tools()
-                logger.info(
-                    f"Connected to {name} at {url} with {len(tools)} tools"
-                )
+                logger.info(f"Connected to {name} at {url} with {len(tools)} tools")
 
                 self.mcp_clients[name] = client
                 connected_count += 1
@@ -93,9 +89,7 @@ class MCPStateFabric:
             Dict mapping server names to their tool lists
         """
         if not self._initialized:
-            raise RuntimeError(
-                "Fabric not initialized. Call initialize() first."
-            )
+            raise RuntimeError("Fabric not initialized. Call initialize() first.")
 
         capabilities = {}
 
@@ -103,13 +97,9 @@ class MCPStateFabric:
             try:
                 tools = await client.list_tools()
                 capabilities[server_name] = [tool.name for tool in tools]
-                logger.info(
-                    f"{server_name} capabilities: {capabilities[server_name]}"
-                )
+                logger.info(f"{server_name} capabilities: {capabilities[server_name]}")
             except Exception as e:
-                logger.error(
-                    f"Failed to get capabilities from {server_name}: {e}"
-                )
+                logger.error(f"Failed to get capabilities from {server_name}: {e}")
                 capabilities[server_name] = []
 
         return capabilities
@@ -209,9 +199,7 @@ class MCPStateFabric:
 
         # Get all devices or specific device
         devices = (
-            [device_id]
-            if device_id
-            else list(self.state_fabric.device_registry.keys())
+            [device_id] if device_id else list(self.state_fabric.device_registry.keys())
         )
 
         for dev_id in devices:

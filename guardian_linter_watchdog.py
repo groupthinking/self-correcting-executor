@@ -31,9 +31,7 @@ async def run_linter(file_path: Path):
     """Run the linter on a specific file."""
     if not any(part in EXCLUDED_DIRS for part in file_path.parts):
         command = LINT_COMMAND + [str(file_path)]
-        logger.info(
-            f"Guardian: Analyzing {file_path.relative_to(PROJECT_ROOT)}..."
-        )
+        logger.info(f"Guardian: Analyzing {file_path.relative_to(PROJECT_ROOT)}...")
 
         process = await asyncio.create_subprocess_exec(
             *command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -53,9 +51,7 @@ async def run_linter(file_path: Path):
                     f"Linter error on {file_path.relative_to(PROJECT_ROOT)}:\n{stderr.decode().strip()}"
                 )
         else:
-            logger.info(
-                f"Guardian: {file_path.relative_to(PROJECT_ROOT)} looks clean!"
-            )
+            logger.info(f"Guardian: {file_path.relative_to(PROJECT_ROOT)} looks clean!")
 
 
 async def watch_directory():

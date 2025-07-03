@@ -38,9 +38,7 @@ def run_self_correcting_executor(protocol="default_protocol", iterations=1):
     # Final analysis
     final_stats = get_protocol_stats(protocol)
     if final_stats:
-        log(
-            f"Final performance - Success rate: {final_stats['success_rate']:.2%}"
-        )
+        log(f"Final performance - Success rate: {final_stats['success_rate']:.2%}")
 
     return final_stats
 

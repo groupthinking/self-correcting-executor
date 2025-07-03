@@ -75,9 +75,7 @@ class OrchestrationEngine:
         )
 
         # 3. Workflow Generation
-        workflow = await self.generate_workflow(
-            analyzed_intent, required_components
-        )
+        workflow = await self.generate_workflow(analyzed_intent, required_components)
 
         # 4. Execute Workflow
         result = await self.execute_workflow(workflow)
@@ -105,8 +103,7 @@ class OrchestrationEngine:
             action = "list_directory"
             target = "filesystem"
         elif any(
-            keyword in intent_lower
-            for keyword in ["read", "open", "cat", "show file"]
+            keyword in intent_lower for keyword in ["read", "open", "cat", "show file"]
         ):
             action = "read_file"
             target = "filesystem"
@@ -117,15 +114,11 @@ class OrchestrationEngine:
             action = "multimodal_analysis"
             target = "llm"
         elif any(
-            keyword in intent_lower
-            for keyword in ["analyze", "pattern", "insight"]
+            keyword in intent_lower for keyword in ["analyze", "pattern", "insight"]
         ):
             action = "analyze"
             target = "data"
-        elif any(
-            keyword in intent_lower
-            for keyword in ["check", "health", "status"]
-        ):
+        elif any(keyword in intent_lower for keyword in ["check", "health", "status"]):
             action = "monitor"
             target = "system"
         else:
@@ -155,9 +148,7 @@ class OrchestrationEngine:
             return {"path": path}
         return {}
 
-    async def discover_components(
-        self, intent: Dict, sources: List[str]
-    ) -> Dict:
+    async def discover_components(self, intent: Dict, sources: List[str]) -> Dict:
         """Discover which components are needed"""
         components = {
             "agents": [],
@@ -206,10 +197,7 @@ class OrchestrationEngine:
         # Build workflow steps based on action
         action = intent["parsed_intent"]["action"]
 
-        if (
-            action == "generate_code"
-            and "code_generator" in components["agents"]
-        ):
+        if action == "generate_code" and "code_generator" in components["agents"]:
             # Code generation workflow
             workflow["steps"].append(
                 {
@@ -280,17 +268,11 @@ class OrchestrationEngine:
         for step in workflow["steps"]:
             try:
                 if step["type"] == "protocol":
-                    result = await self.execute_protocol(
-                        step["name"], step["inputs"]
-                    )
+                    result = await self.execute_protocol(step["name"], step["inputs"])
                 elif step["type"] == "analyzer":
-                    result = await self.execute_analyzer(
-                        step["name"], step["inputs"]
-                    )
+                    result = await self.execute_analyzer(step["name"], step["inputs"])
                 elif step["type"] == "agent":
-                    result = await self.execute_agent(
-                        step["name"], step["inputs"]
-                    )
+                    result = await self.execute_agent(step["name"], step["inputs"])
 
                 results["steps_completed"].append(
                     {
@@ -432,9 +414,7 @@ class KnowledgeGraph:
 
 
 # CLI Interface matching your example
-async def run_mcp(
-    intent: str, sources: List[str], quantum: bool = False
-) -> Dict:
+async def run_mcp(intent: str, sources: List[str], quantum: bool = False) -> Dict:
     """Run MCP orchestration from CLI"""
     engine = OrchestrationEngine()
 

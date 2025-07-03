@@ -129,9 +129,7 @@ def _track_to_file(protocol_name, outcome):
     try:
         with open(memory_file, "a") as f:
             f.write(json.dumps(enhanced_outcome) + "\n")
-        log(
-            f"Outcome tracked to file for {protocol_name} (database unavailable)"
-        )
+        log(f"Outcome tracked to file for {protocol_name} (database unavailable)")
     except Exception as e:
         log(f"Failed to track outcome to file: {e}")
 
@@ -336,9 +334,7 @@ def get_mutation_history(protocol_name):
                     "mutation_time": mutation_time.isoformat(),
                     "previous_failure_rate": failure_rate,
                     "code_preview": (
-                        new_code[:200] + "..."
-                        if len(new_code) > 200
-                        else new_code
+                        new_code[:200] + "..." if len(new_code) > 200 else new_code
                     ),
                 }
             )

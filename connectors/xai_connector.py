@@ -115,9 +115,7 @@ class XAIConnector:
                     "color": self.md3_colors["error"],
                 }
 
-    def _format_md3_response(
-        self, api_response: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _format_md3_response(self, api_response: Dict[str, Any]) -> Dict[str, Any]:
         """
         Format API response following Material Design 3 principles.
         """
@@ -129,9 +127,7 @@ class XAIConnector:
             "metadata": {
                 "model": api_response["model"],
                 "usage": api_response["usage"],
-                "sources_used": api_response["usage"].get(
-                    "num_sources_used", 0
-                ),
+                "sources_used": api_response["usage"].get("num_sources_used", 0),
                 "timestamp": datetime.now().isoformat(),
             },
             "ui": {
@@ -219,9 +215,7 @@ class XAIMCPTool:
             )
         else:  # Default chat
             messages = [{"role": "user", "content": query}]
-            return await self.connector.chat_completion(
-                messages=messages, **options
-            )
+            return await self.connector.chat_completion(messages=messages, **options)
 
 
 # Example usage

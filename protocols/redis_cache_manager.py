@@ -42,9 +42,7 @@ def task():
             import hashlib
 
             result = {
-                "computed_value": hashlib.sha256(
-                    str(time.time()).encode()
-                ).hexdigest(),
+                "computed_value": hashlib.sha256(str(time.time()).encode()).hexdigest(),
                 "computation_timestamp": datetime.utcnow().isoformat(),
             }
             time.sleep(0.5)  # Simulate processing time
@@ -106,9 +104,7 @@ def task():
             "benefits": {
                 "time_saved": f"{0.5 * hits:.1f} seconds saved from cache hits",
                 "efficiency": (
-                    "High"
-                    if hit_rate > 70
-                    else "Medium" if hit_rate > 30 else "Low"
+                    "High" if hit_rate > 70 else "Medium" if hit_rate > 30 else "Low"
                 ),
             },
         }

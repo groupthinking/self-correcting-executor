@@ -21,9 +21,7 @@ class ProtocolRegistry:
         except FileNotFoundError:
             return {"categories": {}, "registry": {}}
 
-    def register_protocol(
-        self, name, category, location="local", metadata=None
-    ):
+    def register_protocol(self, name, category, location="local", metadata=None):
         """Register a new protocol"""
         registry = self.load_registry()
 
@@ -53,9 +51,7 @@ class ProtocolRegistry:
         registry["registry"]["total_protocols"] = sum(
             len(cat["protocols"]) for cat in registry["categories"].values()
         )
-        registry["registry"]["last_updated"] = (
-            datetime.utcnow().isoformat() + "Z"
-        )
+        registry["registry"]["last_updated"] = datetime.utcnow().isoformat() + "Z"
 
         # Save registry
         with open(self.registry_file, "w") as f:
