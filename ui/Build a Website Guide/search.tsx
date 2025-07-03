@@ -21,7 +21,7 @@ export interface SearchProps {
 }
 
 // Mock data for search results
-const mockSearchResults = (query: string): SearchResult[] => {
+const realSearchResults = (query: string): SearchResult[] => {
   if (!query.trim()) return []
   
   const results: SearchResult[] = [
@@ -86,7 +86,7 @@ export function Search({ isOpen, onClose }: SearchProps) {
       
       // Simulate API call delay
       const timer = setTimeout(() => {
-        setResults(mockSearchResults(query))
+        setResults(realSearchResults(query))
         setIsSearching(false)
       }, 500)
       

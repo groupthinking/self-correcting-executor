@@ -29,7 +29,9 @@ PROTOCOL_VERSION = "2024-11-05"
 class MCPTool:
     """Represents an MCP tool that can be called by clients."""
 
-    def __init__(self, name: str, description: str, input_schema: Dict[str, Any]):
+    def __init__(
+        self, name: str, description: str, input_schema: Dict[str, Any]
+    ):
         self.name = name
         self.description = description
         self.input_schema = input_schema
@@ -83,7 +85,10 @@ class MCPServer:
                 input_schema={
                     "type": "object",
                     "properties": {
-                        "code": {"type": "string", "description": "The code to analyze"},
+                        "code": {
+                            "type": "string",
+                            "description": "The code to analyze",
+                        },
                         "language": {
                             "type": "string",
                             "description": "Programming language",
@@ -167,7 +172,9 @@ class MCPServer:
             )
         )
 
-    async def handle_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_request(
+        self, request_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle incoming JSON-RPC requests."""
 
         request_id = request_data.get("id")
@@ -211,7 +218,9 @@ class MCPServer:
     ) -> Dict[str, Any]:
         """Handle the 'initialize' request."""
         client_info = params.get("clientInfo", {})
-        LOGGER.info("Initializing session for client: %s", client_info.get("name"))
+        LOGGER.info(
+            "Initializing session for client: %s", client_info.get("name")
+        )
 
         return {
             "serverInfo": {
@@ -221,16 +230,22 @@ class MCPServer:
             },
             "capabilities": {
                 "tools": [tool.to_dict() for tool in self.tools],
-                "resources": [resource.to_dict() for resource in self.resources],
+                "resources": [
+                    resource.to_dict() for resource in self.resources
+                ],
             },
         }
 
-    async def _handle_tools_list(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_tools_list(
+        self, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle the 'tools/list' request."""
         _ = params  # Unused
         return {"tools": [tool.to_dict() for tool in self.tools]}
 
-    async def _handle_tools_call(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_tools_call(
+        self, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Handle the 'tools/call' request."""
         tool_name = params.get("name")
         arguments = params.get("arguments", {})
@@ -255,7 +270,9 @@ class MCPServer:
     ) -> Dict[str, Any]:
         """Handle the 'resources/list' request."""
         _ = params  # Unused
-        return {"resources": [resource.to_dict() for resource in self.resources]}
+        return {
+            "resources": [resource.to_dict() for resource in self.resources]
+        }
 
     async def _handle_resources_read(
         self, params: Dict[str, Any]
@@ -264,7 +281,9 @@ class MCPServer:
         uri = params.get("uri")
         content = ""
         if uri == "file:///mcp/protocol-spec.md":
-            content = f"# MCP Protocol Specification\n\nVersion: {PROTOCOL_VERSION}"
+            content = (
+                f"# MCP Protocol Specification\n\nVersion: {PROTOCOL_VERSION}"
+            )
         elif uri == "file:///mcp/tools.json":
             content = json.dumps(
                 {"tools": [tool.to_dict() for tool in self.tools]}, indent=2
@@ -308,7 +327,11 @@ class MCPServer:
         try:
             tree = ast.parse(code)
             lines_of_code = len(code.splitlines())
-            num_functions = sum(1 for node in ast.walk(tree) if isinstance(node, ast.FunctionDef))
+            num_functions = sum(
+                1
+                for node in ast.walk(tree)
+                if isinstance(node, ast.FunctionDef)
+            )
             complexity = self._calculate_complexity(tree)
 
             result = {
@@ -358,7 +381,9 @@ class MCPServer:
         """Execute the 'protocol_validator' tool."""
         message_str = arguments.get("message")
         if not message_str:
-            raise ValueError("'message' argument is required for protocol_validator")
+            raise ValueError(
+                "'message' argument is required for protocol_validator"
+            )
 
         issues = []
         try:
@@ -369,7 +394,11 @@ class MCPServer:
 
             if message.get("jsonrpc") != "2.0":
                 issues.append("Invalid 'jsonrpc' version")
-            if "method" not in message and "result" not in message and "error" not in message:
+            if (
+                "method" not in message
+                and "result" not in message
+                and "error" not in message
+            ):
                 issues.append("Missing 'method', 'result', or 'error' field")
             if "id" not in message:
                 issues.append("Missing 'id' field for request/response")
@@ -413,10 +442,7 @@ class MCPServer:
         except SyntaxError as e:
             suggestions.append(f"Syntax Error: {e}")
 
-        result = {
-            "issues_found": len(suggestions),
-            "suggestions": suggestions
-        }
+        result = {"issues_found": len(suggestions), "suggestions": suggestions}
         return {
             "content": [
                 {
@@ -445,14 +471,21 @@ async def handle_stdin_stdout():
 
     reader = asyncio.StreamReader()
     protocol = asyncio.StreamReaderProtocol(reader)
-    await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin)
+    await asyncio.get_event_loop().connect_read_pipe(
+        lambda: protocol, sys.stdin
+    )
 
     writer = None
     if sys.platform != "win32":
-        w_transport, w_protocol = await asyncio.get_event_loop().connect_write_pipe(
+        (
+            w_transport,
+            w_protocol,
+        ) = await asyncio.get_event_loop().connect_write_pipe(
             asyncio.Protocol, sys.stdout
         )
-        writer = asyncio.StreamWriter(w_transport, w_protocol, None, asyncio.get_event_loop())
+        writer = asyncio.StreamWriter(
+            w_transport, w_protocol, None, asyncio.get_event_loop()
+        )
 
     while not reader.at_eof():
         line = await reader.readline()
@@ -467,7 +500,7 @@ async def handle_stdin_stdout():
             if writer:
                 writer.write(response_str.encode())
                 await writer.drain()
-            else: # Fallback for Windows
+            else:  # Fallback for Windows
                 print(response_str, flush=True)
 
         except json.JSONDecodeError:
@@ -483,4 +516,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(handle_stdin_stdout())
     except KeyboardInterrupt:
-        LOGGER.info("MCP Server deactivated.") 
+        LOGGER.info("MCP Server deactivated.")
