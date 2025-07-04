@@ -4,6 +4,16 @@ import csv
 import os
 from datetime import datetime
 
+class DataProcessor:
+    """Data processor class for MCP server integration"""
+    
+    def __init__(self):
+        pass
+    
+    def process(self):
+        """Process data files and extract insights"""
+        return task()
+
 def task():
     """Process data files and extract insights"""
     # Try multiple possible data directories
