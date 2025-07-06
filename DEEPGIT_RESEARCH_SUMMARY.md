@@ -134,20 +134,20 @@ Automated quality assurance system with four priority levels:
 deepgit/
 ├── agents/              # Autonomous agent implementations
 │   ├── specialized/     # Specialized agent types
-│   ├── unified/        # Unified transport layer
-│   └── executor.py     # Agent execution engine
-├── mcp_server/         # MCP server implementation
-│   ├── main.py         # FastAPI server
+│   ├── unified/         # Unified transport layer
+│   └── executor.py      # Agent execution engine
+├── mcp_server/          # MCP server implementation
+│   ├── main.py          # FastAPI server
 │   └── quantum_tools.py # Quantum computing tools
-├── protocols/          # Protocol implementations
-├── analyzers/          # Data analysis components
-├── connectors/         # External service connectors
-├── utils/              # Utility functions
-├── frontend/           # User interface
-├── orchestrator.py     # Central orchestration engine
-├── main.py            # Self-correcting executor
-├── docker-compose.yml  # Service configuration
-└── requirements.txt    # Python dependencies
+├── protocols/           # Protocol implementations
+├── analyzers/           # Data analysis components
+├── connectors/          # External service connectors
+├── utils/               # Utility functions
+├── frontend/            # User interface
+├── orchestrator.py      # Central orchestration engine
+├── main.py              # Self-correcting executor
+├── docker-compose.yml   # Service configuration
+└── requirements.txt     # Python dependencies
 ```
 
 ## Business Impact
