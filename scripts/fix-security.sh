@@ -299,18 +299,6 @@ if not auth.users:
     auth.create_user('admin', secure_password, 'admin')
     auth.enforce_password_reset('admin')
     print(f"⚠️  Default admin user created with a secure password: {secure_password}")
-    print("⚠️  You must change this password on first login!")
-
-# Initialize auth
-auth = BasicAuth()
-
-# Create default admin user if none exists
-if not auth.users:
-    print("Creating default admin user...")
-    import secrets
-    import string
-    secure_password = ''.join(secrets.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(16))
-    auth.create_user('admin', secure_password, 'admin')
     print(f"⚠️  Default admin user created with a secure password: {secure_password}")
     print("⚠️  You must change this password on first login!")
 EOF
