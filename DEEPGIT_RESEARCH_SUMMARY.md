@@ -124,7 +124,7 @@ Automated quality assurance system with four priority levels:
 ### Development Tools
 - **Makefile**: Development shortcuts
 - **Docker Compose**: Service orchestration
-- **Requirements.txt**: Dependency management
+- **requirements.txt**: Dependency management
 - **GitHub Actions**: CI/CD pipeline
 - **Linting**: Code quality enforcement
 
