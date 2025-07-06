@@ -172,9 +172,9 @@ deepgit/
 ```bash
 git clone https://github.com/groupthinking/deepgit
 cd deepgit
-make up         # Start services
-make logs       # Monitor logs
-make health     # Check system health
+make up     # Start services
+make logs   # Monitor logs
+make health # Check system health
 ```
 
 ### Development Environment
