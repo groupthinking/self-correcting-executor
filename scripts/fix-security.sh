@@ -49,7 +49,9 @@ try:
         config = yaml.safe_load(f)
     
     # Enable authentication
-    config['api']['authentication']['enabled'] = True
+    api_cfg = config.setdefault('api', {})
+    auth_cfg = api_cfg.setdefault('authentication', {})
+    auth_cfg['enabled'] = True
     print("✓ Enabled API authentication")
     
     # Enable sandboxing
