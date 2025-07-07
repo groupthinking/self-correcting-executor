@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import numpy as np
 import hashlib
-import pickle
+import json
 from pathlib import Path
 
 # Import existing components
@@ -250,7 +250,7 @@ class ContinuousLearningLLM:
         """
         try:
             # Find version in history
-            version_path = self.model_dir / f"{version_id}.pkl"
+            version_path = self.model_dir / f"{version_id}.json"
 
             if not version_path.exists():
                 return {
@@ -259,8 +259,8 @@ class ContinuousLearningLLM:
                 }
 
             # Load the version
-            with open(version_path, "rb") as f:
-                model_data = pickle.load(f)
+            with open(version_path, "r") as f:
+                model_data = json.load(f)
 
             # Set as current model
             self.current_model_version = model_data["version_info"]
@@ -536,8 +536,8 @@ class ContinuousLearningLLM:
             },
             training_data_size=self.training_stats["total_samples_processed"],
             quantum_optimized=self.quantum_connector.connected,
-            file_path=str(self.model_dir / f"{version_id}.pkl"),
-            checksum=hashlib.md5(version_id.encode()).hexdigest(),
+            file_path=str(self.model_dir / f"{version_id}.json"),
+            checksum=hashlib.sha256(version_id.encode()).hexdigest(),
         )
 
         # Save model version
@@ -547,8 +547,8 @@ class ContinuousLearningLLM:
             "model_state": "simulated_model_state",
         }
 
-        with open(version.file_path, "wb") as f:
-            pickle.dump(model_data, f)
+        with open(version.file_path, "w") as f:
+            json.dump(model_data, f, indent=2, default=str)
 
         # Update current version
         self.current_model_version = version
@@ -590,14 +590,14 @@ class ContinuousLearningLLM:
         """Load existing model or create new one"""
         try:
             # Look for existing model versions
-            model_files = list(self.model_dir.glob("*.pkl"))
+            model_files = list(self.model_dir.glob("*.json"))
 
             if model_files:
                 # Load latest version
                 latest_file = max(model_files, key=lambda f: f.stat().st_mtime)
 
-                with open(latest_file, "rb") as f:
-                    model_data = pickle.load(f)
+                with open(latest_file, "r") as f:
+                    model_data = json.load(f)
 
                 self.current_model_version = model_data["version_info"]
                 logger.info(
@@ -611,7 +611,7 @@ class ContinuousLearningLLM:
                     performance_metrics={"accuracy": 0.8, "loss": 0.2},
                     training_data_size=0,
                     quantum_optimized=False,
-                    file_path=str(self.model_dir / "v1_initial.pkl"),
+                    file_path=str(self.model_dir / "v1_initial.json"),
                     checksum="initial",
                 )
 

@@ -6,6 +6,7 @@ Supports quantum agent applications and real-time code analysis
 import json
 import asyncio
 import traceback
+import os
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
@@ -675,7 +676,8 @@ MCP_DEBUG_TOOL_SCHEMA = {
 async def example_usage():
     """Example usage of the MCP Debug Tool"""
     async with MCPDebugTool(
-        gcp_endpoint="https://your-gcp-api", auth_token="your-oauth-token"
+        gcp_endpoint=os.getenv("GCP_API_ENDPOINT", "https://api.example.com"), 
+        auth_token=os.getenv("GCP_AUTH_TOKEN", "development-token")
     ) as debug_tool:
 
         # Debug quantum code
