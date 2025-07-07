@@ -20,8 +20,8 @@ import json
 import logging
 import time
 import os
-from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass, field, asdict
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass, asdict
 from datetime import datetime
 import numpy as np
 import hashlib
