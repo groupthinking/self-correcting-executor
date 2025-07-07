@@ -259,6 +259,10 @@ class RealQuantumTest:
         return passed == total
 
 
+import pytest
+
+
+@pytest.mark.asyncio
 async def test_real_quantum():
     """Test real D-Wave quantum computing"""
     logger.info("🚀 Testing REAL D-Wave Quantum Computing")
