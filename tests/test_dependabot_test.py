@@ -45,7 +45,8 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+            if callable(getattr(dependabot_test, name))
+            and not name.startswith("_")
         ]
         assert functions, "Module should contain at least one function"
 
@@ -111,7 +112,8 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+            if callable(getattr(dependabot_test, name))
+            and not name.startswith("_")
         ]
 
         for func in functions:
@@ -131,7 +133,8 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+            if callable(getattr(dependabot_test, name))
+            and not name.startswith("_")
         ]
 
         for func in functions:
@@ -150,7 +153,8 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+            if callable(getattr(dependabot_test, name))
+            and not name.startswith("_")
         ]
 
         for func in functions:
@@ -176,7 +180,8 @@ class TestDependabotTest:
             functions = [
                 getattr(dependabot_test, name)
                 for name in dir(dependabot_test)
-                if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+                if callable(getattr(dependabot_test, name))
+                and not name.startswith("_")
             ]
 
             for func in functions:
@@ -197,7 +202,8 @@ class TestDependabotTest:
             functions = [
                 getattr(dependabot_test, name)
                 for name in dir(dependabot_test)
-                if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+                if callable(getattr(dependabot_test, name))
+                and not name.startswith("_")
             ]
 
             for func in functions:
@@ -226,7 +232,8 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+            if callable(getattr(dependabot_test, name))
+            and not name.startswith("_")
         ]
 
         for func in functions:
@@ -236,9 +243,7 @@ class TestDependabotTest:
                 except (TypeError, ValueError, AttributeError):
                     pass
                 except Exception as e:
-                    print(
-                        f"Unexpected exception in {func.__name__} with {edge_case}: {e}"
-                    )
+                    print(f"Unexpected exception in {func.__name__} with {edge_case}: {e}")
 
     def test_concurrent_execution(self):
         """Test concurrent execution safety"""
@@ -250,7 +255,8 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+            if callable(getattr(dependabot_test, name))
+            and not name.startswith("_")
         ]
 
         if not functions:
@@ -284,11 +290,11 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+            if callable(getattr(dependabot_test, name))
+            and not name.startswith("_")
         ]
 
         initial_objects = len(gc.get_objects())
-
         for func in functions:
             try:
                 func()
@@ -310,7 +316,8 @@ class TestDependabotTest:
             functions = [
                 getattr(dependabot_test, name)
                 for name in dir(dependabot_test)
-                if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+                if callable(getattr(dependabot_test, name))
+                and not name.startswith("_")
             ]
 
             for func in functions:
@@ -334,7 +341,8 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+            if callable(getattr(dependabot_test, name))
+            and not name.startswith("_")
         ]
 
         for config in test_configs:
@@ -344,10 +352,7 @@ class TestDependabotTest:
                 except (TypeError, KeyError, AttributeError):
                     pass
                 except Exception as e:
-                    print(
-                        f"Unexpected exception in {func.__name__}"
-                        f" with config {config}: {e}"
-                    )
+                    print(f"Unexpected exception in {func.__name__} with config {config}: {e}")
 
 
 class TestDependabotTestIntegration:
@@ -374,17 +379,15 @@ class TestDependabotTestIntegration:
             functions = [
                 getattr(dependabot_test, name)
                 for name in dir(dependabot_test)
-                if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+                if callable(getattr(dependabot_test, name))
+                and not name.startswith("_")
             ]
 
             for func in functions:
                 try:
                     func()
                 except Exception as e:
-                    print(
-                        f"Function {func.__name__} failed in"
-                        f" GitHub Actions env: {e}"
-                    )
+                    print(f"Function {func.__name__} failed in GitHub Actions env: {e}")
 
     def test_dependabot_specific_scenarios(self):
         """Test scenarios specific to Dependabot operations"""
@@ -401,17 +404,15 @@ class TestDependabotTestIntegration:
             functions = [
                 getattr(dependabot_test, name)
                 for name in dir(dependabot_test)
-                if callable(getattr(dependabot_test, name)) and not name.startswith("_")
+                if callable(getattr(dependabot_test, name))
+                and not name.startswith("_")
             ]
 
             for func in functions:
                 try:
                     func()
                 except Exception as e:
-                    print(
-                        f"Function {func.__name__} in Dependabot"
-                        f" context: {e}"
-                    )
+                    print(f"Function {func.__name__} in Dependabot context: {e}")
 
 
 if __name__ == "__main__":
