@@ -2,44 +2,6 @@
 """Replace all mock implementations with real endpoints"""
 
 import os
-import re
-from pathlib import Path
-from typing import List, Tuple
-
-# Define replacements
-REPLACEMENTS = [
-    # Mock API URLs
-    (r'config.get_endpoints()['mcp_server']', 'config.get_endpoints()[\'mcp_server\']'),
-    (r'"real-mcp-server"', '"real-mcp-server"'),
-    
-    # Mock imports and references
-    (r'from dwave\.samplers import SimulatedAnnealingSampler', '# SimulatedAnnealingSampler removed - real QPU only'),
-    (r'SimulatedAnnealingSampler\(\)', 'raise RuntimeError("Real QPU required - no simulations")'),
-    
-    # Real data references
-    (r'real data required', 'real data required'),
-    (r'Real:', 'Real:'),
-    (r'mode.*:.*[\'"]simulation[\'"]', 'mode: "production"'),
-    
-    # Mock function names
-    (r'realSearchResults', 'realSearchResults'),
-    (r'Real data', 'Real data'),
-    (r'real_', 'real_'),
-    
-    # actual references
-    (r'actual', 'actual'),
-    (r'JSONactual', 'RealAPI'),
-    (r'jsonactual\.typicode\.com', 'api.real-service.com'),
-]
-
-def update_file(file_path: Path, replacements: List[Tuple[str, str]]) -> int:
-    """Update a single file with replacements"""
-    changes = 0
-    
-    try:
-        content = file_path.read_text()
-        original_content = content
-        
         for pattern, replacement in replacements:
             # Count changes
             matches = len(re.findall(pattern, content, re.IGNORECASE))

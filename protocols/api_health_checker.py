@@ -20,7 +20,7 @@ def task():
     for endpoint in endpoints:
         try:
             start_time = time.time()
-            response = requests.get(endpoint['url'], timeout=5)
+            response = requests.get(endpoint["url"], timeout=5)
             response_time = (time.time() - start_time) * 1000  # ms
 
             results.append({

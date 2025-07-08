@@ -1,0 +1,18 @@
+# Minimal requirements for CI/CD pipeline
+# Core dependencies
+aiohttp>=3.8.0
+pydantic>=2.0.0
+fastapi>=0.100.0
+uvicorn>=0.20.0
+
+# Testing and linting
+black>=23.0.0
+flake8>=6.0.0
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+
+# Basic utilities
+requests>=2.28.0
+python-dotenv>=1.0.0
+PyYAML>=6.0.0

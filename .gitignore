@@ -372,6 +372,10 @@ mcp_logs/
 # Test reports
 test_reports/
 *.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.node.json
 
 # Security
 *.key
@@ -403,14 +407,14 @@ secrets/
 # OS generated files
 Thumbs.db
 ehthumbs.db
-Desktop.ini # Python
-# IDEs
-# OS
+Desktop.ini
+
 # Project specific
 .backup/
 todo_report.txt
 mock_implementations.txt
 duplicate_test_files.txt
+
 # Security
 .env
 .env.*

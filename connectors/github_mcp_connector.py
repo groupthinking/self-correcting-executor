@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
 GitHub MCP Connector
-===================
 
 Real GitHub integration using GitHub API v3 and MCP protocol.
 Provides access to repositories, issues, pull requests, and more.
+Enhanced with a circuit breaker pattern for resilience.
 
 Features:
-- Repository browsing and search
-- Issue and PR management
-- Code analysis and metrics
-- Real-time collaboration
+- Asynchronous API calls with aiohttp
+- Comprehensive action mapping (search, get repo, issues, PRs, etc.)
+- Resilient API calls with a Circuit Breaker pattern
+- Rate limiting awareness
 - MCP protocol compliance
 """
 
@@ -21,9 +21,42 @@ import os
 from typing import Dict, Any, Optional
 import base64
 
+# Assuming the base class is in a file like this.
+# Adjust the import if your project structure is different.
 from connectors.mcp_base import MCPConnector
 
 logger = logging.getLogger(__name__)
+
+
+class CircuitBreaker:
+    """A simple implementation of the circuit breaker pattern."""
+
+    def __init__(self, failure_threshold=5, recovery_timeout=60):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self._failure_count = 0
+        self._last_failure_time = 0
+        self._state = "CLOSED"  # Can be CLOSED, OPEN, HALF_OPEN
+
+    @property
+    def state(self):
+        if (
+            self._state == "OPEN"
+            and time.time() - self._last_failure_time > self.recovery_timeout
+        ):
+            self._state = "HALF_OPEN"
+        return self._state
+
+    def record_failure(self):
+        self._failure_count += 1
+        if self._failure_count >= self.failure_threshold:
+            self._state = "OPEN"
+            self._last_failure_time = time.time()
+
+    def record_success(self):
+        self._state = "CLOSED"
+        self._failure_count = 0
+        self._last_failure_time = 0
 
 
 class GitHubMCPConnector(MCPConnector):
@@ -46,16 +79,6 @@ class GitHubMCPConnector(MCPConnector):
         """Connect to GitHub API"""
         try:
             # Get API token from config or environment
-            self.api_token = config.get("api_token", self.api_token)
-
-            if not self.api_token:
-                logger.error(
-                    "GitHub API token required. Set GITHUB_TOKEN "
-                    "environment variable or pass in config."
-                )
-                return False
-
-            # Create aiohttp session
             headers = {
                 "Authorization": f"token {self.api_token}",
                 "Accept": "application/vnd.github.v3+json",
@@ -65,17 +88,9 @@ class GitHubMCPConnector(MCPConnector):
             self.session = aiohttp.ClientSession(headers=headers)
 
             # Test connection
-            async with self.session.get(f"{self.base_url}/user") as response:
-                if response.status == 200:
-                    user_data = await response.json()
-                    logger.info(
-                        f"Connected to GitHub as: "
-                        f"{user_data.get('login', 'Unknown')}"
-                    )
-                    self.connected = True
-
-                    # Get rate limit info
                     await self._update_rate_limit()
+                    # Connection successful, close breaker
+                    self.breaker.record_success()
                     return True
                 else:
                     logger.error(
@@ -85,11 +100,12 @@ class GitHubMCPConnector(MCPConnector):
 
         except Exception as e:
             logger.error(f"Failed to connect to GitHub: {e}")
+            self.breaker.record_failure()
             return False
 
     async def disconnect(self) -> bool:
         """Disconnect from GitHub API"""
-        if self.session:
+        if self.session and not self.session.closed:
             await self.session.close()
         self.connected = False
         return True
@@ -126,7 +142,22 @@ class GitHubMCPConnector(MCPConnector):
         if handler:
             try:
                 result = await handler(params)
+                # Successful API call, even if GitHub returns a logical
+                # error (e.g. "not found")
+                # We check for success before resetting the breaker.
+                if isinstance(result, dict) and result.get("success") is False:
+                    # This indicates a logical failure (e.g. 404 Not Found),
+                    # not necessarily a service failure
+                    pass
+                # Reset breaker on any successful communication
+                self.breaker.record_success()
                 return result
+            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                logger.error(
+                    f"API call for action '{action}' failed with " f"network error: {e}"
+                )
+                self.breaker.record_failure()
+                return {"success": False, "error": str(e), "action": action}
             except Exception as e:
                 return {"error": str(e), "action": action}
 
@@ -187,14 +218,6 @@ class GitHubMCPConnector(MCPConnector):
                         "total_count": data.get("total_count", 0),
                         "repositories": repositories,
                         "search_query": search_query,
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Search failed: {response.status}",
-                        "status_code": response.status,
-                    }
-
         except Exception as e:
             logger.error(f"Repository search failed: {e}")
             return {"success": False, "error": str(e)}
@@ -252,24 +275,6 @@ class GitHubMCPConnector(MCPConnector):
                         "status_code": response.status,
                     }
 
-        except Exception as e:
-            logger.error(f"Get repository failed: {e}")
-            return {"success": False, "error": str(e)}
-
-    async def get_issues(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Get repository issues
-
-        Args:
-            params: Issue parameters (owner, repo, state, labels, etc.)
-        """
-        try:
-            owner = params.get("owner")
-            repo = params.get("repo")
-            state = params.get("state", "open")
-            labels = params.get("labels", "")
-            per_page = params.get("per_page", 30)
-
             if not owner or not repo:
                 return {
                     "success": False,
@@ -320,25 +325,6 @@ class GitHubMCPConnector(MCPConnector):
                         "error": f"Failed to get issues: {response.status}",
                         "status_code": response.status,
                     }
-
-        except Exception as e:
-            logger.error(f"Get issues failed: {e}")
-            return {"success": False, "error": str(e)}
-
-    async def get_pull_requests(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Get repository pull requests
-
-        Args:
-            params: PR parameters (owner, repo, state, etc.)
-        """
-        try:
-            owner = params.get("owner")
-            repo = params.get("repo")
-            state = params.get("state", "open")
-            per_page = params.get("per_page", 30)
 
             if not owner or not repo:
                 return {
@@ -446,25 +432,6 @@ class GitHubMCPConnector(MCPConnector):
                         "status_code": response.status,
                     }
 
-        except Exception as e:
-            logger.error(f"Get file content failed: {e}")
-            return {"success": False, "error": str(e)}
-
-    async def get_commits(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Get repository commits
-
-        Args:
-            params: Commit parameters (owner, repo, sha, since, until)
-        """
-        try:
-            owner = params.get("owner")
-            repo = params.get("repo")
-            sha = params.get("sha", "main")
-            since = params.get("since")
-            until = params.get("until")
-            per_page = params.get("per_page", 30)
-
             if not owner or not repo:
                 return {
                     "success": False,
@@ -524,20 +491,6 @@ class GitHubMCPConnector(MCPConnector):
                         "status_code": response.status,
                     }
 
-        except Exception as e:
-            logger.error(f"Get commits failed: {e}")
-            return {"success": False, "error": str(e)}
-
-    async def get_user_info(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Get GitHub user information
-
-        Args:
-            params: User parameters (username)
-        """
-        try:
-            username = params.get("username")
-
             if not username:
                 return {
                     "success": False,
@@ -577,31 +530,6 @@ class GitHubMCPConnector(MCPConnector):
                         "status_code": response.status,
                     }
 
-        except Exception as e:
-            logger.error(f"Get user info failed: {e}")
-            return {"success": False, "error": str(e)}
-
-    async def create_issue(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Create a new issue
-
-        Args:
-            params: Issue parameters (owner, repo, title, body, labels, assignees)
-        """
-        try:
-            owner = params.get("owner")
-            repo = params.get("repo")
-            title = params.get("title")
-            body = params.get("body", "")
-            labels = params.get("labels", [])
-            assignees = params.get("assignees", [])
-
-            if not owner or not repo or not title:
-                return {
-                    "success": False,
-                    "error": (
-                        "Owner, repo, and title parameters required"
-                    ),
                 }
 
             url = f"{self.base_url}/repos/{owner}/{repo}/issues"
@@ -637,6 +565,11 @@ class GitHubMCPConnector(MCPConnector):
                         },
                     }
                 else:
+                    error_details = await response.text()
+                    logger.error(
+                        f"Failed to create issue. Status: {response.status}, "
+                        f"Details: {error_details}"
+                    )
                     return {
                         "success": False,
                         "error": f"Failed to create issue: {response.status}",
@@ -732,7 +665,7 @@ async def demonstrate_github_connector():
         for repo in search_result["repositories"][:3]:
             print(f"   - {repo['full_name']}: {repo['stars']} stars")
     else:
-        print(f"   - Error: {search_result['error']}")
+        print(f"   - Error: {search_result.get('error')}")
     print()
 
     # Demo 2: Get repository info
@@ -748,7 +681,7 @@ async def demonstrate_github_connector():
         print(f"   - Stars: {repo['stars']}")
         print(f"   - Open issues: {repo['open_issues']}")
     else:
-        print(f"   - Error: {repo_result['error']}")
+        print(f"   - Error: {repo_result.get('error')}")
     print()
 
     # Demo 3: Get rate limit
@@ -760,7 +693,7 @@ async def demonstrate_github_connector():
         print(f"   - Used requests: {rl['used']}")
         print(f"   - Total limit: {rl['limit']}")
     else:
-        print(f"   - Error: {rate_limit['error']}")
+        print(f"   - Error: {rate_limit_result.get('error')}")
     print()
 
     # Disconnect
@@ -769,4 +702,11 @@ async def demonstrate_github_connector():
 
 
 if __name__ == "__main__":
+    # Setup basic logging for the demo
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
+    # To run the demo, ensure you have a GITHUB_TOKEN environment variable set
+    if not os.environ.get("GITHUB_TOKEN"):
+        print("Warning: GITHUB_TOKEN environment variable not set. " "Demo may fail.")
     asyncio.run(demonstrate_github_connector())

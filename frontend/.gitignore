@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Allow TypeScript config files
+!tsconfig.json
+!tsconfig.node.json
