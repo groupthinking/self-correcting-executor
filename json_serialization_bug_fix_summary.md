@@ -52,7 +52,10 @@ class ModelVersionJSONDecoder(json.JSONDecoder):
                 if isinstance(data.get("timestamp"), str):
                     data["timestamp"] = datetime.fromisoformat(data["timestamp"])
                 return ModelVersion(**data)
-            # Similar handling for TrainingData...
+            elif class_name == "TrainingData":
+                if isinstance(data.get("timestamp"), str):
+                    data["timestamp"] = datetime.fromisoformat(data["timestamp"])
+                return TrainingData(**data)
         return obj
 ```
 
