@@ -52,7 +52,7 @@ const Dashboard: React.FC = () => {
         let totalExec = 0;
         let totalSuccess = 0;
 
-        Object.values(stats).forEach((stat) => {
+        Object.values(stats).forEach((stat: any) => {
           totalExec += stat.executions || 0;
           totalSuccess += stat.successes || 0;
         });
@@ -216,7 +216,7 @@ const Dashboard: React.FC = () => {
 };
 
 interface MetricCardProps {
-  icon: React.ComponentType;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string | number;
   color: string;
