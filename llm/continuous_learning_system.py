@@ -19,8 +19,8 @@ import json
 import logging
 import time
 import os
-from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass, field
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass, asdict
 from datetime import datetime
 import numpy as np
 import hashlib
@@ -33,6 +33,48 @@ from connectors.dwave_quantum_connector import DWaveQuantumConnector
 from protocols.multimodal_llm_analyzer import task as analyze_massive_data
 
 logger = logging.getLogger(__name__)
+
+
+class ModelVersionJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder for ModelVersion and datetime objects"""
+
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return {"__datetime__": True, "value": obj.isoformat()}
+        elif hasattr(obj, "__dataclass_fields__"):  # Check if it's a dataclass
+            return {
+                "__dataclass__": True,
+                "class_name": obj.__class__.__name__,
+                "data": asdict(obj),
+            }
+        return super().default(obj)
+
+
+class ModelVersionJSONDecoder(json.JSONDecoder):
+    """Custom JSON decoder for ModelVersion, TrainingData and datetime objects"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(object_hook=self.object_hook, *args, **kwargs)
+
+    def object_hook(self, obj):
+        if "__datetime__" in obj:
+            return datetime.fromisoformat(obj["value"])
+        elif "__dataclass__" in obj:
+            class_name = obj["class_name"]
+            data = obj["data"]
+
+            dataclass_map = {
+                "ModelVersion": ModelVersion,
+                "TrainingData": TrainingData,
+            }
+            target_class = dataclass_map.get(class_name)
+
+            if target_class:
+                # Convert datetime strings back to datetime objects for backward compatibility
+                if isinstance(data.get("timestamp"), str):
+                    data["timestamp"] = datetime.fromisoformat(data["timestamp"])
+                return target_class(**data)
+        return obj
 
 
 @dataclass
@@ -248,18 +290,23 @@ class ContinuousLearningLLM:
             version_id: Version ID to rollback to
         """
         try:
-            # Find version in history
-            version_path = self.model_dir / f"{version_id}.pkl"
+            # Find version in history (try JSON first, then pickle for backward compatibility)
+            json_path = self.model_dir / f"{version_id}.json"
+            pkl_path = self.model_dir / f"{version_id}.pkl"
 
-            if not version_path.exists():
+            if json_path.exists():
+                # Load the JSON version using custom JSON decoder
+                with open(json_path, "r", encoding="utf-8") as f:
+                    model_data = json.load(f, cls=ModelVersionJSONDecoder)
+            elif pkl_path.exists():
+                # Fallback to pickle for backward compatibility
+                with open(pkl_path, "rb") as f:
+                    model_data = pickle.load(f)
+            else:
                 return {
                     "success": False,
                     "error": f"Model version {version_id} not found",
                 }
-
-            # Load the version
-            with open(version_path, "rb") as f:
-                model_data = pickle.load(f)
 
             # Set as current model
             self.current_model_version = model_data["version_info"]
@@ -535,19 +582,19 @@ class ContinuousLearningLLM:
             },
             training_data_size=self.training_stats["total_samples_processed"],
             quantum_optimized=self.quantum_connector.connected,
-            file_path=str(self.model_dir / f"{version_id}.pkl"),
+            file_path=str(self.model_dir / f"{version_id}.json"),
             checksum=hashlib.md5(version_id.encode()).hexdigest(),
         )
 
-        # Save model version
+        # Save model version using custom JSON encoder
         model_data = {
             "version_info": version,
             "training_result": training_result,
             "model_state": "simulated_model_state",
         }
 
-        with open(version.file_path, "wb") as f:
-            pickle.dump(model_data, f)
+        with open(version.file_path, "w", encoding="utf-8") as f:
+            json.dump(model_data, f, cls=ModelVersionJSONEncoder, indent=2)
 
         # Update current version
         self.current_model_version = version
@@ -588,19 +635,31 @@ class ContinuousLearningLLM:
     async def _load_or_create_model(self):
         """Load existing model or create new one"""
         try:
-            # Look for existing model versions
-            model_files = list(self.model_dir.glob("*.pkl"))
+            # Look for existing model versions (first try JSON, then fallback to PKL for backward compatibility)
+            json_files = list(self.model_dir.glob("*.json"))
+            pkl_files = list(self.model_dir.glob("*.pkl"))
 
-            if model_files:
-                # Load latest version
-                latest_file = max(model_files, key=lambda f: f.stat().st_mtime)
+            if json_files:
+                # Load latest JSON version
+                latest_file = max(json_files, key=lambda f: f.stat().st_mtime)
+
+                with open(latest_file, "r", encoding="utf-8") as f:
+                    model_data = json.load(f, cls=ModelVersionJSONDecoder)
+
+                self.current_model_version = model_data["version_info"]
+                logger.info(
+                    f"Loaded model version: {self.current_model_version.version_id}"
+                )
+            elif pkl_files:
+                # Fallback to pickle files for backward compatibility
+                latest_file = max(pkl_files, key=lambda f: f.stat().st_mtime)
 
                 with open(latest_file, "rb") as f:
                     model_data = pickle.load(f)
 
                 self.current_model_version = model_data["version_info"]
                 logger.info(
-                    f"Loaded model version: {self.current_model_version.version_id}"
+                    f"Loaded model version (from pickle): {self.current_model_version.version_id}"
                 )
             else:
                 # Create initial model
@@ -610,9 +669,19 @@ class ContinuousLearningLLM:
                     performance_metrics={"accuracy": 0.8, "loss": 0.2},
                     training_data_size=0,
                     quantum_optimized=False,
-                    file_path=str(self.model_dir / "v1_initial.pkl"),
+                    file_path=str(self.model_dir / "v1_initial.json"),
                     checksum="initial",
                 )
+
+                # Save initial model using JSON
+                model_data = {
+                    "version_info": initial_version,
+                    "training_result": {"success": True, "improvement": 0.0},
+                    "model_state": "initial_model_state",
+                }
+
+                with open(initial_version.file_path, "w", encoding="utf-8") as f:
+                    json.dump(model_data, f, cls=ModelVersionJSONEncoder, indent=2)
 
                 self.current_model_version = initial_version
                 logger.info("Created initial model version")
