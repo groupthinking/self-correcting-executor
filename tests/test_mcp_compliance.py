@@ -17,12 +17,12 @@ class TestMCPCompliance:
     """Test suite to ensure MCP compliance across the codebase"""
 
     @pytest.fixture
-    async def mcp_config(self):
+    def mcp_config(self):
         """Get MCP configuration"""
         return MCPConfig()
 
     @pytest.fixture
-    async def mcp_server(self):
+    def mcp_server(self):
         """Create real MCP server instance"""
         server = RealMCPServer()
         return server
