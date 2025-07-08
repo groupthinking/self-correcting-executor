@@ -250,7 +250,7 @@ class MCPEnabledA2AAgent(BaseAgent):
         # 6. Check SLA compliance
         if latency_ms > self.sla_requirements["max_latency_ms"]:
             self.performance_stats["sla_violations"] += 1
-            logger.warning("SLA violation: latency exceeded")
+            logger.warning(f"SLA violation: latency exceeded {latency_ms:.2f}ms > {self.sla_requirements['max_latency_ms']}ms")
 
         return {
             "message_id": a2a_msg.id,
