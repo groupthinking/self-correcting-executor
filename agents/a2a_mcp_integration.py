@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 A2A (Agent-to-Agent) MCP Integration Framework
-==============================================
 
 This implements a complete agent-to-agent communication system that integrates
 with the Model Context Protocol (MCP) for intelligent, semantic-aware agent
@@ -491,7 +490,6 @@ class MCPEnabledA2AAgent(BaseAgent):
                 return {"status": "error", "error": "Quantum connector failed"}
         else:
             return {"status": "unknown_tool", "tool": tool_name}
-=======
         """Execute tool through MCP server"""
         # This would make actual HTTP calls to the MCP server
         # For now, simulate tool execution
@@ -501,7 +499,6 @@ class MCPEnabledA2AAgent(BaseAgent):
             return {"valid": True, "issues": []}
         else:
             return {"status": "unknown_tool"}
->>>>>>> master
 
     def _generate_negotiation_proposal(self, content: Dict[str, Any]) -> Dict[str, Any]:
         """Generate negotiation proposal based on agent capabilities"""
@@ -640,7 +637,6 @@ async def process_data(request: RequestModel):
 
         return f"# Generated {code_type} in {language}"
 
-=======
         """Analyze data (placeholder for specialized agents)"""
         return {
             "analysis_type": "basic",
@@ -655,7 +651,6 @@ async def process_data(request: RequestModel):
             "language": "python",
             "code": "def example(): pass",
         }
->>>>>>> master
 
 
 class A2AMCPOrchestrator:
@@ -767,7 +762,6 @@ class NegotiationManager:
     async def _process_negotiations(self):
         """Process active negotiations"""
         # This would handle ongoing negotiations
-
 
 
 # Global orchestrator instance

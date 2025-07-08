@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Test Suite for REAL D-Wave Quantum MCP Connector
-===============================================
 
 Tests legitimate D-Wave quantum integration using actual Ocean SDK.
 Requires real D-Wave Leap cloud access - NO SIMULATIONS.

@@ -1,6 +1,5 @@
 """
 State Continuity Fabric Core Implementation
-==========================================
 
 This is our UNIQUE VALUE PROPOSITION that sits on top of mcp-use.
 No existing library provides this cross-device, cross-application state continuity.

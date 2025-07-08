@@ -89,10 +89,8 @@ def task():
             "action": "user_data_processing",
             "available_directories": available_dirs,
             "data_statistics": data_stats,
-<<<<<<< HEAD
             # Sample of processed files
             "processed_files": processed_files[:10],
-=======
         }
     except Exception as e:
         return {

@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 
 
-
 def task():
     """Analyze execution patterns and provide insights from database"""
     try:
@@ -142,7 +141,9 @@ def task():
             },
             "protocol_performance": protocol_performance,
             "recent_failures": failure_patterns,
+        }
     except Exception as e:
+        return {
             "success": False,
             "action": "execution_analytics",
             "error": str(e),

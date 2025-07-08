@@ -1,6 +1,5 @@
 """
 Unified MCP-A2A-Mojo Integration
-================================
 
 This module demonstrates how three complementary technologies create a
 sophisticated, high-performance agent runtime:

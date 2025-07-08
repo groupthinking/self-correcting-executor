@@ -2,7 +2,6 @@
 # pylint: disable=line-too-long, too-many-lines
 """
 Proper MCP Server Implementation
-===============================
 
 This implements a Model Context Protocol (MCP) server that follows the official
 MCP specification for JSON-RPC communication with AI clients.

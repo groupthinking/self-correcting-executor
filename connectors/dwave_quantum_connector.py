@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Real D-Wave Quantum MCP Connector
-================================
 
 LEGITIMATE quantum computing integration using D-Wave Ocean SDK and Leap cloud service.
 Based on official D-Wave examples and documentation.
@@ -35,12 +34,12 @@ try:
 
     # SimulatedAnnealingSampler removed - real QPU only
     import dimod
-<<<<<<< HEAD
-=======
     from dimod import BinaryQuadraticModel, ConstrainedQuadraticModel
     import dwave.inspector
+
     DWAVE_AVAILABLE = True
 except ImportError:
+    DWAVE_AVAILABLE = False
 
 from connectors.mcp_base import MCPConnector
 

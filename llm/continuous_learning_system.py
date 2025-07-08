@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Continuous Learning LLM System
-==============================
 
 A sophisticated LLM system that continuously learns from massive datasets
 without cutoff periods, using both classical and quantum computing resources.

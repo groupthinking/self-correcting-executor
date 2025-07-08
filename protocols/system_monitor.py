@@ -3,7 +3,6 @@ import psutil
 import platform
 
 
-
 def task():
     """Monitor system resources and health"""
     try:

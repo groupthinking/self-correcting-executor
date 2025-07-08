@@ -13,7 +13,6 @@ from agents.a2a_framework import A2AMessage, BaseAgent
 from connectors.mcp_base import MCPContext
 
 
-
 # Mojo-inspired transport abstractions (Python implementation)
 @dataclass
 class MojoMessagePipe:

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Quantum MCP Tools
-================
 
 This module provides quantum computing tools that integrate with the D-Wave
 connector and expose quantum capabilities through the MCP protocol.
@@ -51,12 +50,12 @@ class QuantumMCPTools:
                 )
                 self.solver_info = solver_result.get("solver_info", {})
                 logger.info(
-<<<<<<< HEAD
-                    f"Connected to quantum solver: {
-                        self.solver_info.get(
+                    f"Connected to quantum solver: {self.solver_info.get('name', 'unknown')}"
+                )
+                return True
             else:
-
-            return True
+                logger.warning("No quantum solver available")
+                return False
 
         except Exception as e:
             logger.error(f"Failed to initialize quantum tools: {e}")
@@ -366,19 +365,12 @@ class QuantumMCPTools:
         # Add constraints (only one value per parameter)
         for i in range(len(lr_values)):
             for j in range(i + 1, len(lr_values)):
-<<<<<<< HEAD
                 # Large penalty for multiple selections
                 qubo[f"x{i}*x{j}"] = 1000
-=======
-            for j in range(i + 1, len(batch_values)):
 
         return {"qubo": qubo}
 
-    def _quantum_solution_to_training_params(
         self,
-        solution: Dict[str, int],
-        training_data: Dict[str, Any],
-        model_config: Dict[str, Any],
         batch_values = [16, 32, 64, 128]
         selected_lr = None
         selected_batch = None

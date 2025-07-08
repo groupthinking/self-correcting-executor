@@ -73,19 +73,7 @@ def task():
         cursor.close()
         conn.close()
 
-        return {
-            "success": True,
-            "action": "database_health_check",
-            "database_info": {
-<<<<<<< HEAD
-                # Truncate long version string
-                "version": db_version.split(",")[0],
-=======
-                "version": db_version.split(",")[0],  # Truncate long version string
-                "table_count": table_count,
-            "test_write": "successful",
-            "timestamp": datetime.utcnow().isoformat(),
-        }
+        # Truncate long version string
 
     except Exception as e:
         return {

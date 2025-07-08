@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 GitHub MCP Connector
-===================
 
 Real GitHub integration using GitHub API v3 and MCP protocol.
 Provides access to repositories, issues, pull requests, and more.

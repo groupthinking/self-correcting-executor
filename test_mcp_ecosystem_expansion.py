@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 MCP Ecosystem Expansion Test Suite
-==================================
 
 Comprehensive test suite for the expanded MCP ecosystem including:
 - A2A (Agent-to-Agent) communication
@@ -157,8 +156,7 @@ class MCPEcosystemTester:
                     "connector_initialization": True,  # Always pass as it handles missing tokens gracefully
                     "qubo_solving": qubo_result.get("success", False),
                     "resource_management": resource_result.get("success", False),
-                    "solver_type": resource_result.get("solver_info", {}).get(
-                    ),
+                    "solver_type": resource_result.get("solver_info", {}).get(),
                 },
                 "timestamp": datetime.utcnow().isoformat(),
             }
@@ -198,15 +196,13 @@ class MCPEcosystemTester:
             return {
                 "status": "PASSED",
                 "tests": {
-<<<<<<< HEAD
                     # Always pass as it handles missing tokens gracefully
                     "connector_initialization": True,
-=======
-                    "connector_initialization": True,  # Always pass as it handles missing tokens gracefully
                     "rate_limit_check": rate_limit.get("success", False),
+                },
                 "metrics": {
                     "github_connected": connected,
-                        "remaining", 0
+                    "rate_limit_remaining": rate_limit.get("remaining", 0),
                 },
                 "timestamp": datetime.utcnow().isoformat(),
             }
