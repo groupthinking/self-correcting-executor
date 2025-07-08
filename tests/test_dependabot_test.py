@@ -152,6 +152,7 @@ class TestDependabotTest:
             for name in dir(dependabot_test)
             if callable(getattr(dependabot_test, name)) and not name.startswith("_")
         ]
+
         for func in functions:
             try:
                 func()
@@ -328,11 +329,7 @@ class TestDependabotTest:
         if dependabot_test is None:
             pytest.skip("dependabot_test module not available")
 
-        test_configs = [
-            {},
-            {"key": "value"},
-            {"nested": {"key": "value"}},
-        ]
+        test_configs = [{}, {"key": "value"}, {"nested": {"key": "value"}}]
 
         functions = [
             getattr(dependabot_test, name)
