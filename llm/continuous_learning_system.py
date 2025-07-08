@@ -38,35 +38,32 @@ logger = logging.getLogger(__name__)
 
 class ModelVersionJSONEncoder(json.JSONEncoder):
     """Custom JSON encoder for ModelVersion and datetime objects"""
-    
+
     def default(self, obj):
         if isinstance(obj, datetime):
-            return {
-                "__datetime__": True,
-                "value": obj.isoformat()
-            }
-        elif hasattr(obj, '__dataclass_fields__'):  # Check if it's a dataclass
+            return {"__datetime__": True, "value": obj.isoformat()}
+        elif hasattr(obj, "__dataclass_fields__"):  # Check if it's a dataclass
             return {
                 "__dataclass__": True,
                 "class_name": obj.__class__.__name__,
-                "data": asdict(obj)
+                "data": asdict(obj),
             }
         return super().default(obj)
 
 
 class ModelVersionJSONDecoder(json.JSONDecoder):
     """Custom JSON decoder for ModelVersion, TrainingData and datetime objects"""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(object_hook=self.object_hook, *args, **kwargs)
-    
+
     def object_hook(self, obj):
         if "__datetime__" in obj:
             return datetime.fromisoformat(obj["value"])
         elif "__dataclass__" in obj:
             class_name = obj["class_name"]
             data = obj["data"]
-            
+
             if class_name == "ModelVersion":
                 # Convert datetime strings back to datetime objects
                 if isinstance(data.get("timestamp"), str):
