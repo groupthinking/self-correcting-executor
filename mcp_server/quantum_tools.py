@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Quantum MCP Tools
-================
 
 This module provides quantum computing tools that integrate with the D-Wave
 connector and expose quantum capabilities through the MCP protocol.
@@ -14,10 +13,8 @@ Tools:
 """
 
 import asyncio
-import json
 import logging
-from typing import Dict, List, Any, Optional
-from datetime import datetime
+from typing import Dict, List, Any
 import numpy as np
 
 # Import D-Wave connector
@@ -53,12 +50,12 @@ class QuantumMCPTools:
                 )
                 self.solver_info = solver_result.get("solver_info", {})
                 logger.info(
-                    f"Connected to quantum solver: {self.solver_info.get('name', 'Unknown')}"
+                    f"Connected to quantum solver: {self.solver_info.get('name', 'unknown')}"
                 )
+                return True
             else:
-                logger.warning("Quantum connector not available, using simulation mode")
-
-            return True
+                logger.warning("No quantum solver available")
+                return False
 
         except Exception as e:
             logger.error(f"Failed to initialize quantum tools: {e}")
@@ -349,7 +346,8 @@ class QuantumMCPTools:
         self, training_data: Dict[str, Any], model_config: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Convert LLM training problem to QUBO optimization"""
-        # This is a simplified conversion - real implementation would be more sophisticated
+        # This is a simplified conversion - real implementation would be more
+        # sophisticated
 
         # Extract training parameters
         learning_rate = model_config.get("learning_rate", 0.001)
@@ -361,36 +359,26 @@ class QuantumMCPTools:
 
         # Learning rate optimization (discrete values)
         lr_values = [0.0001, 0.0005, 0.001, 0.005, 0.01]
+        batch_values = [16, 32, 64, 128]
+
         for i, lr in enumerate(lr_values):
             qubo[f"x{i}"] = abs(lr - learning_rate) * 1000  # Penalty for deviation
 
-        # Batch size optimization
-        batch_values = [16, 32, 64, 128]
-        for i, bs in enumerate(batch_values):
-            qubo[f"y{i}"] = abs(bs - batch_size) * 10
+        for i, bs_val in enumerate(batch_values):
+            qubo[f"y{i}"] = abs(bs_val - batch_size) * 10
 
         # Add constraints (only one value per parameter)
         for i in range(len(lr_values)):
             for j in range(i + 1, len(lr_values)):
-                qubo[f"x{i}*x{j}"] = 1000  # Large penalty for multiple selections
-
-        for i in range(len(batch_values)):
-            for j in range(i + 1, len(batch_values)):
-                qubo[f"y{i}*y{j}"] = 1000
+                # Large penalty for multiple selections
+                qubo[f"x{i}*x{j}"] = 1000
 
         return {"qubo": qubo}
 
-    def _quantum_solution_to_training_params(
-        self,
-        solution: Dict[str, int],
-        training_data: Dict[str, Any],
-        model_config: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        """Convert quantum solution back to training parameters"""
-        # Extract selected values from quantum solution
+    def process_hyperparameter_solution(self, solution, model_config):
+        """Process the solution from quantum optimizer for hyperparameters"""
         lr_values = [0.0001, 0.0005, 0.001, 0.005, 0.01]
         batch_values = [16, 32, 64, 128]
-
         selected_lr = None
         selected_batch = None
 
@@ -399,9 +387,9 @@ class QuantumMCPTools:
                 selected_lr = lr
                 break
 
-        for i, bs in enumerate(batch_values):
+        for i, bs_val in enumerate(batch_values):
             if solution.get(f"y{i}", 0) == 1:
-                selected_batch = bs
+                selected_batch = bs_val
                 break
 
         return {

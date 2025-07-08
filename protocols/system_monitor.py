@@ -1,7 +1,6 @@
 # Real Protocol: System Monitor
 import psutil
 import platform
-import os
 
 
 def task():

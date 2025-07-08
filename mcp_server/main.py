@@ -2,7 +2,6 @@
 # pylint: disable=line-too-long, too-many-lines
 """
 Proper MCP Server Implementation
-===============================
 
 This implements a Model Context Protocol (MCP) server that follows the official
 MCP specification for JSON-RPC communication with AI clients.
@@ -14,7 +13,7 @@ import logging
 import sys
 import ast
 import re
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 # Configure logging

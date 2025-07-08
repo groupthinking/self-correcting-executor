@@ -1,6 +1,5 @@
 """
 xAI Connector for MCP Integration
-=================================
 
 Integrates xAI's Grok models with our MCP infrastructure,
 including live search capabilities.

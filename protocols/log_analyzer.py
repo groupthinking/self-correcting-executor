@@ -1,7 +1,6 @@
 # Real Protocol: Log Analyzer
 import os
 import re
-from datetime import datetime
 from collections import Counter
 
 

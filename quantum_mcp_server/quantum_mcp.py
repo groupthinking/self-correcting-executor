@@ -1,6 +1,5 @@
 """
 Quantum MCP Server Implementation
-=================================
 
 Provides quantum computing tools through MCP protocol integration.
 This module bridges quantum capabilities with the MCP debug framework.

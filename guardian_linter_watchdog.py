@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Guardian Agent: Linter Watchdog
-===============================
 
 This script continuously monitors the project for Python file changes
 and runs a linter to provide immediate feedback on code quality.
@@ -9,7 +8,6 @@ and runs a linter to provide immediate feedback on code quality.
 This is the first component of the Guardian Agent Protocol.
 """
 import asyncio
-import os
 import subprocess
 import logging
 from pathlib import Path
@@ -42,21 +40,14 @@ async def run_linter(file_path: Path):
             logger.warning(
                 f"Guardian: Found issues in {file_path.relative_to(PROJECT_ROOT)}"
             )
-            if stdout:
-                print("\n--- LINT REPORT ---")
-                print(stdout.decode().strip())
-                print("--- END REPORT ---\n")
             if stderr:
                 logger.error(
                     f"Linter error on {file_path.relative_to(PROJECT_ROOT)}:\n{stderr.decode().strip()}"
                 )
-        else:
-            logger.info(f"Guardian: {file_path.relative_to(PROJECT_ROOT)} looks clean!")
 
 
-async def watch_directory():
+def watch_directory():
     """Watch the project directory for file changes."""
-    logger.info("Guardian Agent (Linter Watchdog) is now active.")
     logger.info(f"Watching for changes in: {PROJECT_ROOT}")
 
     # Simple polling-based watcher

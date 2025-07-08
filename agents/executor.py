@@ -8,7 +8,7 @@ def execute_task(protocol_name="default_protocol"):
     # Try database tracker first, fall back to file tracker
     try:
         from utils.db_tracker import track_outcome
-    except:
+    except Exception:
         from utils.tracker import track_outcome
 
     log(f"Executing protocol: {protocol_name}")
