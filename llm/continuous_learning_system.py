@@ -63,16 +63,17 @@ class ModelVersionJSONDecoder(json.JSONDecoder):
             class_name = obj["class_name"]
             data = obj["data"]
 
-            if class_name == "ModelVersion":
-                # Convert datetime strings back to datetime objects
+            dataclass_map = {
+                "ModelVersion": ModelVersion,
+                "TrainingData": TrainingData,
+            }
+            target_class = dataclass_map.get(class_name)
+
+            if target_class:
+                # Convert datetime strings back to datetime objects for backward compatibility
                 if isinstance(data.get("timestamp"), str):
                     data["timestamp"] = datetime.fromisoformat(data["timestamp"])
-                return ModelVersion(**data)
-            elif class_name == "TrainingData":
-                # Convert datetime strings back to datetime objects
-                if isinstance(data.get("timestamp"), str):
-                    data["timestamp"] = datetime.fromisoformat(data["timestamp"])
-                return TrainingData(**data)
+                return target_class(**data)
         return obj
 
 
