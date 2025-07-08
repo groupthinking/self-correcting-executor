@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Real D-Wave Quantum MCP Connector
-================================
 
 LEGITIMATE quantum computing integration using D-Wave Ocean SDK and Leap cloud service.
 Based on official D-Wave examples and documentation.
@@ -19,10 +18,9 @@ References:
 
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 import numpy as np
-from datetime import datetime
 
 # Real D-Wave imports (requires: pip install dwave-ocean-sdk)
 try:
@@ -33,7 +31,8 @@ try:
     )
     from dwave.system.composites import LazyFixedEmbeddingComposite
     from dwave.cloud import Client
-    from dwave.samplers import SimulatedAnnealingSampler
+
+    # SimulatedAnnealingSampler removed - real QPU only
     import dimod
     from dimod import BinaryQuadraticModel, ConstrainedQuadraticModel
     import dwave.inspector
@@ -112,7 +111,7 @@ class DWaveQuantumConnector(MCPConnector):
 
             if not qpu_solvers:
                 logger.warning("No QPU solvers available, using simulated annealing")
-                self.sampler = SimulatedAnnealingSampler()
+                raise RuntimeError("Real QPU required - no simulations")
                 self.solver_info = {
                     "name": "SimulatedAnnealingSampler",
                     "type": "software",
@@ -440,11 +439,6 @@ class DWaveQuantumConnector(MCPConnector):
             items = params.get("items", [])  # List of {'weight': w, 'value': v}
             capacity = params.get("capacity", 10)
 
-            n = len(items)
-            if n == 0:
-                return {"error": "No items provided"}
-
-            # QUBO formulation for knapsack
             Q = {}
             penalty = max(item["value"] for item in items) * 2  # Large penalty
 
@@ -454,6 +448,7 @@ class DWaveQuantumConnector(MCPConnector):
 
             # Constraint: weight <= capacity
             # (sum(w_i * x_i) - capacity)^2 penalty term
+            n = len(items)  # Define n as the number of items
             for i in range(n):
                 for j in range(i, n):
                     weight_product = items[i]["weight"] * items[j]["weight"]
@@ -504,8 +499,16 @@ class DWaveQuantumConnector(MCPConnector):
             "connection_status": ("connected" if self.connected else "disconnected"),
         }
 
+    async def ensure_real_qpu(self) -> bool:
+        """Ensure we're using a real QPU, not a simulator"""
+        if not self.solver_info or self.solver_info.get("type") != "QPU":
+            raise RuntimeError("No D-Wave QPU available - real QPU required")
+        return True
+
 
 # Example usage and testing
+
+
 async def example_usage():
     """Example of using the real D-Wave quantum connector"""
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Production MCP Deployment with State Continuity Extensions
-==========================================================
 
 This demonstrates the strategic approach:
 1. Use mcp-use for core MCP functionality (commodity)
@@ -11,7 +10,7 @@ This demonstrates the strategic approach:
 
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from datetime import datetime
 
 # Configure production logging
@@ -314,15 +313,15 @@ async def implement_contribution_strategy():
     # In mcp_use/mixins/state_continuity.py
     class StateContinuityMixin:
         """Adds state continuity capabilities to MCPAgent"""
-        
+
         async def capture_state(self, context: Dict[str, Any]):
             """Capture execution state for continuity"""
             # Our implementation
-        
+
         async def sync_across_devices(self, source: str, target: str):
             """Synchronize state between devices"""
             # Our implementation
-    
+
     # In mcp_use/agents/mcpagent.py
     class MCPAgent(BaseAgent, StateContinuityMixin):
         # Enhanced with our capabilities

@@ -3,17 +3,8 @@ import { Brain, Sparkles, Network, Cpu, BarChart3, Zap } from 'lucide-react';
 import ComponentManager from './ComponentManager';
 import IntentExecutor from './IntentExecutor';
 import PatternVisualizer from './PatternVisualizer';
-import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { 
-  CheckCircle, 
-  Error as ErrorIcon,
-  Extension,
-  Psychology,
-  Hub,
-  QueryStats
-} from '@mui/icons-material';
 
 const API_BASE = 'http://localhost:8080/api/v2';
 
@@ -27,7 +18,6 @@ interface SystemMetrics {
 }
 
 const Dashboard: React.FC = () => {
-  const [activeFile, setActiveFile] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<SystemMetrics>({
     totalExecutions: 0,
     successRate: 0,
@@ -37,63 +27,18 @@ const Dashboard: React.FC = () => {
     mcpConnections: 2
   });
 
-  const [realtimeData, setRealtimeData] = useState<any[]>([]);
-
-  const handleFileSelect = (path: string) => {
-    setActiveFile(path);
-  };
-
-  const { data: components, isLoading } = useQuery({
+  const { isLoading } = useQuery({
     queryKey: ['components'],
     queryFn: async () => {
-      const response = await axios.get(`${API_BASE}/components`);
-      return response.data;
-    },
-    refetchInterval: 5000,
-  });
-
-  const { data: patterns } = useQuery({
-    queryKey: ['patterns'],
-    queryFn: async () => {
       try {
-        const response = await axios.get(`${API_BASE}/patterns`);
+        const response = await axios.get(`${API_BASE}/components`);
         return response.data;
       } catch (error) {
         return null;
       }
     },
+    refetchInterval: 5000,
   });
-
-  const componentCounts = [
-    {
-      title: 'Protocols',
-      count: components?.protocols?.length || 0,
-      icon: Extension,
-      color: '#6366f1',
-      description: 'Executable tasks'
-    },
-    {
-      title: 'Agents',
-      count: components?.agents?.length || 0,
-      icon: Psychology,
-      color: '#8b5cf6',
-      description: 'Autonomous entities'
-    },
-    {
-      title: 'Connectors',
-      count: components?.connectors?.length || 0,
-      icon: Hub,
-      color: '#ec4899',
-      description: 'MCP interfaces'
-    },
-    {
-      title: 'Analyzers',
-      count: components?.analyzers?.length || 0,
-      icon: QueryStats,
-      color: '#10b981',
-      description: 'Data processors'
-    },
-  ];
 
   useEffect(() => {
     // Fetch real metrics
@@ -101,17 +46,17 @@ const Dashboard: React.FC = () => {
       try {
         const response = await fetch('http://localhost:8080/api/v1/stats');
         const data = await response.json();
-        
+
         // Calculate metrics from actual data
         const stats = data.all_stats || {};
         let totalExec = 0;
         let totalSuccess = 0;
-        
+
         Object.values(stats).forEach((stat: any) => {
           totalExec += stat.executions || 0;
           totalSuccess += stat.successes || 0;
         });
-        
+
         setMetrics({
           totalExecutions: totalExec,
           successRate: totalExec > 0 ? (totalSuccess / totalExec) * 100 : 0,
@@ -270,12 +215,14 @@ const Dashboard: React.FC = () => {
   );
 };
 
-const MetricCard: React.FC<{
-  icon: any;
+interface MetricCardProps {
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string | number;
   color: string;
-}> = ({ icon: Icon, label, value, color }) => {
+}
+
+const MetricCard: React.FC<MetricCardProps> = ({ icon: Icon, label, value, color }) => {
   const colorClasses = {
     blue: 'text-blue-400 bg-blue-500/10',
     green: 'text-green-400 bg-green-500/10',
@@ -297,11 +244,13 @@ const MetricCard: React.FC<{
   );
 };
 
-const FeatureCard: React.FC<{
+interface FeatureCardProps {
   title: string;
   description: string;
   icon: string;
-}> = ({ title, description, icon }) => {
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ title, description, icon }) => {
   return (
     <div className="p-4 bg-gray-800/30 rounded-lg hover:bg-gray-800/50 transition-colors">
       <div className="text-2xl mb-2">{icon}</div>
@@ -311,4 +260,4 @@ const FeatureCard: React.FC<{
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

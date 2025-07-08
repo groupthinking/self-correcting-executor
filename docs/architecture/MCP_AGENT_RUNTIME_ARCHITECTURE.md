@@ -4,6 +4,14 @@
 
 This document outlines why we maintain MCP (Model Context Protocol) as our primary agent communication framework rather than adopting Chromium's Mojo IPC, while exploring optimization strategies for high-performance agent runtime.
 
+## Real MCP Implementation
+
+Our architecture uses real MCP implementations with no mock components:
+
+1. **Real MCP Server**: Production-ready server implementation with no simulated behaviors
+2. **Real Quantum Integration**: Direct integration with D-Wave quantum hardware
+3. **No Mock Policy**: Strict prohibition of mock implementations in production code
+
 ## Architectural Decision: MCP over Mojo
 
 ### Why NOT Mojo?

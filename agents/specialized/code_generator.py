@@ -1,7 +1,6 @@
 # Code Generation Agent
 # Specialized agent for generating API endpoint code
 
-import json
 import textwrap
 from datetime import datetime
 from typing import Dict, Any
@@ -27,10 +26,10 @@ class CodeGeneratorAgent:
                     try:
                         # Validate input
                         {validation_logic}
-                        
+
                         # Process request
                         {processing_logic}
-                        
+
                         # Return response
                         return {{
                             "status": "success",
@@ -47,39 +46,39 @@ class CodeGeneratorAgent:
                 """
                 # {title}
                 # Generated API endpoint
-                
+
                 from fastapi import FastAPI, HTTPException
                 from pydantic import BaseModel
                 from datetime import datetime
                 from typing import Optional, List
-                
+
                 {models}
-                
+
                 {endpoints}
             """
             ),
             "crud_operations": textwrap.dedent(
                 """
                 # CRUD operations for {entity}
-                
+
                 @app.post("/{entity_plural}")
                 async def create_{entity}(item: {model_name}):
                     \"\"\"Create new {entity}\"\"\"
                     # Implementation here
                     pass
-                
+
                 @app.get("/{entity_plural}/{{id}}")
                 async def get_{entity}(id: int):
                     \"\"\"Get {entity} by ID\"\"\"
                     # Implementation here
                     pass
-                
+
                 @app.put("/{entity_plural}/{{id}}")
                 async def update_{entity}(id: int, item: {model_name}):
                     \"\"\"Update {entity}\"\"\"
                     # Implementation here
                     pass
-                
+
                 @app.delete("/{entity_plural}/{{id}}")
                 async def delete_{entity}(id: int):
                     \"\"\"Delete {entity}\"\"\"
@@ -149,7 +148,10 @@ class CodeGeneratorAgent:
         validation_logic = "# Validate required fields\n        "
         if params:
             for param in params:
-                validation_logic += f"if not {param}:\n            raise ValidationError('{param} is required')\n        "
+                validation_logic += (
+                    f"if not {param}:\n            "
+                    f"raise ValidationError('{param} is required')\n        "
+                )
         else:
             validation_logic += "pass"
 
