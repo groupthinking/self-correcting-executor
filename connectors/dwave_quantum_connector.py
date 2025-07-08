@@ -28,15 +28,19 @@ try:
     from dwave.system import (
         DWaveSampler,
         EmbeddingComposite,
+        FixedEmbeddingComposite,
     )
+    from dwave.system.composites import LazyFixedEmbeddingComposite
     from dwave.cloud import Client
 
     # SimulatedAnnealingSampler removed - real QPU only
     import dimod
-
+<<<<<<< HEAD
+=======
+    from dimod import BinaryQuadraticModel, ConstrainedQuadraticModel
+    import dwave.inspector
     DWAVE_AVAILABLE = True
 except ImportError:
-    DWAVE_AVAILABLE = False
 
 from connectors.mcp_base import MCPConnector
 
@@ -433,15 +437,9 @@ class DWaveQuantumConnector(MCPConnector):
         Solve 0-1 Knapsack problem using quantum annealing
         """
         try:
-            # List of {'weight': w, 'value': v}
-            items = params.get("items", [])
+            items = params.get("items", [])  # List of {'weight': w, 'value': v}
             capacity = params.get("capacity", 10)
 
-            n = len(items)
-            if n == 0:
-                return {"error": "No items provided"}
-
-            # QUBO formulation for knapsack
             Q = {}
             penalty = max(item["value"] for item in items) * 2  # Large penalty
 

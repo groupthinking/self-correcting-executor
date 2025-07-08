@@ -4,11 +4,6 @@ Comprehensive test suite for MCP Debug Tool with Quantum Agent Applications
 Tests all debugging capabilities, quantum analysis, and GCP integration
 """
 
-from quantum_mcp_server.quantum_mcp import QuantumMCPServer
-from connectors.mcp_debug_tool import (
-    MCPDebugTool,
-    MCPDebugContext,
-)
 import asyncio
 import json
 import sys
@@ -20,6 +15,12 @@ import logging
 # Add project root to path
 sys.path.append(str(Path(__file__).parent))
 
+from connectors.mcp_debug_tool import (
+    MCPDebugTool,
+    MCPDebugContext,
+    DebugResponse,
+)
+from quantum_mcp_server.quantum_mcp import QuantumMCPServer
 
 # Configure logging
 logging.basicConfig(
@@ -104,14 +105,14 @@ class QuantumDebugTestSuite:
         quantum_code = """
         import qiskit
         from qiskit import QuantumCircuit, execute, Aer
-
+        
         def create_bell_state():
             qc = QuantumCircuit(2, 2)
             qc.h(0)
             qc.cx(0, 1)
             qc.measure_all()
             return qc
-
+        
         circuit = create_bell_state()
         backend = Aer.get_backend('qasm_simulator')
         result = execute(circuit, backend, shots=1024).result()
@@ -295,30 +296,30 @@ class QuantumDebugTestSuite:
         teleportation_code = """
         import qiskit
         from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
-
+        
         def quantum_teleportation():
             # Create quantum registers
             qreg = QuantumRegister(3, 'q')
             creg = ClassicalRegister(3, 'c')
             qc = QuantumCircuit(qreg, creg)
-
+            
             # Prepare the state to be teleported (|+> state)
             qc.h(qreg[0])
-
+            
             # Create Bell pair between qubits 1 and 2
             qc.h(qreg[1])
             qc.cx(qreg[1], qreg[2])
-
+            
             # Bell measurement on qubits 0 and 1
             qc.cx(qreg[0], qreg[1])
             qc.h(qreg[0])
             qc.measure(qreg[0], creg[0])
             qc.measure(qreg[1], creg[1])
-
+            
             # Apply corrections based on measurement
             qc.cx(qreg[1], qreg[2])
             qc.cz(qreg[0], qreg[2])
-
+            
             return qc
         """
 
@@ -446,9 +447,7 @@ class QuantumDebugTestSuite:
         logger.info(f"📊 Total Tests: {self.total_tests}")
         logger.info(f"✅ Passed: {self.passed_tests}")
         logger.info(f"❌ Failed: {self.total_tests - self.passed_tests}")
-        logger.info(
-            f"📈 Success Rate: {(self.passed_tests / self.total_tests) * 100:.1f}%"
-        )
+        logger.info(f"📈 Success Rate: {(self.passed_tests/self.total_tests)*100:.1f}%")
 
         if self.passed_tests == self.total_tests:
             logger.info("🎉 ALL TESTS PASSED! MCP Debug Tool is fully functional.")
@@ -466,21 +465,21 @@ async def run_debug_tool_demo():
     demo_code = """
     import qiskit
     from qiskit import QuantumCircuit, execute
-
+    
     def problematic_quantum_function():
         # Issue 1: Undefined qubit count
         qc = QuantumCircuit(undefined_qubits)
-
+        
         # Issue 2: Premature measurement
         qc.h(0)
         qc.measure(0, 0)
         qc.cx(0, 1)  # Operation after measurement
-
+        
         # Issue 3: High gate density
         for i in range(100):
             qc.h(i % 5)
             qc.cx(i % 5, (i + 1) % 5)
-
+        
         return qc
     """
 
@@ -508,18 +507,12 @@ async def run_debug_tool_demo():
 
         if result.quantum_insights:
             logger.info(
-                f"Quantum Insights: {
-                    json.dumps(
-                        result.quantum_insights,
-                        indent=2)}"
+                f"Quantum Insights: {json.dumps(result.quantum_insights, indent=2)}"
             )
 
         if result.performance_metrics:
             logger.info(
-                f"Performance Metrics: {
-                    json.dumps(
-                        result.performance_metrics,
-                        indent=2)}"
+                f"Performance Metrics: {json.dumps(result.performance_metrics, indent=2)}"
             )
 
 

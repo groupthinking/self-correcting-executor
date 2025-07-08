@@ -147,7 +147,7 @@ class MCPEnabledA2AAgent(BaseAgent):
                 if not recipient:
                     return {
                         "status": "error",
-                        "message": "recipient not specified",
+                        "message": "recipient not specified for send_message intent",
                     }
                 return await self.send_contextualized_message(
                     recipient=recipient,
@@ -173,7 +173,7 @@ class MCPEnabledA2AAgent(BaseAgent):
                 if not tool_name:
                     return {
                         "status": "error",
-                        "message": "tool_name not specified",
+                        "message": "tool_name not specified for tool_request intent",
                     }
                 return await self._execute_mcp_tool(tool_name, intent.get("params", {}))
             else:
@@ -250,7 +250,9 @@ class MCPEnabledA2AAgent(BaseAgent):
         # 6. Check SLA compliance
         if latency_ms > self.sla_requirements["max_latency_ms"]:
             self.performance_stats["sla_violations"] += 1
-            logger.warning(f"SLA violation: latency exceeded {latency_ms:.2f}ms > {self.sla_requirements['max_latency_ms']}ms")
+            logger.warning(
+                f"SLA violation: latency exceeded {latency_ms:.2f}ms > {self.sla_requirements['max_latency_ms']}ms"
+            )
 
         return {
             "message_id": a2a_msg.id,
@@ -489,6 +491,17 @@ class MCPEnabledA2AAgent(BaseAgent):
                 return {"status": "error", "error": "Quantum connector failed"}
         else:
             return {"status": "unknown_tool", "tool": tool_name}
+=======
+        """Execute tool through MCP server"""
+        # This would make actual HTTP calls to the MCP server
+        # For now, simulate tool execution
+        if tool_name == "code_analyzer":
+            return {"lines_of_code": 10, "complexity": "low"}
+        elif tool_name == "protocol_validator":
+            return {"valid": True, "issues": []}
+        else:
+            return {"status": "unknown_tool"}
+>>>>>>> master
 
     def _generate_negotiation_proposal(self, content: Dict[str, Any]) -> Dict[str, Any]:
         """Generate negotiation proposal based on agent capabilities"""
@@ -627,6 +640,23 @@ async def process_data(request: RequestModel):
 
         return f"# Generated {code_type} in {language}"
 
+=======
+        """Analyze data (placeholder for specialized agents)"""
+        return {
+            "analysis_type": "basic",
+            "insights": ["Pattern detected", "Anomaly found"],
+            "confidence": 0.85,
+        }
+
+    async def _generate_code(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate code (placeholder for specialized agents)"""
+        return {
+            "code_type": "function",
+            "language": "python",
+            "code": "def example(): pass",
+        }
+>>>>>>> master
+
 
 class A2AMCPOrchestrator:
     """
@@ -709,6 +739,7 @@ class PerformanceMonitor:
     async def _update_stats(self):
         """Update performance statistics"""
         # This would collect stats from all agents
+        pass
 
     def get_stats(self) -> Dict[str, Any]:
         """Get current performance statistics"""
@@ -736,6 +767,7 @@ class NegotiationManager:
     async def _process_negotiations(self):
         """Process active negotiations"""
         # This would handle ongoing negotiations
+
 
 
 # Global orchestrator instance

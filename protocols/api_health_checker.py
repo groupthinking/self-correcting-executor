@@ -42,8 +42,7 @@ def task():
             )
 
     return {
-        # Success if less than half failed
-        "success": failures < len(endpoints) / 2,
+        "success": failures < len(endpoints) / 2,  # Success if less than half failed
         "action": "api_health_check",
         "total_endpoints": len(endpoints),
         "healthy_count": len(endpoints) - failures,

@@ -61,7 +61,7 @@ def task():
                                         "size": size,
                                     }
                                 )
-                        except BaseException:
+                        except:
                             pass
 
         # Generate insights
@@ -89,12 +89,11 @@ def task():
             "action": "user_data_processing",
             "available_directories": available_dirs,
             "data_statistics": data_stats,
+<<<<<<< HEAD
             # Sample of processed files
             "processed_files": processed_files[:10],
-            "insights": insights,
-            "timestamp": datetime.utcnow().isoformat(),
+=======
         }
-
     except Exception as e:
         return {
             "success": False,

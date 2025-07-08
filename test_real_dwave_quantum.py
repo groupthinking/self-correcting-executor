@@ -61,12 +61,10 @@ class RealQuantumTest:
 
                 if solver_info["solver_info"]["type"] == "QPU":
                     logger.info(
-                        f"⚛️  Qubits: {
-                            solver_info['solver_info']['num_qubits']}"
+                        f"⚛️  Qubits: {solver_info['solver_info']['num_qubits']}"
                     )
                     logger.info(
-                        f"🔗 Couplers: {
-                            solver_info['solver_info']['num_couplers']}"
+                        f"🔗 Couplers: {solver_info['solver_info']['num_couplers']}"
                     )
 
                 return True
@@ -95,7 +93,7 @@ class RealQuantumTest:
                 solution = result["best_solution"]
                 energy = result["best_energy"]
 
-                logger.info("✅ QUBO solved")
+                logger.info(f"✅ QUBO solved")
                 logger.info(f"📊 Best solution: {solution}")
                 logger.info(f"⚡ Energy: {energy}")
                 logger.info(f"🔢 Samples: {result['num_solutions']}")
@@ -140,7 +138,7 @@ class RealQuantumTest:
                 route = result.get("route", [])
                 total_distance = result.get("total_distance", 0)
 
-                logger.info("✅ TSP solved")
+                logger.info(f"✅ TSP solved")
                 logger.info(f"🛣️  Route: {' → '.join(route)}")
                 logger.info(f"📏 Total distance: {total_distance}")
 
@@ -178,7 +176,7 @@ class RealQuantumTest:
                 partition_b = result.get("partition_b", [])
                 cut_value = result.get("cut_value", 0)
 
-                logger.info("✅ Max-Cut solved")
+                logger.info(f"✅ Max-Cut solved")
                 logger.info(f"🔵 Partition A: {partition_a}")
                 logger.info(f"🔴 Partition B: {partition_b}")
                 logger.info(f"✂️  Cut value: {cut_value}")
@@ -238,7 +236,7 @@ class RealQuantumTest:
         logger.info(f"📊 Total Tests: {total}")
         logger.info(f"✅ Passed: {passed}")
         logger.info(f"❌ Failed: {total - passed}")
-        logger.info(f"📈 Success Rate: {(passed / total) * 100:.1f}%")
+        logger.info(f"📈 Success Rate: {(passed/total)*100:.1f}%")
 
         if passed == total:
             logger.info("🎉 ALL TESTS PASSED! Real quantum computing working!")
@@ -261,6 +259,10 @@ class RealQuantumTest:
         return passed == total
 
 
+import pytest
+
+
+@pytest.mark.asyncio
 async def test_real_quantum():
     """Test real D-Wave quantum computing"""
     logger.info("🚀 Testing REAL D-Wave Quantum Computing")

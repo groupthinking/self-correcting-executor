@@ -5,7 +5,7 @@
 
 def task():
     """Improved task implementation after mutation"""
-    from random import random
+    from random import choice, random
 
     # Enhanced logic with better success probability
     if random() < 0.8:  # 80% success rate instead of 50%

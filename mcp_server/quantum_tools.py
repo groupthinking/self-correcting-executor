@@ -21,6 +21,7 @@ import numpy as np
 # Import D-Wave connector
 from connectors.dwave_quantum_connector import (
     DWaveQuantumConnector,
+    QuantumResult,
 )
 
 logger = logging.getLogger(__name__)
@@ -50,12 +51,10 @@ class QuantumMCPTools:
                 )
                 self.solver_info = solver_result.get("solver_info", {})
                 logger.info(
+<<<<<<< HEAD
                     f"Connected to quantum solver: {
                         self.solver_info.get(
-                            'name', 'Unknown')}"
-                )
             else:
-                logger.warning("Quantum connector not available, using simulation mode")
 
             return True
 
@@ -353,8 +352,7 @@ class QuantumMCPTools:
 
         # Extract training parameters
         learning_rate = model_config.get("learning_rate", 0.001)
-        batch_size = model_config.get("batch_size", 32)
-        model_config.get("epochs", 10)
+        epochs = model_config.get("epochs", 10)
 
         # Create QUBO for hyperparameter optimization
         qubo = {}
@@ -364,20 +362,15 @@ class QuantumMCPTools:
         for i, lr in enumerate(lr_values):
             qubo[f"x{i}"] = abs(lr - learning_rate) * 1000  # Penalty for deviation
 
-        # Batch size optimization
-        batch_values = [16, 32, 64, 128]
-        for i, bs in enumerate(batch_values):
             qubo[f"y{i}"] = abs(bs - batch_size) * 10
-
         # Add constraints (only one value per parameter)
         for i in range(len(lr_values)):
             for j in range(i + 1, len(lr_values)):
+<<<<<<< HEAD
                 # Large penalty for multiple selections
                 qubo[f"x{i}*x{j}"] = 1000
-
-        for i in range(len(batch_values)):
+=======
             for j in range(i + 1, len(batch_values)):
-                qubo[f"y{i}*y{j}"] = 1000
 
         return {"qubo": qubo}
 
@@ -386,12 +379,7 @@ class QuantumMCPTools:
         solution: Dict[str, int],
         training_data: Dict[str, Any],
         model_config: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        """Convert quantum solution back to training parameters"""
-        # Extract selected values from quantum solution
-        lr_values = [0.0001, 0.0005, 0.001, 0.005, 0.01]
         batch_values = [16, 32, 64, 128]
-
         selected_lr = None
         selected_batch = None
 

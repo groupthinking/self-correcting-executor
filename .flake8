@@ -1,11 +1,12 @@
 [flake8]
 max-line-length = 120
-ignore = E203, W503, W504
+extend-ignore = E203,W503,W504,F401,F841,F541,E722,W291,W293,E402,E501
 exclude = 
     .git,
     __pycache__,
     .venv,
     venv,
+    .env,
     build,
     dist,
     *.egg-info

@@ -54,14 +54,14 @@ def ensure_tables_exist():
         # Create indexes for better performance
         cursor.execute(
             """
-            CREATE INDEX IF NOT EXISTS idx_executions_protocol
+            CREATE INDEX IF NOT EXISTS idx_executions_protocol 
             ON protocol_executions(protocol_name);
         """
         )
 
         cursor.execute(
             """
-            CREATE INDEX IF NOT EXISTS idx_executions_time
+            CREATE INDEX IF NOT EXISTS idx_executions_time 
             ON protocol_executions(execution_time);
         """
         )
@@ -89,7 +89,7 @@ def track_outcome(protocol_name, outcome):
         # Insert execution record
         cursor.execute(
             """
-            INSERT INTO protocol_executions
+            INSERT INTO protocol_executions 
             (protocol_name, execution_time, success, details)
             VALUES (%s, %s, %s, %s)
         """,
@@ -103,10 +103,7 @@ def track_outcome(protocol_name, outcome):
 
         conn.commit()
         log(
-            f"Outcome tracked in database for {protocol_name}: {
-                outcome.get(
-                    'success',
-                    'unknown')}"
+            f"Outcome tracked in database for {protocol_name}: {outcome.get('success', 'unknown')}"
         )
 
     except Exception as e:
@@ -145,7 +142,7 @@ def get_protocol_stats(protocol_name):
     try:
         cursor.execute(
             """
-            SELECT
+            SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes,
                 SUM(CASE WHEN NOT success THEN 1 ELSE 0 END) as failures,
@@ -224,7 +221,7 @@ def get_all_stats():
     try:
         cursor.execute(
             """
-            SELECT
+            SELECT 
                 protocol_name,
                 COUNT(*) as total,
                 SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes,
@@ -285,7 +282,7 @@ def track_mutation(protocol_name, failure_rate, new_code, backup_code):
     try:
         cursor.execute(
             """
-            INSERT INTO protocol_mutations
+            INSERT INTO protocol_mutations 
             (protocol_name, mutation_time, previous_failure_rate, new_code, backup_code)
             VALUES (%s, %s, %s, %s, %s)
         """,
@@ -317,7 +314,7 @@ def get_mutation_history(protocol_name):
     try:
         cursor.execute(
             """
-            SELECT
+            SELECT 
                 mutation_time,
                 previous_failure_rate,
                 new_code

@@ -3,6 +3,7 @@ import psutil
 import platform
 
 
+
 def task():
     """Monitor system resources and health"""
     try:
@@ -19,8 +20,7 @@ def task():
 
         system_info = {
             "platform": platform.system(),
-            # Truncate long versions
-            "platform_version": platform.version()[:50],
+            "platform_version": platform.version()[:50],  # Truncate long versions
             "cpu_cores": psutil.cpu_count(),
             "cpu_percent": cpu_percent,
             "memory_total_gb": round(memory.total / (1024**3), 2),

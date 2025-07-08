@@ -24,10 +24,7 @@ def mutate_protocol(protocol_name):
 
     failure_rate = stats["failure_rate"]
     log(
-        f"Protocol {protocol_name}: {
-            stats['failures']}/{
-            stats['total_executions']} failures (rate: {
-                failure_rate:.2%})"
+        f"Protocol {protocol_name}: {stats['failures']}/{stats['total_executions']} failures (rate: {failure_rate:.2%})"
     )
 
     if failure_rate < 0.5:
@@ -44,8 +41,7 @@ def mutate_protocol(protocol_name):
         return False
 
     log(
-        f"🔄 Mutating protocol: {protocol_name} due to high failure rate ({
-            failure_rate:.2%})"
+        f"🔄 Mutating protocol: {protocol_name} due to high failure rate ({failure_rate:.2%})"
     )
 
     # Read original code for backup

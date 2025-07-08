@@ -467,11 +467,7 @@ async def handle_stdin_stdout():
 
             if writer:
                 writer.write(response_str.encode())
-                try:
-                    await writer.drain()
-                except AttributeError:
-                    # Fallback for protocol without drain helper
-                    pass
+                await writer.drain()
             else:  # Fallback for Windows
                 print(response_str, flush=True)
 

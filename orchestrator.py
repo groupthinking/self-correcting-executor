@@ -142,8 +142,7 @@ class OrchestrationEngine:
             # Simple path extraction: assumes path is the last word
             parts = intent.split()
             path = parts[-1] if len(parts) > 1 and "/" in parts[-1] else "."
-            # A more robust NLP/regex solution would be better here in a real
-            # system
+            # A more robust NLP/regex solution would be better here in a real system
             return {"path": path}
         return {}
 

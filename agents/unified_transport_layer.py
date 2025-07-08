@@ -13,6 +13,7 @@ from agents.a2a_framework import A2AMessage, BaseAgent
 from connectors.mcp_base import MCPContext
 
 
+
 # Mojo-inspired transport abstractions (Python implementation)
 @dataclass
 class MojoMessagePipe:
@@ -356,10 +357,7 @@ class TradingAgent(UnifiedAgent):
         # Verify ultra-low latency
         if result["transport_latency_ms"] > 0.1:
             # Fallback or alert
-            print(
-                f"WARNING: High latency detected: {
-                    result['transport_latency_ms']}ms"
-            )
+            print(f"WARNING: High latency detected: {result['transport_latency_ms']}ms")
 
         return result
 
@@ -377,7 +375,7 @@ async def demonstrate_unified_architecture():
     # Create agents
     trader = TradingAgent("trader_1")
     analyzer = UnifiedAgent("analyzer_1", ["analyze", "predict"])
-    UnifiedAgent("executor_1", ["execute", "confirm"])
+    executor = UnifiedAgent("executor_1", ["execute", "confirm"])
 
     # Test 1: Ultra-low latency trading
     print("1. Ultra-low latency trading:")

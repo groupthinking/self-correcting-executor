@@ -6,8 +6,7 @@ from datetime import datetime, timedelta
 import numpy as np
 from collections import defaultdict
 
-# from utils.db_tracker import get_execution_history  # TODO: implement
-# when db_tracker has this function
+# from utils.db_tracker import get_execution_history  # TODO: implement when db_tracker has this function
 
 
 class PatternDetector:
@@ -183,15 +182,8 @@ class PatternDetector:
                 {
                     "type": "repeated_failure",
                     "severity": repeated["severity"],
-                    "message": f"Protocol {
-                        repeated['protocol']} has failed {
-                        repeated['failure_count']} times",
-                    "recommendation": "Consider mutation or redesign",
-                    "data": repeated,
-                }
-            )
+                    "message": f"Protocol {repeated['protocol']} has failed {repeated['failure_count']} times",
 
-        # Performance insights
         for slow in performance_patterns["slow_protocols"]:
             insights.append(
                 {
@@ -205,20 +197,9 @@ class PatternDetector:
                 }
             )
 
-        # Usage insights
-        if usage_patterns["most_used_protocols"]:
-            top_protocol = usage_patterns["most_used_protocols"][0]
-            insights.append(
-                {
                     "type": "high_usage",
-                    "severity": "info",
-                    "message": f"Protocol {
-                        top_protocol['protocol']} is most used ({
-                        top_protocol['usage_count']} times)",
-                    "recommendation": "Ensure robustness and consider optimization",
-                    "data": top_protocol,
+                    "message": f"Protocol {top_protocol['protocol']} is most used ({top_protocol['usage_count']} times)",
                 }
-            )
 
         return insights
 
@@ -226,13 +207,7 @@ class PatternDetector:
         self, insights: List[Dict]
     ) -> List[Dict]:
         """Generate specific mutation recommendations"""
-        recommendations = []
-
-        for insight in insights:
-            if insight["type"] == "repeated_failure":
-                protocol = insight["data"]["protocol"]
                 recommendations.append(
-                    {
                         "protocol": protocol,
                         "mutation_type": "error_handling",
                         "priority": "high",
@@ -296,16 +271,14 @@ class InsightDrivenMutator:
         mutation_type = recommendation["mutation_type"]
 
         # Load current protocol code
+        from protocols.loader import load_protocol
 
         current_code = await self._get_protocol_code(protocol)
 
         # Generate mutated code based on type
         if mutation_type == "error_handling":
             mutated_code = await self._add_error_handling(current_code, recommendation)
-        elif mutation_type == "performance_optimization":
-            mutated_code = await self._add_performance_optimization(
                 current_code, recommendation
-            )
         else:
             mutated_code = current_code
 
@@ -316,10 +289,7 @@ class InsightDrivenMutator:
             "protocol": protocol,
             "mutation_type": mutation_type,
             "success": success,
-            "changes_applied": recommendation["suggested_changes"][
-                :2
             ],  # Apply top 2 suggestions
-            "timestamp": datetime.utcnow().isoformat(),
         }
 
     async def _get_protocol_code(self, protocol: str) -> str:

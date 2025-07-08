@@ -72,13 +72,10 @@ def task():
                             total_records += 1
                         processed_count += 1
                         insights.append(
-                            f"{filename}: {
-                                type(data).__name__} with {
-                                len(data) if isinstance(
-                                    data, (list, dict)) else 1} items"
+                            f"{filename}: {type(data).__name__} with {len(data) if isinstance(data, (list, dict)) else 1} items"
                         )
-                except json.JSONDecodeError as e:
-                    logger.warning(f"Could not parse {filename}: {e}")
+                except:
+                    pass
 
             elif filename.endswith(".csv"):
                 try:

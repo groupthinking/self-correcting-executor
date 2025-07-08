@@ -35,8 +35,8 @@ def task():
         # Check table count
         cursor.execute(
             """
-            SELECT count(*)
-            FROM information_schema.tables
+            SELECT count(*) 
+            FROM information_schema.tables 
             WHERE table_schema = 'public';
         """
         )
@@ -77,13 +77,12 @@ def task():
             "success": True,
             "action": "database_health_check",
             "database_info": {
+<<<<<<< HEAD
                 # Truncate long version string
                 "version": db_version.split(",")[0],
-                "size_bytes": db_size,
-                "size_mb": round(db_size / (1024 * 1024), 2),
-                "connection_count": connection_count,
+=======
+                "version": db_version.split(",")[0],  # Truncate long version string
                 "table_count": table_count,
-            },
             "test_write": "successful",
             "timestamp": datetime.utcnow().isoformat(),
         }

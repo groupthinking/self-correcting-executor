@@ -428,10 +428,7 @@ class MCPDebugTool(MCPConnector):
 
             if "measure" in line.lower() and "before" not in line.lower():
                 if i > 0 and "gate" not in lines[i - 1].lower():
-                    issues.append(
-                        f"Potential premature measurement at line {
-                            i + 1}"
-                    )
+                    issues.append(f"Potential premature measurement at line {i+1}")
 
         return {
             "operations": qubit_operations,

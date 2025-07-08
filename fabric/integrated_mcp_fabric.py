@@ -65,10 +65,7 @@ class MCPStateFabric:
 
                 # Verify connection by listing tools
                 tools = await client.list_tools()
-                logger.info(
-                    f"Connected to {name} at {url} with {
-                        len(tools)} tools"
-                )
+                logger.info(f"Connected to {name} at {url} with {len(tools)} tools")
 
                 self.mcp_clients[name] = client
                 connected_count += 1
@@ -242,15 +239,9 @@ class MCPStateFabric:
                 source_device, target_device
             )
             logger.info(
-                f"Synced state from {source_device} to {target_device}: {
-                    merged_state.id}"
+                f"Synced state from {source_device} to {target_device}: {merged_state.id}"
             )
-            return True
-        except Exception as e:
-            logger.error(f"State sync failed: {e}")
-            return False
 
-    async def close(self):
         """Clean shutdown of all connections"""
         for server_name, client in self.mcp_clients.items():
             try:

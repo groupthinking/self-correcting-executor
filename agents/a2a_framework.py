@@ -65,6 +65,7 @@ class BaseAgent(ABC):
     @abstractmethod
     async def process_intent(self, intent: Dict) -> Dict:
         """Process an intent and return result"""
+        pass
 
     async def send_message(
         self, recipient: str, message_type: str, content: Dict

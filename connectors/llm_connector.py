@@ -3,7 +3,8 @@
 
 import os
 import json
-from typing import Dict, Any
+import asyncio
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 import aiohttp
 
@@ -90,12 +91,8 @@ Format as valid JSON only.
                             "type": "high_performance",
                             "protocol": pattern["protocol"],
                             "success_rate": pattern["success_rate"],
-                            "insight": f"Protocol {
-                                pattern['protocol']} shows {
-                                pattern['success_rate'] *
-                                100:.1f}% success rate",
-                            "recommendation": f"Use {
-                                pattern['protocol']} as template for similar tasks",
+                            "insight": f"Protocol {pattern['protocol']} shows {pattern['success_rate']*100:.1f}% success rate",
+                            "recommendation": f"Use {pattern['protocol']} as template for similar tasks",
                         }
                     )
 
@@ -106,8 +103,7 @@ Format as valid JSON only.
                 optimizations.append(
                     {
                         "area": "memory",
-                        "current": f"{
-                            metrics['memory_usage'] * 100:.1f}%",
+                        "current": f"{metrics['memory_usage']*100:.1f}%",
                         "action": "Implement memory pooling and garbage collection optimization",
                         "priority": "high",
                     }
@@ -117,10 +113,7 @@ Format as valid JSON only.
                 optimizations.append(
                     {
                         "area": "caching",
-                        "current": f"{
-                            metrics.get(
-                                'cache_hit_rate',
-                                0) * 100:.1f}%",
+                        "current": f"{metrics.get('cache_hit_rate', 0)*100:.1f}%",
                         "action": "Implement predictive cache warming based on usage patterns",
                         "priority": "medium",
                     }
@@ -137,8 +130,7 @@ Format as valid JSON only.
                 {
                     "name": "auto_mutation_engine",
                     "description": "Automatically apply successful mutation patterns to underperforming protocols",
-                    "rationale": f"Found {
-                        len(successful_mutations)} mutations with >20% improvement",
+                    "rationale": f"Found {len(successful_mutations)} mutations with >20% improvement",
                     "implementation": "Create ML model to predict beneficial mutations",
                 }
             )
@@ -149,8 +141,7 @@ Format as valid JSON only.
                 {
                     "name": "execution_pattern_predictor",
                     "description": "Predict optimal protocol selection based on historical patterns",
-                    "rationale": f"System has {
-                        exec_history.get('total_executions')} executions to learn from",
+                    "rationale": f"System has {exec_history.get('total_executions')} executions to learn from",
                     "implementation": "Train lightweight ML model on execution history",
                 }
             )

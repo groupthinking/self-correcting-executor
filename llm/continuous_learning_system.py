@@ -16,11 +16,12 @@ Features:
 """
 
 import asyncio
+import json
 import logging
 import time
 import os
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+from typing import Dict, List, Any, Optional, Union
+from dataclasses import dataclass, field
 from datetime import datetime
 import numpy as np
 import hashlib
@@ -179,8 +180,7 @@ class ContinuousLearningLLM:
         try:
             start_time = time.time()
             logger.info(
-                f"Starting incremental training on {
-                    len(training_data)} samples"
+                f"Starting incremental training on {len(training_data)} samples"
             )
 
             # Preprocess training data
@@ -285,16 +285,12 @@ class ContinuousLearningLLM:
 
             if analysis_result["success"]:
                 logger.info(
-                    f"Analyzed {
-                        analysis_result.get(
-                            'total_files_discovered',
-                            0)} files"
+                    f"Analyzed {analysis_result.get('total_files_discovered', 0)} files"
                 )
                 return analysis_result
             else:
                 logger.error(
-                    f"Massive dataset analysis failed: {
-                        analysis_result.get('error')}"
+                    f"Massive dataset analysis failed: {analysis_result.get('error')}"
                 )
                 return {"success": False, "error": "Analysis failed"}
 
@@ -338,13 +334,7 @@ class ContinuousLearningLLM:
             for idea in generated_ideas:
                 training_data.append(
                     TrainingData(
-                        text=f"{
-                            idea.get(
-                                'name',
-                                '')}: {
-                            idea.get(
-                                'description',
-                                '')}",
+                        text=f"{idea.get('name', '')}: {idea.get('description', '')}",
                         metadata={
                             "type": "idea",
                             "rationale": idea.get("rationale", ""),
@@ -534,8 +524,7 @@ class ContinuousLearningLLM:
         self, training_result: Dict[str, Any]
     ) -> ModelVersion:
         """Create a new model version"""
-        version_id = f"v{self.training_stats['model_versions'] +
-                         1}_{int(time.time())}"
+        version_id = f"v{self.training_stats['model_versions'] + 1}_{int(time.time())}"
 
         # Create version info
         version = ModelVersion(
@@ -585,8 +574,7 @@ class ContinuousLearningLLM:
 
                     if result["success"]:
                         logger.info(
-                            f"Training completed: {
-                                result['samples_processed']} samples"
+                            f"Training completed: {result['samples_processed']} samples"
                         )
                     else:
                         logger.error(f"Training failed: {result['error']}")
@@ -613,8 +601,7 @@ class ContinuousLearningLLM:
 
                 self.current_model_version = model_data["version_info"]
                 logger.info(
-                    f"Loaded model version: {
-                        self.current_model_version.version_id}"
+                    f"Loaded model version: {self.current_model_version.version_id}"
                 )
             else:
                 # Create initial model
@@ -704,14 +691,12 @@ class ContinuousLearningLLM:
         # Batch size options: 16, 32, 64, 128
         batch_values = [16, 32, 64, 128]
         for i, bs in enumerate(batch_values):
-            # Penalty for deviation from default
-            qubo[f"batch_{i}"] = abs(bs - 32) * 10
+            qubo[f"batch_{i}"] = abs(bs - 32) * 10  # Penalty for deviation from default
 
         # Add constraints (only one value per parameter)
         for i in range(len(lr_values)):
             for j in range(i + 1, len(lr_values)):
-                # Large penalty for multiple selections
-                qubo[f"lr_{i}*lr_{j}"] = 1000
+                qubo[f"lr_{i}*lr_{j}"] = 1000  # Large penalty for multiple selections
 
         for i in range(len(batch_values)):
             for j in range(i + 1, len(batch_values)):
