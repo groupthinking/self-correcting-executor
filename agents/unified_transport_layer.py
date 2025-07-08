@@ -5,7 +5,7 @@ import asyncio
 from typing import Dict, Any, Optional, List
 import time
 import mmap
-import pickle
+import json
 from dataclasses import dataclass
 
 # Import our existing components
@@ -165,8 +165,8 @@ class UnifiedTransportLayer:
         self, pipe: MojoMessagePipe, payload: Dict
     ) -> Dict:
         """Shared memory transfer for large payloads"""
-        # Serialize to shared memory
-        serialized = pickle.dumps(payload)
+        # Serialize to shared memory using JSON (secure)
+        serialized = json.dumps(payload, default=str).encode('utf-8')
 
         if pipe.shared_memory:
             # Write to shared memory
@@ -197,7 +197,7 @@ class UnifiedTransportLayer:
         return {
             "status": "delivered",
             "method": "pipe",
-            "serialized_size": len(pickle.dumps(payload)),
+            "serialized_size": len(json.dumps(payload, default=str).encode('utf-8')),
         }
 
     async def _handle_passing_transfer(

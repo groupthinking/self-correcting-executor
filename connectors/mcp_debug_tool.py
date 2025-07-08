@@ -4,6 +4,11 @@ Supports quantum agent applications and real-time code analysis
 """
 
 import asyncio
+ copilot/fix-94a3a2ef-451e-4b72-9782-aff6506fa546
+import traceback
+import os
+=======
+ master
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
@@ -606,7 +611,7 @@ MCP_DEBUG_TOOL_SCHEMA = {
     "tools": [
         {
             "name": "DebugTool",
-            "endpoint": "https://your-gcp-api/v1/reason",
+            "endpoint": "https://api.example.com/v1/reason",
             "type": "debug",
             "schema": {
                 "code": {
@@ -661,7 +666,7 @@ MCP_DEBUG_TOOL_SCHEMA = {
             "version": "1.0.0",
             "authentication": {
                 "type": "oauth2",
-                "token_url": "https://your-gcp-api/oauth2/token",
+                "token_url": "https://api.example.com/oauth2/token",
                 "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
             },
             "timeout": 30000,
@@ -679,7 +684,8 @@ MCP_DEBUG_TOOL_SCHEMA = {
 async def example_usage():
     """Example usage of the MCP Debug Tool"""
     async with MCPDebugTool(
-        gcp_endpoint="https://your-gcp-api", auth_token="your-oauth-token"
+        gcp_endpoint=os.getenv("GCP_API_ENDPOINT", "https://api.example.com"), 
+        auth_token=os.getenv("GCP_AUTH_TOKEN", "development-token")
     ) as debug_tool:
 
         # Debug quantum code

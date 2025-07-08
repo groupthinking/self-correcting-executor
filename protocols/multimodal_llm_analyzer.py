@@ -6,7 +6,6 @@ import os
 from datetime import datetime
 from typing import Dict, List, Any
 import numpy as np
-import random
 
 
 def task():
@@ -75,19 +74,35 @@ def _analyze_massive_user_collection() -> Dict[str, Any]:
             folder_name = os.path.basename(base_path)
             analysis["folders_scanned"].append(folder_name)
 
-            # Get total file count for this directory
+            # Get total file count for this directory using secure subprocess
             try:
                 import subprocess
-
-                result = subprocess.run(
-                    ["find", base_path, "-type", "f"],
-                    capture_output=True,
-                    text=True,
-                )
-                all_files = (
-                    result.stdout.strip().split("\n") if result.stdout.strip() else []
-                )
-                folder_file_count = len(all_files)
+                import shutil
+                
+                # Use absolute path for find command for security
+                find_path = shutil.which("find")
+                if not find_path:
+                    # Fallback to Python implementation if find is not available
+                    all_files = []
+                    for root, dirs, files in os.walk(base_path):
+                        for file in files:
+                            all_files.append(os.path.join(root, file))
+                    folder_file_count = len(all_files)
+                else:
+                    # Validate and sanitize the base_path to prevent command injection
+                    if not os.path.exists(base_path) or not os.path.isdir(base_path):
+                        raise ValueError(f"Invalid directory path: {base_path}")
+                        
+                    result = subprocess.run(
+                        [find_path, os.path.abspath(base_path), "-type", "f"],
+                        capture_output=True,
+                        text=True,
+                        timeout=30,  # Add timeout for security
+                    )
+                    all_files = (
+                        result.stdout.strip().split("\n") if result.stdout.strip() else []
+                    )
+                    folder_file_count = len(all_files)
 
                 analysis["directory_stats"][folder_name] = {
                     "total_files": folder_file_count,
@@ -95,11 +110,13 @@ def _analyze_massive_user_collection() -> Dict[str, Any]:
                 }
                 analysis["total_files"] += folder_file_count
 
-                # Use statistical sampling for massive datasets
+                # Use systematic sampling for massive datasets (deterministic)
                 if folder_file_count > 1000:
                     # Sample 5% or max 2000 files, whichever is smaller
                     sample_size = min(int(folder_file_count * 0.05), 2000)
-                    sampled_files = random.sample(all_files, sample_size)
+                    # Systematic sampling - take every nth file for reproducible results
+                    step = max(1, len(all_files) // sample_size)
+                    sampled_files = all_files[::step][:sample_size]
                     analysis["directory_stats"][folder_name][
                         "sample_analyzed"
                     ] = sample_size
