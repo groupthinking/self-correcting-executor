@@ -73,6 +73,39 @@ class MCPConfig:
 
         print(f"✅ Created Claude config at: {claude_config_path}")
         return claude_config_path
+        
+    def check_no_mocks(self) -> bool:
+        """Check that no mock endpoints are configured"""
+        endpoints = self.get_endpoints()
+        
+        mock_indicators = [
+            "mock",
+            "fake",
+            "simulated",
+            "placeholder",
+            "example.com",
+        ]
+        
+        for name, url in endpoints.items():
+            if url:
+                url_lower = url.lower()
+                for indicator in mock_indicators:
+                    if indicator in url_lower and "no-mock" not in url_lower:
+                        raise ValueError(f"Mock indicator '{indicator}' found in {name}: {url}")
+        
+        return True
+        
+    def validate_config(self) -> Dict[str, bool]:
+        """Validate configuration and return status of features"""
+        validation = {
+            "Quantum computing": os.getenv("DWAVE_API_TOKEN") is not None,
+            "Database connection": os.getenv("DATABASE_URL") is not None,
+            "Authentication": os.getenv("JWT_SECRET_KEY") is not None,
+            "Encryption": os.getenv("ENCRYPTION_KEY") is not None,
+            "MCP Server": os.getenv("MCP_SERVER_URL") is not None,
+        }
+        
+        return validation
 
 
 if __name__ == "__main__":

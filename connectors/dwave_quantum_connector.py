@@ -498,9 +498,17 @@ class DWaveQuantumConnector(MCPConnector):
             "available": DWAVE_AVAILABLE,
             "connection_status": ("connected" if self.connected else "disconnected"),
         }
+        
+    async def ensure_real_qpu(self) -> bool:
+        """Ensure we're using a real QPU, not a simulator"""
+        if not self.solver_info or self.solver_info.get("type") != "QPU":
+            raise RuntimeError("No D-Wave QPU available - real QPU required")
+        return True
 
 
 # Example usage and testing
+
+
 async def example_usage():
     """Example of using the real D-Wave quantum connector"""
 
