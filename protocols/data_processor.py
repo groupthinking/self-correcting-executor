@@ -77,8 +77,8 @@ def task():
                                 len(data) if isinstance(
                                     data, (list, dict)) else 1} items"
                         )
-                except BaseException:
-                    pass
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Could not parse {filename}: {e}")
 
             elif filename.endswith(".csv"):
                 try:
