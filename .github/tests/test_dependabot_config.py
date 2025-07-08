@@ -55,7 +55,8 @@ class TestDependabotConfig:
         supported_versions = [2]
         version = dependabot_config.get("version")
         assert version in supported_versions, (
-            f"Version {version} is not supported. Supported versions: {supported_versions}"
+            f"Version {version} is not supported. "
+            f"Supported versions: {supported_versions}"
         )
 
     def test_config_has_updates_key(self, dependabot_config: Dict[str, Any]) -> None:
