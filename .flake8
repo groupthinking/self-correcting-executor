@@ -9,4 +9,6 @@ exclude =
     .env,
     build,
     dist,
-    *.egg-info
+    *.egg-info,
+    node_modules,
+    frontend/node_modules

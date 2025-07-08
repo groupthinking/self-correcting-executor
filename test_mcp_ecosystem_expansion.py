@@ -156,7 +156,6 @@ class MCPEcosystemTester:
                     "connector_initialization": True,  # Always pass as it handles missing tokens gracefully
                     "qubo_solving": qubo_result.get("success", False),
                     "resource_management": resource_result.get("success", False),
-                    "solver_type": resource_result.get("solver_info", {}).get(),
                 },
                 "timestamp": datetime.utcnow().isoformat(),
             }
