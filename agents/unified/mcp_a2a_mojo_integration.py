@@ -1,6 +1,5 @@
 """
 Unified MCP-A2A-Mojo Integration
-================================
 
 This module demonstrates how three complementary technologies create a
 sophisticated, high-performance agent runtime:
@@ -16,14 +15,13 @@ amplifies the capabilities of the others.
 import asyncio
 import time
 import os
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from enum import Enum
-import numpy as np
 
 # Import our existing components
-from agents.a2a_framework import A2AMessage, BaseAgent, message_bus
-from connectors.mcp_base import MCPContext, MCPConnector
+from agents.a2a_framework import A2AMessage, BaseAgent
+from connectors.mcp_base import MCPContext
 
 
 class TransportStrategy(Enum):
@@ -416,7 +414,7 @@ async def demonstrate_unified_architecture():
 
     result = await trader.execute_market_order(order)
 
-    print(f"✓ Order executed")
+    print("✓ Order executed")
     print(f"  - Transport: {result['transport']['strategy']}")
     print(f"  - Latency: {result['transport']['transport_latency_ms']:.3f}ms")
     print(f"  - Zero-copy: {result['transport'].get('zero_copy', False)}")

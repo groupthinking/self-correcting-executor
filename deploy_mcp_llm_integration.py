@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Production MCP-LLM Integration with State Continuity Fabric
-===========================================================
 
 This demonstrates how to deploy our unified architecture within
 LLM/ML processes, using mcp-use for protocol and adding our
@@ -11,7 +10,7 @@ unique State Continuity Fabric for competitive advantage.
 import asyncio
 import json
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime
 
 # Production logging

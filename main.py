@@ -2,7 +2,7 @@
 # Integrates with UMDR MCP stack for full runtime capabilities
 
 from agents.executor import execute_task
-from agents.mutator import mutate_protocol, analyze_all_protocols
+from agents.mutator import mutate_protocol
 from utils.logger import log
 from utils.tracker import get_protocol_stats
 import sys
@@ -10,11 +10,11 @@ import sys
 
 def run_self_correcting_executor(protocol="default_protocol", iterations=1):
     """Run the self-correcting executor with automatic mutation"""
-    log(f"🚀 Starting Self-Correcting MCP Executor")
+    log("🚀 Starting Self-Correcting MCP Executor")
     log(f"Protocol: {protocol}, Iterations: {iterations}")
 
     for i in range(iterations):
-        log(f"\n--- Iteration {i+1}/{iterations} ---")
+        log(f"\n--- Iteration {i + 1}/{iterations} ---")
 
         # Execute the protocol
         outcome = execute_task(protocol)

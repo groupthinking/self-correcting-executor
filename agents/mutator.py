@@ -1,4 +1,5 @@
-# ProtocolMutator: Reads outcomes, identifies failures, and rewrites protocol logic
+# ProtocolMutator: Reads outcomes, identifies failures, and rewrites
+# protocol logic
 import json
 import os
 from utils.logger import log
@@ -11,7 +12,11 @@ def mutate_protocol(protocol_name):
         from utils.db_tracker import get_protocol_stats, track_mutation
 
         stats = get_protocol_stats(protocol_name)
-    except:
+ cursor/fix-model-version-serialization-bug-b8f3
+    except ImportError:
+=======
+    except Exception:
+ master
         from utils.tracker import get_protocol_stats
 
         stats = get_protocol_stats(protocol_name)
@@ -27,7 +32,10 @@ def mutate_protocol(protocol_name):
     )
 
     if failure_rate < 0.5:
-        log(f"Mutation not needed. Failure rate acceptable: {failure_rate:.2%}")
+        log(
+            f"Mutation not needed. Failure rate acceptable: {
+                failure_rate:.2%}"
+        )
         return False
 
     # Rewrite protocol file with improved logic
@@ -58,13 +66,13 @@ def mutate_protocol(protocol_name):
 def task():
     """Improved task implementation after mutation"""
     from random import choice, random
-    
+
     # Enhanced logic with better success probability
     if random() < 0.8:  # 80% success rate instead of 50%
-        result = {{'success': True, 'action': 'optimized_execution', 'mutation_gen': 1}}
+        result = {'success': True, 'action': 'optimized_execution', 'mutation_gen': 1}
     else:
-        result = {{'success': False, 'action': 'controlled_failure', 'mutation_gen': 1}}
-    
+        result = {'success': False, 'action': 'controlled_failure', 'mutation_gen': 1}
+
     return result
 '''
     else:
@@ -105,7 +113,11 @@ def analyze_all_protocols():
         from utils.db_tracker import get_all_stats
 
         all_stats = get_all_stats()
-    except:
+ cursor/fix-model-version-serialization-bug-b8f3
+    except ImportError:
+=======
+    except Exception:
+ master
         from utils.tracker import get_all_stats
 
         all_stats = get_all_stats()
