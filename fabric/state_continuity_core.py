@@ -1,6 +1,5 @@
 """
 State Continuity Fabric Core Implementation
-==========================================
 
 This is our UNIQUE VALUE PROPOSITION that sits on top of mcp-use.
 No existing library provides this cross-device, cross-application state continuity.
@@ -10,10 +9,8 @@ import asyncio
 import time
 import json
 import hashlib
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
-from collections import defaultdict
-import numpy as np
 
 # We'll use mcp-use for MCP protocol handling
 from mcp_use import MCPClient, create_client
@@ -363,7 +360,7 @@ async def demonstrate_fabric():
     # Initialize with MCP server (if available)
     try:
         await fabric.initialize("http://localhost:8080")
-    except:
+    except Exception:
         print("Running without MCP server")
 
     # Register devices

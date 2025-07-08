@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Test Suite for REAL D-Wave Quantum MCP Connector
-===============================================
 
 Tests legitimate D-Wave quantum integration using actual Ocean SDK.
 Requires real D-Wave Leap cloud access - NO SIMULATIONS.
@@ -259,6 +258,10 @@ class RealQuantumTest:
         return passed == total
 
 
+import pytest
+
+
+@pytest.mark.asyncio
 async def test_real_quantum():
     """Test real D-Wave quantum computing"""
     logger.info("🚀 Testing REAL D-Wave Quantum Computing")

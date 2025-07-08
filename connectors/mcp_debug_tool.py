@@ -3,16 +3,20 @@ MCP Debug Tool - Advanced debugging capabilities with GCP integration
 Supports quantum agent applications and real-time code analysis
 """
 
-import json
 import asyncio
+ copilot/fix-94a3a2ef-451e-4b72-9782-aff6506fa546
 import traceback
 import os
+ copilot/fix-213aa9e3-0b23-4bd9-9b0c-2eb2bc585c94
+=======
+=======
+ master
+ master
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 import aiohttp
 import logging
-from pathlib import Path
 
 from connectors.mcp_base import MCPConnector
 
@@ -267,7 +271,10 @@ class MCPDebugTool(MCPConnector):
                 if response.status == 200:
                     return await response.json()
                 else:
-                    self.logger.warning(f"GCP API returned status {response.status}")
+                    self.logger.warning(
+                        f"GCP API returned status {
+                            response.status}"
+                    )
                     return await self._fallback_reasoning(code, error)
         except Exception as e:
             self.logger.error(f"GCP API call failed: {str(e)}")
@@ -607,7 +614,7 @@ MCP_DEBUG_TOOL_SCHEMA = {
     "tools": [
         {
             "name": "DebugTool",
-            "endpoint": "https://your-gcp-api/v1/reason",
+            "endpoint": "https://api.example.com/v1/reason",
             "type": "debug",
             "schema": {
                 "code": {
@@ -654,11 +661,15 @@ MCP_DEBUG_TOOL_SCHEMA = {
                     "required": ["error", "mcp_data"],
                 },
             },
-            "description": "A debugging tool integrated with GCP to analyze code issues, provide reasoning, and suggest fixes, leveraging MCP for context sharing. Supports quantum agent applications.",
+            "description": (
+                "A debugging tool integrated with GCP to analyze code issues, "
+                "provide reasoning, and suggest fixes, leveraging MCP for context "
+                "sharing. Supports quantum agent applications."
+            ),
             "version": "1.0.0",
             "authentication": {
                 "type": "oauth2",
-                "token_url": "https://your-gcp-api/oauth2/token",
+                "token_url": "https://api.example.com/oauth2/token",
                 "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
             },
             "timeout": 30000,
@@ -684,7 +695,7 @@ async def example_usage():
         quantum_code = """
         import qiskit
         from qiskit import QuantumCircuit, execute
-        
+
         def quantum_teleportation():
             qc = QuantumCircuit(3, 3)
             # Bell state preparation

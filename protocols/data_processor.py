@@ -5,39 +5,29 @@ import os
 from datetime import datetime
 
 
-def task():
+def task(data_path=None, operation="analyze"):
     """Process data files and extract insights"""
-    # Try multiple possible data directories
-    possible_dirs = [
-        os.environ.get("DATA_DIR", "/data"),
-        "/data",
-        "/app/data",
-        "/tmp",
-        os.getcwd(),
-    ]
+    # Use provided data path or try multiple possible data directories
+    if data_path and os.path.exists(data_path) and os.path.isdir(data_path):
+        data_dir = data_path
+    else:
+        possible_dirs = [
+            os.environ.get("DATA_DIR", "/data"),
+            "/data",
+            "/app/data",
+            "/tmp",
+            os.getcwd(),
+        ]
 
-    data_dir = None
-    for dir_path in possible_dirs:
-        if os.path.exists(dir_path) and os.path.isdir(dir_path):
-            data_dir = dir_path
-            break
+        data_dir = None
+        for dir_path in possible_dirs:
+            if os.path.exists(dir_path) and os.path.isdir(dir_path):
+                data_dir = dir_path
+                break
 
     if not data_dir:
-        # Create a mock result when no data directory exists
-        return {
-            "success": True,
-            "action": "data_processing",
-            "mode": "simulation",
-            "message": "No data directory found, returning simulated results",
-            "files_processed": 3,
-            "total_records": 150,
-            "insights": [
-                "Simulated: Found 3 data files",
-                "Simulated: Processed 150 records total",
-                "Simulated: Average processing time 0.5s per file",
-            ],
-            "timestamp": datetime.utcnow().isoformat(),
-        }
+        # Return error when no data directory exists
+        return {"success": False, "error": "No data directory found"}
 
     try:
         processed_count = 0
@@ -85,7 +75,7 @@ def task():
                         total_records += row_count
                         processed_count += 1
                         insights.append(f"{filename}: CSV with {row_count} rows")
-                except:
+                except BaseException:
                     pass
 
         # Always return success if we got this far

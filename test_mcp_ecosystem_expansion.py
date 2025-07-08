@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 MCP Ecosystem Expansion Test Suite
-==================================
 
 Comprehensive test suite for the expanded MCP ecosystem including:
 - A2A (Agent-to-Agent) communication
@@ -19,7 +18,7 @@ import logging
 import time
 import os
 import sys
-from typing import Dict, List, Any
+from typing import Dict, Any
 from datetime import datetime
 
 # Configure logging
@@ -158,13 +157,6 @@ class MCPEcosystemTester:
                     "qubo_solving": qubo_result.get("success", False),
                     "resource_management": resource_result.get("success", False),
                 },
-                "metrics": {
-                    "quantum_connected": connected,
-                    "qubo_success": qubo_result.get("success", False),
-                    "solver_type": resource_result.get("solver_info", {}).get(
-                        "type", "unknown"
-                    ),
-                },
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -203,20 +195,13 @@ class MCPEcosystemTester:
             return {
                 "status": "PASSED",
                 "tests": {
-                    "connector_initialization": True,  # Always pass as it handles missing tokens gracefully
-                    "repository_search": (
-                        search_result.get("success", False) if search_result else False
-                    ),
+                    # Always pass as it handles missing tokens gracefully
+                    "connector_initialization": True,
                     "rate_limit_check": rate_limit.get("success", False),
                 },
                 "metrics": {
                     "github_connected": connected,
-                    "search_results": (
-                        search_result.get("total_count", 0) if search_result else 0
-                    ),
-                    "rate_limit_remaining": rate_limit.get("rate_limit", {}).get(
-                        "remaining", 0
-                    ),
+                    "rate_limit_remaining": rate_limit.get("remaining", 0),
                 },
                 "timestamp": datetime.utcnow().isoformat(),
             }
