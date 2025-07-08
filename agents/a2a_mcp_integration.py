@@ -644,7 +644,7 @@ async def process_data(request: RequestModel):
             "confidence": 0.85,
         }
 
-    async def _generate_code(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _generate_placeholder_code(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate code (placeholder for specialized agents)"""
         return {
             "code_type": "function",

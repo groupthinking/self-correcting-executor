@@ -29,6 +29,9 @@ def resolve_formatting_conflicts(content):
         var} more text"
     f"text {var} more text"
     """
+    # Pattern to match conflict blocks
+    conflict_pattern = r"<<<<<<< HEAD\n(.*?)\n=======\n(.*?)\n>>>>>>> master"
+
     # Find all conflict markers
     conflicts = re.findall(conflict_pattern, content, re.DOTALL)
 

@@ -448,6 +448,7 @@ class DWaveQuantumConnector(MCPConnector):
 
             # Constraint: weight <= capacity
             # (sum(w_i * x_i) - capacity)^2 penalty term
+            n = len(items)  # Define n as the number of items
             for i in range(n):
                 for j in range(i, n):
                     weight_product = items[i]["weight"] * items[j]["weight"]

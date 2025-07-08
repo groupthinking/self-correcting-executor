@@ -19,6 +19,7 @@ def fix_conflict_markers(file_path):
         return False
 
     # Pattern to match conflict blocks
+    pattern = r"<<<<<<< HEAD\n(.*?)\n=======\n.*?\n>>>>>>> master"
 
     # Replace conflict blocks with the HEAD version
     fixed_content = re.sub(pattern, r"\1", content, flags=re.DOTALL)

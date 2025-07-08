@@ -351,6 +351,7 @@ class QuantumMCPTools:
 
         # Extract training parameters
         learning_rate = model_config.get("learning_rate", 0.001)
+        batch_size = model_config.get("batch_size", 32)
         epochs = model_config.get("epochs", 10)
 
         # Create QUBO for hyperparameter optimization
@@ -358,10 +359,14 @@ class QuantumMCPTools:
 
         # Learning rate optimization (discrete values)
         lr_values = [0.0001, 0.0005, 0.001, 0.005, 0.01]
+        batch_values = [16, 32, 64, 128]
+
         for i, lr in enumerate(lr_values):
             qubo[f"x{i}"] = abs(lr - learning_rate) * 1000  # Penalty for deviation
 
-            qubo[f"y{i}"] = abs(bs - batch_size) * 10
+        for i, bs_val in enumerate(batch_values):
+            qubo[f"y{i}"] = abs(bs_val - batch_size) * 10
+
         # Add constraints (only one value per parameter)
         for i in range(len(lr_values)):
             for j in range(i + 1, len(lr_values)):
@@ -370,7 +375,9 @@ class QuantumMCPTools:
 
         return {"qubo": qubo}
 
-        self,
+    def process_hyperparameter_solution(self, solution, model_config):
+        """Process the solution from quantum optimizer for hyperparameters"""
+        lr_values = [0.0001, 0.0005, 0.001, 0.005, 0.01]
         batch_values = [16, 32, 64, 128]
         selected_lr = None
         selected_batch = None
@@ -380,9 +387,9 @@ class QuantumMCPTools:
                 selected_lr = lr
                 break
 
-        for i, bs in enumerate(batch_values):
+        for i, bs_val in enumerate(batch_values):
             if solution.get(f"y{i}", 0) == 1:
-                selected_batch = bs
+                selected_batch = bs_val
                 break
 
         return {
