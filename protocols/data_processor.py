@@ -27,10 +27,7 @@ def task(data_path=None, operation="analyze"):
 
     if not data_dir:
         # Return error when no data directory exists
-        return {
-            "success": False,
-            "error": "No data directory found"
-        }
+        return {"success": False, "error": "No data directory found"}
 
     try:
         processed_count = 0
