@@ -4,8 +4,17 @@ import csv
 import os
 from datetime import datetime
 
+class DataProcessor:
+    """Data processor class for MCP server integration"""
+    
+    def __init__(self):
+        pass
+    
+    def process(self):
+        """Process data files and extract insights"""
+        return task()
 
-def task(data_path=None, operation="analyze"):
+def task():
     """Process data files and extract insights"""
     # Use provided data path or try multiple possible data directories
     if data_path and os.path.exists(data_path) and os.path.isdir(data_path):
@@ -26,9 +35,15 @@ def task(data_path=None, operation="analyze"):
                 break
 
     if not data_dir:
-        # Return error when no data directory exists
-        return {"success": False, "error": "No data directory found"}
-
+        # NO SIMULATIONS - Real data required
+        return {
+            'success': False,
+            'action': 'data_processing',
+            'error': 'No data directory found. Please set DATA_DIR environment variable or ensure /data exists.',
+            'checked_paths': possible_dirs,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+    
     try:
         processed_count = 0
         total_records = 0

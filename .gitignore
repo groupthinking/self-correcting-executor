@@ -407,7 +407,15 @@ secrets/
 # OS generated files
 Thumbs.db
 ehthumbs.db
-Desktop.ini # Security
+Desktop.ini
+
+# Project specific
+.backup/
+todo_report.txt
+mock_implementations.txt
+duplicate_test_files.txt
+
+# Security
 .env
 .env.*
 !.env.example

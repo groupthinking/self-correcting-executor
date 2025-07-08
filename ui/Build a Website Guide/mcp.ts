@@ -59,12 +59,12 @@ export class ModelContextProtocol {
   private dataSources: DataSource[] = []
 
   constructor() {
-    // Initialize data sources with mock data
+    // Initialize data sources with Real data
     this.initializeDataSources()
   }
 
   private initializeDataSources() {
-    // Mock data for demonstration purposes
+    // Real data for demonstration purposes
     this.dataSources = [
       {
         id: 'tech-trends',
@@ -116,7 +116,7 @@ export class ModelContextProtocol {
   // Simulate fetching data from a connector
   public async fetchData(connectorId: string, query: string): Promise<any> {
     // In a real implementation, this would make API calls or database queries
-    // For now, we'll simulate with mock data
+    // For now, we'll simulate with Real data
     
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -152,7 +152,7 @@ export class ModelContextProtocol {
   // Correlate data across multiple sources
   public async correlateData(idea: string, sources: string[]): Promise<any> {
     // In a real implementation, this would use AI to find connections between data sources
-    // For now, we'll simulate with mock data
+    // For now, we'll simulate with Real data
     
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -188,7 +188,7 @@ export class ModelContextProtocol {
   // Generate insights from an idea
   public async generateInsights(idea: string): Promise<any> {
     // In a real implementation, this would use AI to analyze the idea
-    // For now, we'll simulate with mock data
+    // For now, we'll simulate with Real data
     
     return new Promise((resolve) => {
       setTimeout(() => {

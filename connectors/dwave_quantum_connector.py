@@ -31,7 +31,6 @@ try:
     )
     from dwave.system.composites import LazyFixedEmbeddingComposite
     from dwave.cloud import Client
-
     # SimulatedAnnealingSampler removed - real QPU only
     import dimod
     from dimod import BinaryQuadraticModel, ConstrainedQuadraticModel
@@ -110,14 +109,15 @@ class DWaveQuantumConnector(MCPConnector):
             qpu_solvers = [s for s in solvers if hasattr(s, "qubits")]
 
             if not qpu_solvers:
-                logger.warning("No QPU solvers available, using simulated annealing")
-                raise RuntimeError("Real QPU required - no simulations")
-                self.solver_info = {
-                    "name": "SimulatedAnnealingSampler",
-                    "type": "software",
-                    "num_qubits": "unlimited",
-                    "connectivity": "complete",
-                }
+                # NO SIMULATION - Real QPU required
+                logger.error("No QPU solvers available. Real quantum hardware required.")
+                raise RuntimeError(
+                    "No D-Wave QPU available. Please ensure:\n"
+                    "1. Valid DWAVE_API_TOKEN is set\n"
+                    "2. Active D-Wave Leap account with QPU access\n"
+                    "3. Internet connection to D-Wave cloud\n"
+                    "Visit: https://cloud.dwavesys.com/leap/"
+                )
             else:
                 # Use specified solver or first available QPU
                 if self.solver_name:
@@ -167,10 +167,48 @@ class DWaveQuantumConnector(MCPConnector):
         """Send context to quantum system"""
         self.context = context
         return True
-
-    async def execute_action(
-        self, action: str, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    
+    async def ensure_real_qpu(self) -> bool:
+        """Ensure we have real QPU access - no simulations allowed"""
+        if not self.connected:
+            raise RuntimeError("Not connected to D-Wave service")
+        
+        if self.solver_info.get('type') != 'QPU':
+            raise RuntimeError(
+                f"Real QPU required but got {self.solver_info.get('type')}. "
+                "No simulations allowed in production."
+            )
+        
+        return True
+    
+    async def list_solvers(self) -> List[Dict[str, Any]]:
+        """List all available D-Wave solvers"""
+        if not self.client:
+            raise RuntimeError("Not connected to D-Wave service")
+        
+        solvers = self.client.get_solvers()
+        solver_list = []
+        
+        for solver in solvers:
+            solver_info = {
+                "id": solver.id,
+                "name": solver.name,
+                "is_qpu": hasattr(solver, 'qubits'),
+                "status": solver.status
+            }
+            
+            if hasattr(solver, 'qubits'):
+                solver_info.update({
+                    "num_qubits": len(solver.nodes),
+                    "num_couplers": len(solver.edges),
+                    "topology": getattr(solver, 'topology', 'Unknown')
+                })
+            
+            solver_list.append(solver_info)
+        
+        return solver_list
+    
+    async def execute_action(self, action: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Execute quantum action"""
         if not self.connected:
             return {"error": "Not connected to D-Wave service"}
@@ -481,13 +519,9 @@ class DWaveQuantumConnector(MCPConnector):
             return result
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "problem_type": "Knapsack",
-            }
-
-    async def get_solver_info(self, params: Dict[str, Any] = None) -> Dict[str, Any]:
+            return {"success": False, "error": str(e), "problem_type": "Knapsack"}
+    
+    async def get_solver_info(self, params: Dict[str, Any] = {}) -> Dict[str, Any]:
         """Get information about the connected D-Wave solver"""
         if not self.connected:
             return {"error": "Not connected to D-Wave service"}

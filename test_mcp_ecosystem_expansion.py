@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from config.mcp_config import MCPConfig
 """
 MCP Ecosystem Expansion Test Suite
 

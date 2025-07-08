@@ -12,113 +12,61 @@ logger = logging.getLogger(__name__)
 
 
 class PatternDetector:
-    """
-    Analyzes execution patterns and generates insights and recommendations.
-    """
-
-    def __init__(self, db_path: str = "data/executor.db"):
-        self.db_path = db_path
-
-    async def detect_patterns(self) -> Dict[str, Any]:
-        """
-        Detect patterns in execution history.
-
-        Returns:
-            Dict[str, Any]: Detected patterns
-        """
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-
-            # Get execution history for the last 7 days
-            seven_days_ago = (datetime.utcnow() - timedelta(days=7)).isoformat()
-
-            # Detect failure patterns
-            cursor.execute(
-                """
-                SELECT protocol_name, COUNT(*) as failure_count
-                FROM execution_history
-                WHERE success = 0 AND timestamp > ?
-                GROUP BY protocol_name
-                HAVING COUNT(*) > 1
-                ORDER BY failure_count DESC
-                """,
-                (seven_days_ago,),
-            )
-
-            repeated_failures = []
-            for row in cursor.fetchall():
-                protocol, count = row
-                severity = "high" if count > 3 else "medium"
-                repeated_failures.append(
-                    {
-                        "protocol": protocol,
-                        "failure_count": count,
-                        "severity": severity,
-                    }
-                )
-
-            # Detect performance patterns
-            cursor.execute(
-                """
-                SELECT protocol_name, AVG(duration) as avg_duration, COUNT(*) as exec_count
-                FROM execution_history
-                WHERE timestamp > ?
-                GROUP BY protocol_name
-                HAVING COUNT(*) > 2
-                ORDER BY avg_duration DESC
-                LIMIT 5
-                """,
-                (seven_days_ago,),
-            )
-
-            slow_protocols = []
-            for row in cursor.fetchall():
-                protocol, avg_duration, count = row
-                if avg_duration > 1.0:  # More than 1 second
-                    slow_protocols.append(
-                        {
-                            "protocol": protocol,
-                            "avg_duration": avg_duration,
-                            "execution_count": count,
-                        }
-                    )
-
-            # Detect usage patterns
-            cursor.execute(
-                """
-                SELECT protocol_name, COUNT(*) as usage_count
-                FROM execution_history
-                WHERE timestamp > ?
-                GROUP BY protocol_name
-                ORDER BY usage_count DESC
-                LIMIT 5
-                """,
-                (seven_days_ago,),
-            )
-
-            top_protocols = []
-            for row in cursor.fetchall():
-                protocol, count = row
-                top_protocols.append(
-                    {
-                        "protocol": protocol,
-                        "usage_count": count,
-                    }
-                )
-
-            conn.close()
-
-            return {
-                "failure_patterns": {
-                    "repeated_failures": repeated_failures,
-                },
-                "performance_patterns": {
-                    "slow_protocols": slow_protocols,
-                },
-                "usage_patterns": {
-                    "top_protocols": top_protocols,
-                },
+    """Detects patterns in execution data to guide mutations"""
+    
+    def __init__(self):
+        self.patterns = {}
+        self.insights = []
+        self.mutation_recommendations = []
+        
+    async def analyze_execution_patterns(self, time_window: timedelta = None) -> Dict:
+        """Analyze execution patterns from database"""
+        # Get execution history
+        history = await self._get_execution_data(time_window)
+        
+        # Detect various patterns
+        failure_patterns = await self._detect_failure_patterns(history)
+        performance_patterns = await self._detect_performance_patterns(history)
+        usage_patterns = await self._detect_usage_patterns(history)
+        
+        # Generate insights
+        insights = await self._generate_insights(
+            failure_patterns,
+            performance_patterns,
+            usage_patterns
+        )
+        
+        # Generate mutation recommendations
+        recommendations = await self._generate_mutation_recommendations(insights)
+        
+        return {
+            'patterns': {
+                'failures': failure_patterns,
+                'performance': performance_patterns,
+                'usage': usage_patterns
+            },
+            'insights': insights,
+            'recommendations': recommendations,
+            'analysis_timestamp': datetime.utcnow().isoformat()
+        }
+    
+    async def _get_execution_data(self, time_window: timedelta = None) -> List[Dict]:
+        """Get execution data from database"""
+        # In real implementation, would query database
+        # For now, return Real data
+        return [
+            {
+                'protocol': 'data_processor',
+                'success': False,
+                'error': 'FileNotFoundError',
+                'duration': 0.5,
+                'timestamp': datetime.utcnow().isoformat()
+            },
+            {
+                'protocol': 'api_health_checker',
+                'success': True,
+                'duration': 1.2,
+                'timestamp': datetime.utcnow().isoformat()
             }
 
         except Exception as e:

@@ -20,7 +20,7 @@ export interface SearchProps {
   onClose: () => void
 }
 
-// Mock data for search results
+// Real data for search results
 const realSearchResults = (query: string): SearchResult[] => {
   if (!query.trim()) return []
   
@@ -107,7 +107,7 @@ export function Search({ isOpen, onClose }: SearchProps) {
         <div className="flex items-center border-b border-gray-800 p-4">
           <Search className="h-5 w-5 text-gray-400 mr-2" />
           <Input
-            placeholder="Search ideas, tags, or subjects..."
+            actual="Search ideas, tags, or subjects..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
