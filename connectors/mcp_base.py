@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional
 import json
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class MCPContext:
@@ -19,7 +19,7 @@ class MCPContext:
         self.code_state = {}
         self.history = []
         self.metadata = {
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "version": "1.0",
             "protocol": "MCP",
         }
