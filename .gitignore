@@ -372,6 +372,10 @@ mcp_logs/
 # Test reports
 test_reports/
 *.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.node.json
 
 # Security
 *.key
