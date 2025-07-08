@@ -597,10 +597,14 @@ class ContinuousLearningLLM:
             training_data_size=self.training_stats["total_samples_processed"],
             quantum_optimized=self.quantum_connector.connected,
             file_path=str(self.model_dir / f"{version_id}.json"),
+ copilot/fix-213aa9e3-0b23-4bd9-9b0c-2eb2bc585c94
+            checksum=hashlib.sha256(version_id.encode()).hexdigest(),
+
  copilot/fix-94a3a2ef-451e-4b72-9782-aff6506fa546
             checksum=hashlib.sha256(version_id.encode()).hexdigest(),
-=======
+
             checksum=hashlib.md5(version_id.encode()).hexdigest(),
+ master
  master
         )
 
@@ -611,12 +615,17 @@ class ContinuousLearningLLM:
             "model_state": "simulated_model_state",
         }
 
+ copilot/fix-213aa9e3-0b23-4bd9-9b0c-2eb2bc585c94
+        with open(version.file_path, "w") as f:
+            json.dump(model_data, f, indent=2, default=str)
+
  copilot/fix-94a3a2ef-451e-4b72-9782-aff6506fa546
         with open(version.file_path, "w") as f:
             json.dump(model_data, f, indent=2, default=str)
 
         with open(version.file_path, "w", encoding="utf-8") as f:
             json.dump(model_data, f, cls=ModelVersionJSONEncoder, indent=2)
+ master
  master
 
         # Update current version
@@ -666,6 +675,10 @@ class ContinuousLearningLLM:
             json_files = list(self.model_dir.glob("*.json"))
             pkl_files = list(self.model_dir.glob("*.pkl"))
 
+ copilot/fix-213aa9e3-0b23-4bd9-9b0c-2eb2bc585c94
+                with open(latest_file, "r") as f:
+                    model_data = json.load(f)
+
             if json_files:
                 # Load latest JSON version
                 latest_file = max(json_files, key=lambda f: f.stat().st_mtime)
@@ -673,6 +686,7 @@ class ContinuousLearningLLM:
 
                 with open(latest_file, "r", encoding="utf-8") as f:
                     model_data = json.load(f, cls=ModelVersionJSONDecoder)
+ master
 
                 self.current_model_version = model_data["version_info"]
                 logger.info(
