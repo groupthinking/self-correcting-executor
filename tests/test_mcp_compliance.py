@@ -109,9 +109,8 @@ class TestMCPCompliance:
     async def test_mcp_server_tools_are_real(self, mcp_server):
         """Test that MCP server tools perform real operations"""
         # Test data processing tool
-        result = await mcp_server.server.tool("process_data")(
-            data_path="./test_data", operation="analyze"
-        )
+        tool_fn = await mcp_server.tool("process_data")
+        result = await tool_fn(data_path="./test_data", operation="analyze")
 
         # Should return real analysis or error, never mock data
         assert "mock" not in str(result).lower()
