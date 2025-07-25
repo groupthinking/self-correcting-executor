@@ -5,7 +5,19 @@
 
 version: 2
 updates:
+ groupthinking-patch-2
   - package-ecosystem: "" # See documentation for possible values
+
+  - package-ecosystem: "pip"
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/frontend" # Location of package manifests
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+master
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
