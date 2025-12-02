@@ -93,7 +93,7 @@ def task():
             f.write(mutated_logic)
 
         # Track mutation in database if available
-        if track_mutation:
+        if track_mutation is not None:
             track_mutation(protocol_name, failure_rate, mutated_logic, original_code)
 
         log(

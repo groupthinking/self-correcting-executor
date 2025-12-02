@@ -54,7 +54,7 @@ class MCPConnector(ABC):
         self.service_type = service_type
         self.connected = False
         self.context = MCPContext()
-        self.capabilities = []
+        self.capabilities: list[str] = []
 
     @abstractmethod
     async def connect(self, config: Dict) -> bool:

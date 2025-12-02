@@ -2,11 +2,15 @@
 # Coordinates agents, protocols, and services based on intent
 
 import asyncio
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from datetime import datetime
 from utils.logger import log
 
 # Import specialized agents
+code_generator_agent: Any = None
+file_system_agent: Any = None
+llm_connector: Any = None
+
 try:
     from agents.specialized.code_generator import code_generator_agent
     from agents.specialized.filesystem_agent import file_system_agent
@@ -15,8 +19,6 @@ try:
 except ImportError as e:
     print(f"Warning: Could not import specialized agents: {e}")
     specialized_agents_available = False
-    code_generator_agent = None
-    file_system_agent = None
 
 # Import LLM connector
 try:
@@ -25,7 +27,6 @@ try:
     llm_available = True
 except ImportError:
     llm_available = False
-    llm_connector = None
 
 
 class OrchestrationEngine:
@@ -149,7 +150,7 @@ class OrchestrationEngine:
 
     async def discover_components(self, intent: Dict, sources: List[str]) -> Dict:
         """Discover which components are needed"""
-        components = {
+        components: dict[str, list[str]] = {
             "agents": [],
             "protocols": [],
             "connectors": [],
@@ -185,7 +186,7 @@ class OrchestrationEngine:
 
     async def generate_workflow(self, intent: Dict, components: Dict) -> Dict:
         """Generate optimized workflow from components"""
-        workflow = {
+        workflow: dict[str, Any] = {
             "id": f"wf_{datetime.utcnow().timestamp()}",
             "intent": intent,
             "steps": [],
@@ -405,7 +406,7 @@ class KnowledgeGraph:
 
     async def get_optimization_hints(self, workflow: Dict) -> List[str]:
         """Get hints for optimizing workflow"""
-        hints = []
+        hints: list[str] = []
         # Analyze past executions for patterns
         # This would use ML/pattern recognition
         return hints

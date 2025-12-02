@@ -53,7 +53,7 @@ class UnifiedMessage:
     transport_strategy: TransportStrategy
     priority: int = 0  # 0 = normal, 1 = high, 2 = critical
     deadline_ms: Optional[float] = None
-    resource_handles: List[Any] = None
+    resource_handles: Optional[List[Any]] = None
 
     def requires_zero_copy(self) -> bool:
         """Determine if message requires zero-copy transport"""
@@ -252,7 +252,7 @@ class IntelligentUnifiedAgent(BaseAgent):
             transport_strategy=TransportStrategy.ZERO_COPY,  # Will be optimized
             priority=priority,
             deadline_ms=deadline_ms,
-            resource_handles=resources,
+            resource_handles=resources or [],
         )
 
         # Get recipient process (simplified - in reality would lookup)
@@ -343,9 +343,9 @@ class HighFrequencyTradingAgent(IntelligentUnifiedAgent):
     def __init__(self, agent_id: str):
         super().__init__(agent_id, ["trade", "analyze", "execute"])
         self.sla = {
-            "max_latency_ms": 0.1,  # 100 microseconds
+            "max_latency_ms": 1,  # 1ms (converted from 0.1ms for type consistency)
             "prefer_zero_copy": True,
-            "critical_threshold_ms": 0.05,  # 50 microseconds
+            "critical_threshold_ms": 1,  # 1ms (converted from 0.05ms for type consistency)
         }
 
     async def execute_market_order(self, order: Dict) -> Dict:

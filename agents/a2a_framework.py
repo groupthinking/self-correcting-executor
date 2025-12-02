@@ -2,7 +2,7 @@
 # Enables autonomous agents to negotiate, collaborate, and share context
 
 import asyncio
-from typing import Dict, List, Callable
+from typing import Dict, List, Callable, Optional, Any
 from datetime import datetime
 from abc import ABC, abstractmethod
 import uuid
@@ -17,7 +17,7 @@ class A2AMessage:
         recipient: str,
         message_type: str,
         content: Dict,
-        conversation_id: str = None,
+        conversation_id: Optional[str] = None,
     ):
         self.id = str(uuid.uuid4())
         self.sender = sender
@@ -58,9 +58,9 @@ class BaseAgent(ABC):
     def __init__(self, agent_id: str, capabilities: List[str]):
         self.agent_id = agent_id
         self.capabilities = capabilities
-        self.conversations = {}
-        self.message_handlers = {}
-        self.state = {}
+        self.conversations: dict[str, list] = {}
+        self.message_handlers: dict[str, Callable] = {}
+        self.state: dict[str, Any] = {}
 
     @abstractmethod
     async def process_intent(self, intent: Dict) -> Dict:
@@ -128,7 +128,7 @@ class NegotiationAgent(BaseAgent):
         negotiation_id = str(uuid.uuid4())
 
         # Start negotiation with each agent
-        proposals = {}
+        proposals: dict[str, Any] = {}
         for agent in agents:
             await self.send_message(
                 recipient=agent,
@@ -208,8 +208,9 @@ class DataAnalysisAgent(BaseAgent):
     async def handle_analysis_request(self, message: A2AMessage) -> Dict:
         """Handle incoming analysis request"""
         content = message.content
+        data_source = content.get("data_source", "")
         result = await self.analyze_data(
-            content.get("data_source"), content.get("analysis_type", "general")
+            data_source if data_source else "", content.get("analysis_type", "general")
         )
         return result
 

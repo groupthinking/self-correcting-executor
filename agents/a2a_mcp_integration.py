@@ -16,6 +16,7 @@ Features:
 """
 
 import asyncio
+import json
 import logging
 import time
 from typing import Dict, List, Any, Optional
@@ -26,6 +27,7 @@ from enum import Enum
 # Import existing components
 from agents.a2a_framework import A2AMessage, BaseAgent, A2AMessageBus
 from connectors.mcp_base import MCPContext
+from connectors.real_mcp_client import MCPClient, execute_mcp_tool
 
 logger = logging.getLogger(__name__)
 
@@ -294,53 +296,122 @@ class MCPEnabledA2AAgent(BaseAgent):
 
     async def _send_zero_copy(self, message: A2AMCPMessage) -> Dict[str, Any]:
         """Zero-copy transfer for high-performance"""
-        # In real implementation, this would use direct memory transfer
-        # For now, simulate zero-copy behavior by directly calling receive on
-        # the bus
-        if self.message_bus:
-            await self.message_bus.send(message.a2a_message)
-        return {
-            "strategy": "zero_copy",
-            "status": "delivered",
-            "latency_ms": 0.1,
-        }
+        start_time = time.time()
+        
+        try:
+            # Direct message bus delivery for zero-copy semantics
+            if self.message_bus:
+                await self.message_bus.send(message.a2a_message)
+            
+            # Calculate real latency
+            latency_ms = (time.time() - start_time) * 1000
+            
+            return {
+                "strategy": "zero_copy",
+                "status": "delivered",
+                "latency_ms": latency_ms,
+            }
+        except Exception as e:
+            latency_ms = (time.time() - start_time) * 1000
+            logger.error(f"Zero-copy transfer failed: {e}")
+            return {
+                "strategy": "zero_copy",
+                "status": "failed",
+                "latency_ms": latency_ms,
+                "error": str(e)
+            }
 
     async def _send_shared_memory(self, message: A2AMCPMessage) -> Dict[str, Any]:
         """Shared memory transfer for large messages"""
-        # Simulate shared memory transfer
-        if self.message_bus:
-            await self.message_bus.send(message.a2a_message)
-        return {
-            "strategy": "shared_memory",
-            "status": "delivered",
-            "latency_ms": 5.0,
-        }
-
-    async def _send_mcp_pipe(self, message: A2AMCPMessage) -> Dict[str, Any]:
-        """MCP-optimized pipe transfer"""
-        # Use MCP server for transport
+        start_time = time.time()
+        
         try:
-            # Send through MCP server (simulated)
+            # Use message bus with measured latency for large messages
             if self.message_bus:
                 await self.message_bus.send(message.a2a_message)
+            
+            # Calculate real latency
+            latency_ms = (time.time() - start_time) * 1000
+            
             return {
-                "strategy": "mcp_pipe",
+                "strategy": "shared_memory",
                 "status": "delivered",
-                "latency_ms": 2.0,
+                "latency_ms": latency_ms,
             }
+        except Exception as e:
+            latency_ms = (time.time() - start_time) * 1000
+            logger.error(f"Shared memory transfer failed: {e}")
+            return {
+                "strategy": "shared_memory",
+                "status": "failed",
+                "latency_ms": latency_ms,
+                "error": str(e)
+            }
+
+    async def _send_mcp_pipe(self, message: A2AMCPMessage) -> Dict[str, Any]:
+        """MCP-optimized pipe transfer using real MCP client"""
+        try:
+            start_time = time.time()
+            
+            # Use real MCP client for message transport
+            mcp_client = MCPClient()
+            if await mcp_client.connect():
+                # Send message content through MCP server
+                result = await mcp_client.call_tool(
+                    "protocol_validator",
+                    {
+                        "message": json.dumps(message.to_dict()),
+                        "protocol_version": "2024-11-05"
+                    }
+                )
+                
+                await mcp_client.disconnect()
+                
+                # Calculate real latency
+                latency_ms = (time.time() - start_time) * 1000
+                
+                # Send through message bus if validation successful
+                if result.get("status") == "success" and self.message_bus:
+                    await self.message_bus.send(message.a2a_message)
+                
+                return {
+                    "strategy": "mcp_pipe",
+                    "status": "delivered" if result.get("status") == "success" else "failed",
+                    "latency_ms": latency_ms,
+                    "mcp_result": result
+                }
+            else:
+                raise ConnectionError("Failed to connect to MCP server")
+                
         except Exception as e:
             logger.error(f"MCP pipe transfer failed: {e}")
             return await self._send_standard(message)
 
     async def _send_standard(self, message: A2AMCPMessage) -> Dict[str, Any]:
         """Standard transport fallback"""
-        if self.message_bus:
-            await self.message_bus.send(message.a2a_message)
-        return {
-            "strategy": "standard",
-            "status": "delivered",
-            "latency_ms": 10.0,
-        }
+        start_time = time.time()
+        
+        try:
+            if self.message_bus:
+                await self.message_bus.send(message.a2a_message)
+            
+            # Calculate real latency
+            latency_ms = (time.time() - start_time) * 1000
+            
+            return {
+                "strategy": "standard",
+                "status": "delivered",
+                "latency_ms": latency_ms,
+            }
+        except Exception as e:
+            latency_ms = (time.time() - start_time) * 1000
+            logger.error(f"Standard transfer failed: {e}")
+            return {
+                "strategy": "standard",
+                "status": "failed",
+                "latency_ms": latency_ms,
+                "error": str(e)
+            }
 
     async def handle_negotiation_request(self, message: A2AMessage) -> Dict[str, Any]:
         """Handle incoming negotiation request"""
@@ -424,47 +495,28 @@ class MCPEnabledA2AAgent(BaseAgent):
     async def _execute_mcp_tool(
         self, tool_name: str, params: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Execute tool through real MCP server"""
-        import aiohttp
-        from config.mcp_config import MCPConfig
-
+        """Execute tool through real MCP server using stdio transport"""
         try:
-            config = MCPConfig()
-            mcp_url = config.get_endpoints()["mcp_server"]
-
-            # Make real HTTP call to MCP server
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{mcp_url}/tools/{tool_name}",
-                    json={
-                        "jsonrpc": "2.0",
-                        "method": "tools/call",
-                        "params": {"name": tool_name, "arguments": params},
-                        "id": 1,
-                    },
-                    timeout=aiohttp.ClientTimeout(total=30),
-                ) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        return result.get("result", {})
-                    else:
-                        logger.error(
-                            f"MCP tool call failed: {
-                                response.status}"
-                        )
-                        return {
-                            "status": "error",
-                            "error": f"HTTP {response.status}",
-                            "tool": tool_name,
-                        }
-
-        except aiohttp.ClientError as e:
-            logger.error(f"MCP connection error: {e}")
-            # Fallback to direct tool execution if MCP server unavailable
-            return await self._execute_tool_direct(tool_name, params)
+            # Use the real MCP client with stdio transport
+            result = await execute_mcp_tool(tool_name, params)
+            
+            if result.get("status") == "success":
+                return {
+                    "status": "success",
+                    "tool": tool_name,
+                    "result": result.get("result", {}),
+                    "latency_ms": result.get("latency_ms", 0),
+                    "timestamp": result.get("timestamp")
+                }
+            else:
+                logger.error(f"MCP tool execution failed: {result.get('error')}")
+                # Fallback to direct tool execution if MCP server call fails
+                return await self._execute_tool_direct(tool_name, params)
+                
         except Exception as e:
-            logger.error(f"Tool execution error: {e}")
-            return {"status": "error", "error": str(e), "tool": tool_name}
+            logger.error(f"MCP tool execution error: {e}")
+            # Fallback to direct tool execution if MCP client fails
+            return await self._execute_tool_direct(tool_name, params)
 
     async def _execute_tool_direct(
         self, tool_name: str, params: Dict[str, Any]
@@ -521,34 +573,59 @@ class MCPEnabledA2AAgent(BaseAgent):
     async def _analyze_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze data using real MCP tools"""
         try:
-            # Use MCP data processing tool
-            pass
+            # Use real MCP code analyzer for data analysis
+            if isinstance(data, dict) and "code" in data:
+                # Analyze code data
+                result = await self._execute_mcp_tool(
+                    "code_analyzer",
+                    {
+                        "code": data["code"],
+                        "language": data.get("language", "python")
+                    }
+                )
+            else:
+                # Use self_corrector for general data analysis
+                data_str = json.dumps(data) if isinstance(data, dict) else str(data)
+                result = await self._execute_mcp_tool(
+                    "self_corrector",
+                    {
+                        "code": data_str,
+                        "strict_mode": True
+                    }
+                )
 
-            # Call real MCP server for data analysis
-            result = await self._execute_mcp_tool(
-                "process_data",
-                {
-                    "data_path": data.get("path", "./data"),
-                    "operation": "analyze",
-                },
-            )
-
-            # Return real analysis results
-            return {
-                "analysis_type": "comprehensive",
-                "status": result.get("status", "completed"),
-                "file_count": result.get("file_count", 0),
-                "total_size": result.get("total_size_bytes", 0),
-                "file_types": result.get("file_types", {}),
-                "timestamp": result.get("analysis_timestamp"),
-                "confidence": 0.95,
-            }
+            # Process real MCP results
+            if result.get("status") == "success":
+                mcp_result = result.get("result", {})
+                
+                # Calculate confidence based on MCP response
+                confidence = 0.95 if "error" not in str(mcp_result) else 0.5
+                
+                return {
+                    "analysis_type": "mcp_comprehensive",
+                    "status": "completed",
+                    "mcp_result": mcp_result,
+                    "latency_ms": result.get("latency_ms", 0),
+                    "confidence": confidence,
+                    "timestamp": result.get("timestamp"),
+                    "tool_used": result.get("tool")
+                }
+            else:
+                return {
+                    "analysis_type": "mcp_failed",
+                    "status": "failed",
+                    "error": result.get("error", "Unknown MCP error"),
+                    "confidence": 0.0,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                
         except Exception as e:
             logger.error(f"Data analysis failed: {e}")
             return {
                 "analysis_type": "failed",
                 "error": str(e),
                 "confidence": 0.0,
+                "timestamp": datetime.utcnow().isoformat()
             }
 
     async def _generate_code(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -563,26 +640,58 @@ class MCPEnabledA2AAgent(BaseAgent):
                 "requirements": data.get("requirements", []),
             }
 
-            # Call real MCP code generation tool
+            # Generate initial code template
+            template_code = self._generate_code_template(code_spec)
+            
+            # Use real MCP code analyzer to validate and improve the generated code
             result = await self._execute_mcp_tool(
-                "execute_code",
+                "code_analyzer",
                 {
-                    "code": self._generate_code_template(code_spec),
-                    "language": code_spec["language"],
-                    "context": code_spec,
-                },
+                    "code": template_code,
+                    "language": code_spec["language"]
+                }
             )
 
-            return {
-                "code_type": code_spec["type"],
-                "language": code_spec["language"],
-                "code": result.get("output", ""),
-                "execution_time": result.get("execution_time", 0),
-                "status": result.get("status", "generated"),
-            }
+            if result.get("status") == "success":
+                mcp_result = result.get("result", {})
+                
+                # Use self_corrector to improve the code
+                corrector_result = await self._execute_mcp_tool(
+                    "self_corrector",
+                    {
+                        "code": template_code,
+                        "language": code_spec["language"],
+                        "strict_mode": False
+                    }
+                )
+                
+                return {
+                    "code_type": code_spec["type"],
+                    "language": code_spec["language"],
+                    "code": template_code,
+                    "analysis": mcp_result,
+                    "suggestions": corrector_result.get("result", {}),
+                    "latency_ms": result.get("latency_ms", 0),
+                    "status": "generated_and_analyzed"
+                }
+            else:
+                # Fallback to basic template if MCP fails
+                return {
+                    "code_type": code_spec["type"],
+                    "language": code_spec["language"],
+                    "code": template_code,
+                    "status": "generated_basic",
+                    "mcp_error": result.get("error")
+                }
+                
         except Exception as e:
             logger.error(f"Code generation failed: {e}")
-            return {"code_type": "error", "error": str(e), "code": ""}
+            return {
+                "code_type": "error",
+                "error": str(e),
+                "code": "",
+                "status": "failed"
+            }
 
     def _generate_code_template(self, spec: Dict[str, Any]) -> str:
         """Generate code template based on specifications"""
@@ -707,8 +816,25 @@ class PerformanceMonitor:
         self.running = False
 
     async def _update_stats(self):
-        """Update performance statistics"""
-        # This would collect stats from all agents
+        """Update performance statistics from real MCP metrics"""
+        try:
+            from connectors.real_mcp_client import get_mcp_client_pool
+            
+            # Get real metrics from MCP client pool
+            pool = await get_mcp_client_pool()
+            pool_stats = pool.stats
+            
+            # Update with real metrics
+            self.stats.update({
+                "total_messages": pool_stats.get("total_requests", 0),
+                "avg_latency_ms": pool_stats.get("avg_latency_ms", 0.0),
+                "active_connections": pool_stats.get("active_connections", 0),
+                "error_rate": pool_stats.get("error_rate", 0.0),
+                "last_updated": datetime.utcnow().isoformat()
+            })
+            
+        except Exception as e:
+            logger.error(f"Failed to update performance stats: {e}")
 
     def get_stats(self) -> Dict[str, Any]:
         """Get current performance statistics"""
