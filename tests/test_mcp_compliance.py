@@ -267,7 +267,7 @@ def run_compliance_check():
                 content = py_file.read_text()
                 if 'TODO:' in content or 'FIXME:' in content:
                     placeholder_count += 1
-            except:
+            except (IOError, UnicodeDecodeError):
                 pass
     
     if placeholder_count > 0:

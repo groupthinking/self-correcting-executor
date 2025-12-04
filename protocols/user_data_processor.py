@@ -61,7 +61,7 @@ def task():
                                         "size": size,
                                     }
                                 )
-                        except:
+                        except OSError:
                             pass
 
         # Generate insights
