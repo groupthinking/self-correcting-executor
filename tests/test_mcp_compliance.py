@@ -268,6 +268,7 @@ def run_compliance_check():
                 if 'TODO:' in content or 'FIXME:' in content:
                     placeholder_count += 1
             except (IOError, UnicodeDecodeError):
+                # Intentionally ignore files that can't be read/decoded; skip them in this quick placeholder scan
                 pass
     
     if placeholder_count > 0:
