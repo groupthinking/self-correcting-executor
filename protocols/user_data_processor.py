@@ -61,7 +61,8 @@ def task():
                                         "size": size,
                                     }
                                 )
-                        except:
+                        except OSError:
+                            # Ignore files we cannot access or whose size cannot be determined
                             pass
 
         # Generate insights
