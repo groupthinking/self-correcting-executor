@@ -4,7 +4,6 @@ import csv
 import os
 from datetime import datetime
 
-
 class DataProcessor:
     """Data processor class for MCP server integration"""
     
