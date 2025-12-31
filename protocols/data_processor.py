@@ -80,7 +80,8 @@ def task(data_path=None):
                         insights.append(
                             f"{filename}: {type(data).__name__} with {len(data) if isinstance(data, (list, dict)) else 1} items"
                         )
-                except (json.JSONDecodeError, IOError):
+                except (json.JSONDecodeError, OSError):
+                    # Skip files that can't be read or parsed
                     pass
 
             elif filename.endswith(".csv"):
@@ -91,7 +92,8 @@ def task(data_path=None):
                         total_records += row_count
                         processed_count += 1
                         insights.append(f"{filename}: CSV with {row_count} rows")
-                except (csv.Error, IOError):
+                except (csv.Error, OSError):
+                    # Skip CSV files that can't be read or parsed
                     pass
 
         # Always return success if we got this far
