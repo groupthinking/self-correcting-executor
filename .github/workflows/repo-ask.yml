@@ -1,0 +1,161 @@
+name: Repo Ask
+
+# Intelligent research assistant triggered by /repo-ask command
+# Documentation: docs/workflows/repo-ask.md
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  repo-ask:
+    name: Research and Answer
+    # Only run if comment starts with /repo-ask and user has write permissions
+    if: |
+      github.event.issue &&
+      startsWith(github.event.comment.body, '/repo-ask') &&
+      (
+        github.event.comment.author_association == 'OWNER' ||
+        github.event.comment.author_association == 'MEMBER' ||
+        github.event.comment.author_association == 'COLLABORATOR' ||
+        github.event.comment.author_association == 'CONTRIBUTOR'
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse question from comment
+        id: parse
+        run: |
+          # Extract the question from the comment (everything after /repo-ask)
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          QUESTION=$(echo "$COMMENT_BODY" | sed 's|^/repo-ask[[:space:]]*||')
+          
+          # If no question provided, use a default prompt
+          if [ -z "$QUESTION" ]; then
+            QUESTION="Please provide an overview of this repository and its main features."
+          fi
+          
+          # Escape special characters for GitHub output
+          QUESTION="${QUESTION//'%'/'%25'}"
+          QUESTION="${QUESTION//$'\n'/'%0A'}"
+          QUESTION="${QUESTION//$'\r'/'%0D'}"
+          
+          echo "question=$QUESTION" >> $GITHUB_OUTPUT
+          echo "Parsed question: $QUESTION"
+
+      - name: Add reaction to acknowledge command
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes'
+            });
+
+      - name: Load configuration
+        id: config
+        run: |
+          CONFIG_FILE=".github/workflows/agentics/repo-ask.config.md"
+          if [ -f "$CONFIG_FILE" ]; then
+            echo "Configuration file found"
+            echo "config_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "No configuration file found, using defaults"
+            echo "config_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Gather repository information
+        id: repo-info
+        run: |
+          echo "## Repository Analysis" > /tmp/repo-analysis.md
+          echo "" >> /tmp/repo-analysis.md
+          
+          echo "### Structure" >> /tmp/repo-analysis.md
+          echo "\`\`\`" >> /tmp/repo-analysis.md
+          find . -maxdepth 2 -type f -name "*.md" -o -name "*.py" -o -name "*.js" -o -name "*.ts" | head -50 >> /tmp/repo-analysis.md
+          echo "\`\`\`" >> /tmp/repo-analysis.md
+          echo "" >> /tmp/repo-analysis.md
+          
+          echo "### README Preview" >> /tmp/repo-analysis.md
+          if [ -f "README.md" ]; then
+            echo "\`\`\`" >> /tmp/repo-analysis.md
+            head -50 README.md >> /tmp/repo-analysis.md
+            echo "\`\`\`" >> /tmp/repo-analysis.md
+          fi
+          
+          # Store file list for context
+          find . -type f -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.md" | head -100 > /tmp/file-list.txt
+
+      - name: Post processing message
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const question = `${{ steps.parse.outputs.question }}`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `🔍 **Repo Ask** is researching your question...\n\n> ${question}\n\n_This may take a moment. I'll update this comment with my findings._`
+            });
+
+      - name: Research complete notification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const question = `${{ steps.parse.outputs.question }}`;
+            
+            // Read repository analysis
+            let repoAnalysis = '';
+            try {
+              repoAnalysis = fs.readFileSync('/tmp/repo-analysis.md', 'utf8');
+            } catch (e) {
+              repoAnalysis = 'Repository analysis not available.';
+            }
+            
+            // For now, provide a basic response template
+            // In a full implementation, this would be replaced with AI agent processing
+            const response = [
+              '## 🔍 Repo Ask Response',
+              '',
+              '**Question:** ' + question,
+              '',
+              '### Repository Context',
+              '',
+              repoAnalysis,
+              '',
+              '---',
+              '',
+              '⚠️ **Note:** This is a basic response from the repo-ask workflow. For full AI-powered research capabilities, configure an AI agent as described in the [workflow documentation](../docs/workflows/repo-ask.md).',
+              '',
+              '_To configure an AI agent, see [choosing a coding agent](https://githubnext.github.io/gh-aw/reference/engines/)._'
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: response
+            });
+
+      - name: Add completion reaction
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
