@@ -2,7 +2,7 @@
 
 > For an overview of all available workflows, see the [main README](../README.md).
 
-The [repo-ask workflow](../workflows/repo-ask.md?plain=1) is a command-triggered workflow that acts as an intelligent research assistant for your repository. When invoked with the `repo-ask` command, it provides accurate, well-researched answers to questions about your codebase, features, documentation, or any repository-related topics by leveraging web search, repository analysis, and bash commands.
+The [repo-ask workflow](../../.github/workflows/repo-ask.yml) is a command-triggered workflow that acts as an intelligent research assistant for your repository. When invoked with the `repo-ask` command, it provides accurate, well-researched answers to questions about your codebase, features, documentation, or any repository-related topics by leveraging web search, repository analysis, and bash commands.
 
 You can trigger the workflow by adding a comment to any issue or pull request with the command:
 
@@ -28,7 +28,7 @@ gh aw add githubnext/agentics/repo-ask --pr
 
 This creates a pull request to add the workflow to your repository.
 
-You must also add [choose a coding agent](https://githubnext.github.io/gh-aw/reference/engines/) and add an API key secret for the agent to your repository.
+You must also [choose a coding agent](https://githubnext.github.io/gh-aw/reference/engines/) and add an API key secret for the agent to your repository.
 
 You can't start a run of this workflow directly as it is triggered in the context of an issue or pull request comment.
 

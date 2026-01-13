@@ -137,7 +137,7 @@ jobs:
               '',
               '---',
               '',
-              '⚠️ **Note:** This is a basic response from the repo-ask workflow. For full AI-powered research capabilities, configure an AI agent as described in the [workflow documentation](../docs/workflows/repo-ask.md).',
+              '⚠️ **Note:** This is a basic response from the repo-ask workflow. For full AI-powered research capabilities, configure an AI agent as described in the [workflow documentation](docs/workflows/repo-ask.md).',
               '',
               '_To configure an AI agent, see [choosing a coding agent](https://githubnext.github.io/gh-aw/reference/engines/)._'
             ].join('\n');
