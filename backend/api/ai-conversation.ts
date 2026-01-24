@@ -60,7 +60,7 @@ async function authenticateRequest(request: NextRequest): Promise<{ userId: stri
 
     const token = authHeader.substring(7);
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; exp: number };
-    
+
     if (Date.now() >= decoded.exp * 1000) {
       return { userId: '', error: 'Token expired' };
     }
@@ -256,41 +256,41 @@ const codeGeneratorTool = tool({
 export class ${functionality.replace(/\s+/g, '')}Service {
   private readonly config: Config;
   private readonly logger: Logger;
-  
+
   constructor(config: Config, logger: Logger) {
     this.config = config;
     this.logger = logger;
   }
-  
+
   async execute(): Promise<Result> {
     try {
       // Input validation
       this.validateInput();
-      
+
       // Security checks
       await this.performSecurityChecks();
-      
+
       // Main implementation
       const result = await this.performOperation();
-      
+
       // Audit logging
       this.logger.info('Operation completed successfully');
-      
+
       return result;
     } catch (error) {
       this.logger.error('Operation failed', error);
       throw new SecureError('Operation failed', error);
     }
   }
-  
+
   private validateInput(): void {
     // Implementation here
   }
-  
+
   private async performSecurityChecks(): Promise<void> {
     // Security implementation here
   }
-  
+
   private async performOperation(): Promise<Result> {
     // Main logic here
     return new Result();
@@ -301,20 +301,20 @@ import { ${functionality.replace(/\s+/g, '')}Service } from './${functionality.r
 
 describe('${functionality.replace(/\s+/g, '')}Service', () => {
   let service: ${functionality.replace(/\s+/g, '')}Service;
-  
+
   beforeEach(() => {
     service = new ${functionality.replace(/\s+/g, '')}Service(mockConfig, mockLogger);
   });
-  
+
   it('should execute successfully with valid input', async () => {
     const result = await service.execute();
     expect(result).toBeDefined();
   });
-  
+
   it('should handle errors gracefully', async () => {
     // Error test implementation
   });
-  
+
   it('should validate security requirements', async () => {
     // Security test implementation
   });
@@ -395,10 +395,10 @@ export async function POST(request: NextRequest) {
     // Input Validation
     const body = await request.json();
     const validationResult = RequestSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
+        {
           error: 'Invalid request data',
           details: validationResult.error.issues
         },
@@ -413,22 +413,22 @@ export async function POST(request: NextRequest) {
 
     // Extract additional headers
     const customConfig = request.headers.get('X-Config');
-    const mergedConfig = customConfig 
+    const mergedConfig = customConfig
       ? { ...conversationConfig, ...JSON.parse(customConfig) }
       : conversationConfig;
 
     // Tool Selection Based on Configuration
     const availableTools: Record<string, any> = {};
-    
+
     if (mergedConfig.enableTools) {
       availableTools.system_diagnostics = systemDiagnosticsTool;
       availableTools.code_generator = codeGeneratorTool;
     }
-    
+
     if (mergedConfig.enableQuantum) {
       availableTools.quantum_analyzer = quantumAnalyzerTool;
     }
-    
+
     if (mergedConfig.enableMCP) {
       availableTools.mcp_connector = mcpConnectorTool;
     }
@@ -454,7 +454,7 @@ export async function POST(request: NextRequest) {
       temperature: mergedConfig.temperature,
       maxTokens: mergedConfig.maxTokens,
       tools: availableTools,
-      
+
       // AI SDK 5 Beta Features
       experimental_prepareStep: (step) => ({
         ...step,
@@ -467,7 +467,7 @@ export async function POST(request: NextRequest) {
           version: '5.0.0-beta'
         }
       }),
-      
+
       experimental_stopWhen: (message) => {
         // Security: Stop on potentially harmful content
         const harmfulPatterns = [
@@ -476,22 +476,22 @@ export async function POST(request: NextRequest) {
           /delete.*database/i,
           /drop.*table/i
         ];
-        
-        return harmfulPatterns.some(pattern => 
+
+        return harmfulPatterns.some(pattern =>
           pattern.test(message.content || '')
         ) || message.content?.includes('[CONVERSATION_END]');
       },
-      
+
       experimental_continueOnToolCallFailure: true,
       experimental_maxSteps: 10,
-      
+
       experimental_telemetry: {
         isEnabled: true,
         recordInputs: false, // Privacy: Don't record inputs
         recordOutputs: false, // Privacy: Don't record outputs
         functionId: 'ai-conversation-handler'
       },
-      
+
       // Enhanced error handling
       onError: (error) => {
         console.error('AI generation error:', {
@@ -513,11 +513,11 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('API Error:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        message: process.env.NODE_ENV === 'development' 
+        message: process.env.NODE_ENV === 'development'
           ? (error instanceof Error ? error.message : 'Unknown error')
           : 'An error occurred processing your request'
       },
