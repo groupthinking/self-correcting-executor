@@ -6,6 +6,7 @@ import { URL } from 'url';
 import jwt from 'jsonwebtoken';
 import { openai } from '@ai-sdk/openai';
 import { streamText, generateObject } from 'ai';
+import crypto from 'crypto';
 
 // WebSocket Message Schemas
 const WSMessageSchema = z.object({
@@ -490,16 +491,20 @@ export class StreamingService extends EventEmitter {
   }
 
   // Utility methods
+  private generateSecureRandomString(lengthBytes: number = 16): string {
+    return crypto.randomBytes(lengthBytes).toString('hex');
+  }
+
   private generateConnectionId(): string {
-    return `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `conn_${Date.now()}_${this.generateSecureRandomString()}`;
   }
 
   private generateMessageId(): string {
-    return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `msg_${Date.now()}_${this.generateSecureRandomString()}`;
   }
 
   private generateConversationId(): string {
-    return `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `conv_${Date.now()}_${this.generateSecureRandomString()}`;
   }
 
   // Analytics and monitoring
