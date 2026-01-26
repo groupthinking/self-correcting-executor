@@ -1,8 +1,8 @@
 # 🔍 Repo Ask
 
-> For an overview of all available workflows, see the [main README](../README.md).
+> For an overview of all available workflows, see the [main README](../../README.md).
 
-The [repo-ask workflow](../../.github/workflows/repo-ask.yml) is a command-triggered workflow that acts as an intelligent research assistant for your repository. When invoked with the `repo-ask` command, it provides accurate, well-researched answers to questions about your codebase, features, documentation, or any repository-related topics by leveraging web search, repository analysis, and bash commands.
+The [repo-ask workflow](../../.github/workflows/repo-ask.yml) is a command-triggered workflow that posts a templated response summarizing your repository, such as a file listing and README preview, when invoked with the `repo-ask` command.
 
 You can trigger the workflow by adding a comment to any issue or pull request with the command:
 
@@ -40,9 +40,9 @@ To trigger the workflow on a specific issue or pull request, add a comment with 
 
 **Mandatory Checklist**
 
-* [ ] I have read the notes on coding tasks in the [main README](../README.md) and understand the implications.
+* [ ] I have read the notes on coding tasks in the [main README](../../README.md) and understand the implications.
 
-* [ ] I understand that this workflow will generate and run bash commands in the confine of the GitHub Actions VM, with network access.
+* [ ] I understand that this workflow will generate and run bash commands within the confines of the GitHub Actions VM, with network access.
 
 * [ ] I am a repository admin, maintainer, or have write permissions to trigger this workflow.
 

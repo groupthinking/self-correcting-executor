@@ -1,16 +1,16 @@
 # Agentic Workflows
 
-This directory contains documentation for agentic workflows that can be added to your repository. These workflows leverage AI agents to automate common development tasks.
+This directory contains documentation for agentic workflows that can be added to your repository. These workflows are designed to integrate with AI agents to automate common development tasks. Note that the current Repo Ask workflow returns a template-based response and does not yet invoke an AI agent engine.
 
 ## Available Workflows
 
 | Workflow | Description | Trigger |
 |----------|-------------|---------|
-| [Repo Ask](./repo-ask.md) | Intelligent research assistant for repository questions | `/repo-ask` command |
+| [Repo Ask](./repo-ask.md) | Repository research assistant (template-based response) | `/repo-ask` command |
 
 ## How Workflows Work
 
-Agentic workflows are GitHub Actions workflows that are triggered by commands in issue or pull request comments. When you add a comment with a supported command (e.g., `/repo-ask`), the workflow is triggered and an AI agent processes your request.
+Agentic workflows are GitHub Actions workflows that are triggered by commands in issue or pull request comments. When you add a comment with a supported command (e.g., `/repo-ask`), the workflow is triggered and processes your request.
 
 ## Installation
 

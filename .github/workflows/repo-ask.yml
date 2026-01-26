@@ -17,8 +17,7 @@ jobs:
       (
         github.event.comment.author_association == 'OWNER' ||
         github.event.comment.author_association == 'MEMBER' ||
-        github.event.comment.author_association == 'COLLABORATOR' ||
-        github.event.comment.author_association == 'CONTRIBUTOR'
+        github.event.comment.author_association == 'COLLABORATOR'
       )
     runs-on: ubuntu-latest
     permissions:
@@ -44,12 +43,12 @@ jobs:
             QUESTION="Please provide an overview of this repository and its main features."
           fi
           
-          # Escape special characters for GitHub output
-          QUESTION="${QUESTION//'%'/'%25'}"
-          QUESTION="${QUESTION//$'\n'/'%0A'}"
-          QUESTION="${QUESTION//$'\r'/'%0D'}"
-          
-          echo "question=$QUESTION" >> $GITHUB_OUTPUT
+          # Write the question to GITHUB_OUTPUT using multiline syntax
+          {
+            echo 'question<<EOF_QUESTION'
+            echo "$QUESTION"
+            echo 'EOF_QUESTION'
+          } >> "$GITHUB_OUTPUT"
           echo "Parsed question: $QUESTION"
 
       - name: Add reaction to acknowledge command
@@ -63,18 +62,6 @@ jobs:
               content: 'eyes'
             });
 
-      - name: Load configuration
-        id: config
-        run: |
-          CONFIG_FILE=".github/workflows/agentics/repo-ask.config.md"
-          if [ -f "$CONFIG_FILE" ]; then
-            echo "Configuration file found"
-            echo "config_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "No configuration file found, using defaults"
-            echo "config_exists=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Gather repository information
         id: repo-info
         run: |
@@ -83,7 +70,7 @@ jobs:
           
           echo "### Structure" >> /tmp/repo-analysis.md
           echo "\`\`\`" >> /tmp/repo-analysis.md
-          find . -maxdepth 2 -type f -name "*.md" -o -name "*.py" -o -name "*.js" -o -name "*.ts" | head -50 >> /tmp/repo-analysis.md
+          find . -maxdepth 2 -type f \( -name "*.md" -o -name "*.py" -o -name "*.js" -o -name "*.ts" \) | head -50 >> /tmp/repo-analysis.md
           echo "\`\`\`" >> /tmp/repo-analysis.md
           echo "" >> /tmp/repo-analysis.md
           
@@ -95,27 +82,31 @@ jobs:
           fi
           
           # Store file list for context
-          find . -type f -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.md" | head -100 > /tmp/file-list.txt
+          find . -type f \( -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.md" \) | head -100 > /tmp/file-list.txt
 
       - name: Post processing message
         uses: actions/github-script@v7
+        env:
+          QUESTION: ${{ steps.parse.outputs.question }}
         with:
           script: |
-            const question = `${{ steps.parse.outputs.question }}`;
+            const question = process.env.QUESTION;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `🔍 **Repo Ask** is researching your question...\n\n> ${question}\n\n_This may take a moment. I'll update this comment with my findings._`
+              body: `🔍 **Repo Ask** is researching your question...\n\n> ${question}\n\n_This may take a moment. I'll be back with my findings soon._`
             });
 
       - name: Research complete notification
         uses: actions/github-script@v7
+        env:
+          QUESTION: ${{ steps.parse.outputs.question }}
         with:
           script: |
             const fs = require('fs');
-            const question = `${{ steps.parse.outputs.question }}`;
+            const question = process.env.QUESTION;
             
             // Read repository analysis
             let repoAnalysis = '';

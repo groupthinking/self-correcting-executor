@@ -37,11 +37,11 @@ The workspace includes a **DevContainer** definition – simply open the folder 
 
 ## Agentic Workflows
 
-This repository includes agentic workflows that leverage AI agents to automate development tasks. See [docs/workflows/README.md](docs/workflows/README.md) for available workflows.
+This repository includes agentic workflow definitions designed to integrate with AI agents to automate development tasks. Note that the current Repo Ask workflow returns a static/template response and does not yet invoke an AI agent engine. See [docs/workflows/README.md](docs/workflows/README.md) for available workflows.
 
 ### Repo Ask
 
-An intelligent research assistant for your repository. Trigger it by adding a comment to any issue or PR:
+A repository research assistant workflow (currently implemented as a template-based response workflow). Trigger it by adding a comment to any issue or PR:
 
 ```
 /repo-ask How does the authentication system work?

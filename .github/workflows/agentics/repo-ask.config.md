@@ -1,6 +1,6 @@
 # Repo Ask Configuration
 
-This file configures the repo-ask workflow behavior. Edit this file and run `gh aw compile` to apply changes.
+This file is a **template** for configuring the repo-ask workflow behavior. The current `.github/workflows/repo-ask.yml` workflow does **not** yet read or apply this file, and `gh aw compile` is not wired up in this repository, so edits here will not affect runtime behavior until that integration is implemented.
 
 ## Research Settings
 
