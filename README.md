@@ -33,4 +33,18 @@ Open http://localhost:8080/health to verify the API is running.
 
 ## Development
 
-The workspace includes a **DevContainer** definition – simply open the folder in VS Code or Cursor and choose *Reopen in Container* to get an IDE connected to the running services. 
+The workspace includes a **DevContainer** definition – simply open the folder in VS Code or Cursor and choose *Reopen in Container* to get an IDE connected to the running services.
+
+## Agentic Workflows
+
+This repository includes agentic workflow definitions designed to integrate with AI agents to automate development tasks. Note that the current Repo Ask workflow returns a static/template response and does not yet invoke an AI agent engine. See [docs/workflows/README.md](docs/workflows/README.md) for available workflows.
+
+### Repo Ask
+
+A repository research assistant workflow (currently implemented as a template-based response workflow). Trigger it by adding a comment to any issue or PR:
+
+```
+/repo-ask How does the authentication system work?
+```
+
+See [Repo Ask documentation](docs/workflows/repo-ask.md) for more details.
