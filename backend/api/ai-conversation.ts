@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { openai } from '@ai-sdk/openai';
-import { streamText, tool, generateObject, embed } from 'ai';
+import { streamText, tool } from 'ai';
 import { z } from 'zod';
 import { createHash } from 'crypto';
 import jwt from 'jsonwebtoken';
