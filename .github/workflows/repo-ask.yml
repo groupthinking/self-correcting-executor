@@ -33,9 +33,10 @@ jobs:
 
       - name: Parse question from comment
         id: parse
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           # Extract the question from the comment (everything after /repo-ask)
-          COMMENT_BODY="${{ github.event.comment.body }}"
           QUESTION=$(echo "$COMMENT_BODY" | sed 's|^/repo-ask[[:space:]]*||')
           
           # If no question provided, use a default prompt
