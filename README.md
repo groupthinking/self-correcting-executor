@@ -33,6 +33,7 @@ make health
 Open http://localhost:8080/health to verify the API is running.
 
 WRKFLW and workflows repositories are archived; their workflow definitions now live in `workflows/templates.py` alongside the self-correcting engine.
+You can extend the catalog by dropping yaml/json workflow definitions into `workflows/data/`; they are auto-loaded at runtime.
 
 ## Development
 

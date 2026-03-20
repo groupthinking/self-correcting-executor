@@ -22,6 +22,16 @@ def test_materialize_adds_self_correction():
     assert all("retry_policy" in step for step in workflow["steps"])
 
 
+def test_external_templates_loaded_from_data_dir():
+    workflow = materialize_workflow(
+        "construction daily log using external data",
+        preferred_template="construction_daily_log_external",
+    )
+    assert workflow is not None
+    assert workflow.get("template") == "construction_daily_log_external"
+    assert workflow["self_correction"]["policy"]["fallback_protocol"] == "log_analyzer"
+
+
 @pytest.mark.asyncio
 async def test_orchestrator_prefers_template_when_requested():
     engine = OrchestrationEngine()

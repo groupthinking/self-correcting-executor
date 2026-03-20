@@ -2,6 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+from pathlib import Path
+import json
+
+try:
+    import yaml  # type: ignore
+except Exception:  # pragma: no cover - yaml is optional but expected
+    yaml = None
 
 
 @dataclass
@@ -225,6 +232,47 @@ WORKFLOW_TEMPLATES: Dict[str, WorkflowTemplate] = {
     "typescript_service_pipeline": _typescript_workflows_template(),
     "self_correcting_core": _self_correcting_core_template(),
 }
+
+
+def _load_external_templates_from_data_dir() -> Dict[str, WorkflowTemplate]:
+    """Load templates from workflows/data (yaml or json)."""
+    data_dir = Path(__file__).parent / "data"
+    templates: Dict[str, WorkflowTemplate] = {}
+
+    if not data_dir.exists():
+        return templates
+
+    for file in data_dir.glob("*.*"):
+        try:
+            content: Dict[str, Any] = {}
+            if file.suffix.lower() in [".yaml", ".yml"] and yaml:
+                content = yaml.safe_load(file.read_text()) or {}
+            elif file.suffix.lower() == ".json":
+                content = json.loads(file.read_text())
+            else:
+                continue
+
+            if not content.get("name"):
+                continue
+
+            templates[content["name"]] = WorkflowTemplate(
+                name=content["name"],
+                source_repo=content.get("source_repo", "external"),
+                summary=content.get("summary", ""),
+                tags=content.get("tags", []),
+                steps=content.get("steps", []),
+                resilience=content.get("resilience", {}),
+                metadata=content.get("metadata", {}),
+            )
+        except Exception:
+            # Skip malformed entries; keep core templates intact
+            continue
+
+    return templates
+
+
+# Merge external templates (if present)
+WORKFLOW_TEMPLATES.update(_load_external_templates_from_data_dir())
 
 
 def list_template_names() -> List[str]:

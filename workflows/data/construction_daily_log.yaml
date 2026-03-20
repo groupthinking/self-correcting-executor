@@ -1,0 +1,40 @@
+name: construction_daily_log_external
+source_repo: WRKFLW
+summary: Ported daily log and RFI workflow using WRKFLW PRD data
+tags:
+  - construction
+  - daily log
+  - rfi
+  - ai-summary
+steps:
+  - type: protocol
+    name: data_processor
+    description: Normalize field updates and attachments
+    inputs:
+      source: field_capture
+    outputs:
+      - normalized_data
+  - type: analyzer
+    name: pattern_detector
+    description: Detect risks and schedule slippage from logs
+    inputs:
+      data: normalized_data
+    outputs:
+      - patterns
+      - insights
+  - type: protocol
+    name: log_analyzer
+    description: Summarize daily activity for PM review
+    inputs:
+      source: insights
+    outputs:
+      - draft_summary
+resilience:
+  max_attempts: 2
+  fallback_protocol: log_analyzer
+metadata:
+  imported_from: ported/wrkflw/PRD.md
+  patterns:
+    - Daily log capture
+    - RFI approval
+    - AI daily summary

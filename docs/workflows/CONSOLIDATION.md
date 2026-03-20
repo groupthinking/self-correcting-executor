@@ -9,6 +9,7 @@ This repository now hosts all workflow patterns from:
 - Added `workflows` package with declarative templates for each source repo.
 - Templates are wrapped with self-correction metadata so the orchestrator retries and records failures in the knowledge graph.
 - `orchestrator.OrchestrationEngine` now prefers these templates when an intent matches their tags or when `workflow_template` is provided.
+- External data-backed templates can be added under `workflows/data/*.yaml|json`; these are auto-loaded into the catalog (example: `construction_daily_log_external` ported from WRKFLW PRD).
 
 ## How to use
 ```python
