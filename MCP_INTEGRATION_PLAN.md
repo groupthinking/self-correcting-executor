@@ -2,6 +2,7 @@
 
 ## Overview
 This plan systematically replaces all 60+ mock implementations with real, MCP-compliant code while maintaining the MCP-first architecture principles.
+No mock endpoints are permitted in production; every step below documents how we remove or replace mocks with real MCP connections.
 
 ## Phase 1: Core MCP Infrastructure (Immediate)
 

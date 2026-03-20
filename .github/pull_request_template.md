@@ -1,27 +1,28 @@
-# Pull Request
+## Title
+<!-- Keep it concise; include the core change -->
 
-## Description
-Please include a summary of the change and which issue is fixed. Also include relevant motivation and context.
+## Summary
+- What changed:
+- Why it helps:
+- Orchestration example (optional):
+  ```python
+  # e.g., engine.execute_intent("...")
+  ```
 
-Fixes # (issue)
-
-## Type of change
+## Type
 - [ ] Bug fix
-- [ ] New feature
+- [ ] Feature
 - [ ] Breaking change
-- [ ] Documentation update
-- [ ] Other (describe):
+- [ ] Documentation
+- [ ] Other:
 
 ## Checklist
-- [ ] My code follows the style guidelines of this project
-- [ ] I have performed a self-review of my code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
-- [ ] Any dependent changes have been merged and published in downstream modules
+- [ ] Tests added/updated
+- [ ] Tests passing locally
+- [ ] Docs updated (if applicable)
+- [ ] Follows project style
 
-## Screenshots (if applicable)
-
-## Additional context 
+## Sections
+- Changes:
+- Testing:
+- Notes:

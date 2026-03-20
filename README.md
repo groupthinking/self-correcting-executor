@@ -12,6 +12,7 @@ This repository contains a canonical Docker-based development environment for MC
 - ✅ **Makefile** – Developer experience shortcuts
 - ✅ **README.md** – Comprehensive documentation
 - ✅ **mcp/main.py** – FastAPI MCP server implementation
+- ✅ **Workflow catalog** – `workflows/templates.py` consolidates WRKFLW + workflows patterns with self-correction
 
 ### Supporting infrastructure
 
@@ -30,6 +31,9 @@ make health
 ```
 
 Open http://localhost:8080/health to verify the API is running.
+
+WRKFLW and workflows repositories are archived; their workflow definitions now live in `workflows/templates.py` alongside the self-correcting engine.
+You can extend the catalog by dropping yaml/json workflow definitions into `workflows/data/`; they are auto-loaded at runtime.
 
 ## Development
 
