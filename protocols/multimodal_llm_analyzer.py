@@ -78,7 +78,7 @@ def _analyze_massive_user_collection() -> Dict[str, Any]:
             try:
                 import subprocess
                 import shutil
-                
+
                 # Use absolute path for find command for security
                 find_path = shutil.which("find")
                 if not find_path:
@@ -92,7 +92,7 @@ def _analyze_massive_user_collection() -> Dict[str, Any]:
                     # Validate and sanitize the base_path to prevent command injection
                     if not os.path.exists(base_path) or not os.path.isdir(base_path):
                         raise ValueError(f"Invalid directory path: {base_path}")
-                        
+
                     result = subprocess.run(
                         [find_path, os.path.abspath(base_path), "-type", "f"],
                         capture_output=True,
@@ -100,7 +100,9 @@ def _analyze_massive_user_collection() -> Dict[str, Any]:
                         timeout=30,  # Add timeout for security
                     )
                     all_files = (
-                        result.stdout.strip().split("\n") if result.stdout.strip() else []
+                        result.stdout.strip().split("\n")
+                        if result.stdout.strip()
+                        else []
                     )
                     folder_file_count = len(all_files)
 

@@ -264,9 +264,7 @@ class MCPDebugTool(MCPConnector):
                 if response.status == 200:
                     return await response.json()
                 else:
-                    self.logger.warning(
-                        f"GCP API returned status {response.status}"
-                    )
+                    self.logger.warning(f"GCP API returned status {response.status}")
                     return await self._fallback_reasoning(code, error)
         except Exception as e:
             self.logger.error(f"GCP API call failed: {str(e)}")
@@ -679,8 +677,8 @@ MCP_DEBUG_TOOL_SCHEMA = {
 async def example_usage():
     """Example usage of the MCP Debug Tool"""
     async with MCPDebugTool(
-        gcp_endpoint=os.getenv("GCP_API_ENDPOINT", "https://api.example.com"), 
-        auth_token=os.getenv("GCP_AUTH_TOKEN", "development-token")
+        gcp_endpoint=os.getenv("GCP_API_ENDPOINT", "https://api.example.com"),
+        auth_token=os.getenv("GCP_AUTH_TOKEN", "development-token"),
     ) as debug_tool:
 
         # Debug quantum code
