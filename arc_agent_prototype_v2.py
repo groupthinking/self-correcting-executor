@@ -36,10 +36,16 @@ class SimpleGridEnv:
         self.reset()
 
     def reset(self):
-        self.agent_pos = np.array([np.random.randint(0, self.size), np.random.randint(0, self.size)])
-        self.goal_pos = np.array([np.random.randint(0, self.size), np.random.randint(0, self.size)])
+        self.agent_pos = np.array(
+            [np.random.randint(0, self.size), np.random.randint(0, self.size)]
+        )
+        self.goal_pos = np.array(
+            [np.random.randint(0, self.size), np.random.randint(0, self.size)]
+        )
         while np.array_equal(self.agent_pos, self.goal_pos):
-            self.goal_pos = np.array([np.random.randint(0, self.size), np.random.randint(0, self.size)])
+            self.goal_pos = np.array(
+                [np.random.randint(0, self.size), np.random.randint(0, self.size)]
+            )
         self.steps = 0
         self.done = False
         return self.get_state()
@@ -53,7 +59,7 @@ class SimpleGridEnv:
     def step(self, action):
         if self.done:
             return self.get_state(), 0, True
-        moves = {'up': [-1, 0], 'down': [1, 0], 'left': [0, -1], 'right': [0, 1]}
+        moves = {"up": [-1, 0], "down": [1, 0], "left": [0, -1], "right": [0, 1]}
         if action in moves:
             new_pos = self.agent_pos + moves[action]
             if 0 <= new_pos[0] < self.size and 0 <= new_pos[1] < self.size:
@@ -71,31 +77,31 @@ class FluidSeedAgent:
         self.agent_pos = None
         # Immutable Seed Rules
         self.seed_rules = {
-            'fidelity': True,   # Maximize intent modeling
-            'humility': True,   # Explore on uncertainty
-            'integrity': True,  # Log adaptations
+            "fidelity": True,  # Maximize intent modeling
+            "humility": True,  # Explore on uncertainty
+            "integrity": True,  # Log adaptations
         }
 
     def act(self, state, step):
         # Simple probing: random if no belief, else towards believed goal
         if not self.belief or self.agent_pos is None:
-            actions = ['up', 'down', 'left', 'right']
+            actions = ["up", "down", "left", "right"]
             action = np.random.choice(actions)
         else:
             # Derivative-like: move towards goal
-            dx = self.belief['goal'][0] - self.agent_pos[0]
-            dy = self.belief['goal'][1] - self.agent_pos[1]
+            dx = self.belief["goal"][0] - self.agent_pos[0]
+            dy = self.belief["goal"][1] - self.agent_pos[1]
             if abs(dx) > abs(dy):
-                action = 'down' if dx > 0 else 'up'
+                action = "down" if dx > 0 else "up"
             else:
-                action = 'right' if dy > 0 else 'left'
+                action = "right" if dy > 0 else "left"
         self.trajectory.append((step, action))
         return action
 
     def update(self, state, reward, done, agent_pos):
         self.agent_pos = agent_pos
         if reward > 0:
-            self.belief['goal'] = list(agent_pos)  # Update from feedback (derivative)
+            self.belief["goal"] = list(agent_pos)  # Update from feedback (derivative)
         if done:
             print("Seed Rules Enforced:", self.seed_rules)
 
@@ -105,9 +111,9 @@ def visualize_trajectory(env, trajectory, title="Agent Trajectory"):
     grid = np.zeros((env.size, env.size))
     for pos in trajectory:
         grid[pos[0], pos[1]] = 1
-    ax.imshow(grid, cmap='Blues')
+    ax.imshow(grid, cmap="Blues")
     ax.set_title(title)
-    ax.plot(env.goal_pos[1], env.goal_pos[0], 'r*', markersize=15, label='Goal')
+    ax.plot(env.goal_pos[1], env.goal_pos[0], "r*", markersize=15, label="Goal")
     plt.legend()
     plt.savefig(TRAJECTORY_PATH)
     print("Visualization saved to", TRAJECTORY_PATH)
