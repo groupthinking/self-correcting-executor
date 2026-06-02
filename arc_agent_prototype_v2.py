@@ -31,20 +31,21 @@ TRAJECTORY_PATH = os.path.join(OUTPUT_DIR, "agent_trajectory.png")
 
 class SimpleGridEnv:
     def __init__(self, size=10, seed=42):
-        np.random.seed(seed)
+        # Local generator avoids mutating the global numpy RNG state.
+        self.rng = np.random.default_rng(seed)
         self.size = size
         self.reset()
 
     def reset(self):
         self.agent_pos = np.array(
-            [np.random.randint(0, self.size), np.random.randint(0, self.size)]
+            [self.rng.integers(0, self.size), self.rng.integers(0, self.size)]
         )
         self.goal_pos = np.array(
-            [np.random.randint(0, self.size), np.random.randint(0, self.size)]
+            [self.rng.integers(0, self.size), self.rng.integers(0, self.size)]
         )
         while np.array_equal(self.agent_pos, self.goal_pos):
             self.goal_pos = np.array(
-                [np.random.randint(0, self.size), np.random.randint(0, self.size)]
+                [self.rng.integers(0, self.size), self.rng.integers(0, self.size)]
             )
         self.steps = 0
         self.done = False
@@ -71,7 +72,9 @@ class SimpleGridEnv:
 
 
 class FluidSeedAgent:
-    def __init__(self):
+    def __init__(self, seed=42):
+        # Local generator avoids mutating the global numpy RNG state.
+        self.rng = np.random.default_rng(seed)
         self.belief = {}  # Simple goal position belief
         self.trajectory = []
         self.agent_pos = None
@@ -86,7 +89,7 @@ class FluidSeedAgent:
         # Simple probing: random if no belief, else towards believed goal
         if not self.belief or self.agent_pos is None:
             actions = ["up", "down", "left", "right"]
-            action = np.random.choice(actions)
+            action = self.rng.choice(actions)
         else:
             # Derivative-like: move towards goal
             dx = self.belief["goal"][0] - self.agent_pos[0]
@@ -100,24 +103,31 @@ class FluidSeedAgent:
 
     def update(self, state, reward, done, agent_pos):
         self.agent_pos = agent_pos
-        if reward > 0:
-            self.belief["goal"] = list(agent_pos)  # Update from feedback (derivative)
+        # Locate the goal (encoded as 2) in the observed state grid so the
+        # agent forms a belief and can actively steer toward it, rather than
+        # only learning the goal after stumbling onto it.
+        for r, row in enumerate(state):
+            if 2 in row:
+                self.belief["goal"] = [r, row.index(2)]
+                break
         if done:
             print("Seed Rules Enforced:", self.seed_rules)
 
 
 def visualize_trajectory(env, trajectory, title="Agent Trajectory"):
     fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-    grid = np.zeros((env.size, env.size))
-    for pos in trajectory:
-        grid[pos[0], pos[1]] = 1
-    ax.imshow(grid, cmap="Blues")
-    ax.set_title(title)
-    ax.plot(env.goal_pos[1], env.goal_pos[0], "r*", markersize=15, label="Goal")
-    plt.legend()
-    plt.savefig(TRAJECTORY_PATH)
-    print("Visualization saved to", TRAJECTORY_PATH)
-    plt.close()
+    try:
+        grid = np.zeros((env.size, env.size))
+        for pos in trajectory:
+            grid[pos[0], pos[1]] = 1
+        ax.imshow(grid, cmap="Blues")
+        ax.set_title(title)
+        ax.plot(env.goal_pos[1], env.goal_pos[0], "r*", markersize=15, label="Goal")
+        plt.legend()
+        plt.savefig(TRAJECTORY_PATH)
+        print("Visualization saved to", TRAJECTORY_PATH)
+    finally:
+        plt.close(fig)
 
 
 def main():
