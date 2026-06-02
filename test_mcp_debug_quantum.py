@@ -185,8 +185,10 @@ class QuantumDebugTestSuite:
             time.sleep(0.01)  # Timing delay
             qc.cx(i % 10, (i + 1) % 10)
         # This is a very long quantum program with many operations
-        # """ + "\n" * 60  # Make it long
-        
+        # """
+            + "\n" * 60
+        )  # Make it long
+
         async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_decoherence(risky_code, {})
 
@@ -263,8 +265,10 @@ class QuantumDebugTestSuite:
                             continue
                     else:
                         pass
-        """ + "\n" * 150  # Make it long
-        
+        """
+            + "\n" * 150
+        )  # Make it long
+
         async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             debug_context = MCPDebugContext(
                 file="test.py",

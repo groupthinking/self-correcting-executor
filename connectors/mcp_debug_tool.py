@@ -4,14 +4,7 @@ Supports quantum agent applications and real-time code analysis
 """
 
 import asyncio
- copilot/fix-94a3a2ef-451e-4b72-9782-aff6506fa546
-import traceback
 import os
- copilot/fix-213aa9e3-0b23-4bd9-9b0c-2eb2bc585c94
-=======
-=======
- master
- master
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
@@ -272,8 +265,7 @@ class MCPDebugTool(MCPConnector):
                     return await response.json()
                 else:
                     self.logger.warning(
-                        f"GCP API returned status {
-                            response.status}"
+                        f"GCP API returned status {response.status}"
                     )
                     return await self._fallback_reasoning(code, error)
         except Exception as e:
