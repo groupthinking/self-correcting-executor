@@ -4,12 +4,13 @@ import csv
 import os
 from datetime import datetime
 
+
 class DataProcessor:
     """Data processor class for MCP server integration"""
-    
+
     def __init__(self):
         pass
-    
+
     def process(self):
         """Process data files and extract insights"""
         return task()
@@ -38,13 +39,13 @@ def task(data_path=None):
     if not data_dir:
         # NO SIMULATIONS - Real data required
         return {
-            'success': False,
-            'action': 'data_processing',
-            'error': 'No data directory found. Please set DATA_DIR environment variable or ensure /data exists.',
-            'checked_paths': possible_dirs,
-            'timestamp': datetime.utcnow().isoformat()
+            "success": False,
+            "action": "data_processing",
+            "error": "No data directory found. Please set DATA_DIR environment variable or ensure /data exists.",
+            "checked_paths": possible_dirs,
+            "timestamp": datetime.utcnow().isoformat(),
         }
-    
+
     try:
         processed_count = 0
         total_records = 0
