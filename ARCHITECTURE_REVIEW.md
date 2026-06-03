@@ -18,9 +18,9 @@ AI-generated scaffolding, and the load-bearing core does not even compile.
 Three findings collapse the project's central claims:
 
 1. **The core does not run.** `agents/executor.py` and `agents/mutator.py` — the
-   two modules `main.py` imports on line 1 — contain **unresolved Git
-   merge-conflict markers committed to `master`** (`agents/executor.py:13`,
-   `agents/mutator.py:17,118`). `python -c "import ast; ast.parse(open('agents/executor.py').read())"`
+   two modules `main.py` imports (lines 4-5) — contain **unresolved Git
+   merge-conflict markers committed to `master`** (`agents/executor.py:11-15`,
+   `agents/mutator.py:15-19,116-120`). `python -c "import ast; ast.parse(open('agents/executor.py').read())"`
    fails with a `SyntaxError`. The advertised entry point cannot be imported.
 
 2. **The "self-correction" is theater.** A "protocol" is a coin flip
@@ -117,7 +117,7 @@ Boundaries are absent or inverted:
   storage backend inline via `try/except ImportError`. No repository interface. You
   cannot test execution without exercising backend selection.
 - **Execution ↔ code generation:** Violated catastrophically. The mutator
-  **rewrites source files on disk** (`agents/mutator.py:120-130`) as a runtime
+  **rewrites source files on disk** (`agents/mutator.py:85-94`) as a runtime
   behavior, with no sandbox, review, or test gate, and commits the damage into the
   working tree. Runtime mutates its own repository.
 - **Orchestration ↔ execution:** Two disconnected brains. `main.py` drives a simple
