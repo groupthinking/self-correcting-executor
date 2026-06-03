@@ -102,6 +102,27 @@ def test_slow_protocol_below_threshold_is_ignored():
     assert patterns["performance_patterns"]["slow_protocols"] == []
 
 
+def test_ensure_tables_is_called_at_most_once_across_calls():
+    # The executions table is ensured once per process, not on every call.
+    calls = {"n": 0}
+
+    def counting_ensure():
+        calls["n"] += 1
+
+    pd._tables_ready = False
+    try:
+        with patch.object(pd, "ensure_tables_exist", counting_ensure), patch.object(
+            pd, "get_db_connection", lambda: _make_conn([[], [], []])
+        ):
+            detector = pd.PatternDetector()
+            asyncio.run(detector.detect_patterns())
+            asyncio.run(detector.detect_patterns())
+    finally:
+        pd._tables_ready = False
+
+    assert calls["n"] == 1
+
+
 def test_detect_patterns_degrades_gracefully_on_db_error():
     def boom():
         raise RuntimeError("connection refused")

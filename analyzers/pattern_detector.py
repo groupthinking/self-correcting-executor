@@ -3,6 +3,7 @@
 Pattern Detector for analyzing execution patterns and generating insights.
 """
 
+import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
@@ -10,6 +11,11 @@ from typing import Any, Dict, List
 from utils.db_tracker import ensure_tables_exist, get_db_connection
 
 logger = logging.getLogger(__name__)
+
+# The executions table is ensured once per process (the writer,
+# utils.db_tracker.track_outcome, also creates it on demand), so the read path
+# does not issue CREATE TABLE statements on every call.
+_tables_ready = False
 
 
 class PatternDetector:
@@ -26,13 +32,24 @@ class PatternDetector:
         Detect patterns in execution history from the PostgreSQL
         ``protocol_executions`` table.
 
+        The queries use the synchronous psycopg2 driver, so the blocking work
+        runs in a worker thread to avoid stalling the event loop.
+
         Returns:
             Dict[str, Any]: Detected patterns
         """
+        return await asyncio.to_thread(self._detect_patterns_sync)
+
+    def _detect_patterns_sync(self) -> Dict[str, Any]:
+        """Run the blocking database queries for :meth:`detect_patterns`."""
+        global _tables_ready
         conn = None
         try:
-            # Make sure the executions table exists (no-op if already created).
-            ensure_tables_exist()
+            # Ensure the executions table exists once per process rather than on
+            # every call (the write path also creates it on demand).
+            if not _tables_ready:
+                ensure_tables_exist()
+                _tables_ready = True
 
             conn = get_db_connection()
             cursor = conn.cursor()
