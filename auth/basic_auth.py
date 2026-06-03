@@ -75,33 +75,25 @@ class BasicAuth:
 # Initialize auth
 auth = BasicAuth()
 
-# Create default admin user if none exists
+# Create the default admin user if none exists.
+#
+# The initial password must be supplied via the ADMIN_INITIAL_PASSWORD
+# environment variable. It is deliberately never generated-and-logged or
+# written to disk in clear text (avoids CodeQL clear-text logging/storage of
+# sensitive information).
 if not auth.users:
-    import secrets
-    import string
-
-    secure_password = "".join(
-        secrets.choice(string.ascii_letters + string.digits + string.punctuation)
-        for _ in range(16)
-    )
-    auth.create_user("admin", secure_password, "admin")
-    auth.enforce_password_reset("admin")
-    print(f"⚠️  Default admin user created with a secure password: {secure_password}")
-    print("⚠️  You must change this password on first login!")
-
-# Initialize auth
-auth = BasicAuth()
-
-# Create default admin user if none exists
-if not auth.users:
-    print("Creating default admin user...")
-    import secrets
-    import string
-
-    secure_password = "".join(
-        secrets.choice(string.ascii_letters + string.digits + string.punctuation)
-        for _ in range(16)
-    )
-    auth.create_user("admin", secure_password, "admin")
-    print(f"⚠️  Default admin user created with a secure password: {secure_password}")
-    print("⚠️  You must change this password on first login!")
+    initial_admin_password = os.environ.get("ADMIN_INITIAL_PASSWORD")
+    if initial_admin_password:
+        auth.create_user("admin", initial_admin_password, "admin")
+        auth.enforce_password_reset("admin")
+        print("⚠️  Default admin user 'admin' created from ADMIN_INITIAL_PASSWORD.")
+        print("⚠️  You must change this password on first login!")
+    else:
+        print(
+            "⚠️  No admin user exists and ADMIN_INITIAL_PASSWORD is not set; "
+            "skipping default admin creation."
+        )
+        print(
+            "⚠️  Set ADMIN_INITIAL_PASSWORD and restart to create the initial "
+            "admin user."
+        )
