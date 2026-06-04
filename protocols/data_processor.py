@@ -4,17 +4,19 @@ import csv
 import os
 from datetime import datetime
 
+
 class DataProcessor:
     """Data processor class for MCP server integration"""
-    
+
     def __init__(self):
         pass
-    
+
     def process(self):
         """Process data files and extract insights"""
         return task()
 
-def task():
+
+def task(data_path=None):
     """Process data files and extract insights"""
     # Use provided data path or try multiple possible data directories
     if data_path and os.path.exists(data_path) and os.path.isdir(data_path):
@@ -37,13 +39,13 @@ def task():
     if not data_dir:
         # NO SIMULATIONS - Real data required
         return {
-            'success': False,
-            'action': 'data_processing',
-            'error': 'No data directory found. Please set DATA_DIR environment variable or ensure /data exists.',
-            'checked_paths': possible_dirs,
-            'timestamp': datetime.utcnow().isoformat()
+            "success": False,
+            "action": "data_processing",
+            "error": "No data directory found. Please set DATA_DIR environment variable or ensure /data exists.",
+            "checked_paths": possible_dirs,
+            "timestamp": datetime.utcnow().isoformat(),
         }
-    
+
     try:
         processed_count = 0
         total_records = 0
@@ -79,7 +81,8 @@ def task():
                         insights.append(
                             f"{filename}: {type(data).__name__} with {len(data) if isinstance(data, (list, dict)) else 1} items"
                         )
-                except:
+                except (json.JSONDecodeError, OSError):
+                    # Skip files that can't be read or parsed
                     pass
 
             elif filename.endswith(".csv"):
@@ -90,7 +93,8 @@ def task():
                         total_records += row_count
                         processed_count += 1
                         insights.append(f"{filename}: CSV with {row_count} rows")
-                except BaseException:
+                except (csv.Error, OSError):
+                    # Skip CSV files that can't be read or parsed
                     pass
 
         # Always return success if we got this far
