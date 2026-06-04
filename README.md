@@ -1,8 +1,4 @@
-# Unified MCP DevContainer & Runtime (UMDR)
 
-This repository contains a canonical Docker-based development environment for MCP services.
-
-## Deliverables
 
 - ✅ **Dockerfile** – Multi-stage, optimized build
 - ✅ **docker-compose.yml** – Complete service orchestration
