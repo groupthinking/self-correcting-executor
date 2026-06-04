@@ -424,3 +424,6 @@ auth/users.json
 *.pem
 *.cert
 security_config.yaml.backup
+
+# ARC agent prototype generated artifacts
+agent_trajectory.png

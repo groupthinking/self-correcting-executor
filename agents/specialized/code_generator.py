@@ -16,8 +16,7 @@ class CodeGeneratorAgent:
     def _load_templates(self) -> Dict[str, str]:
         """Load code generation templates"""
         return {
-            "fastapi_endpoint": textwrap.dedent(
-                """
+            "fastapi_endpoint": textwrap.dedent("""
                 @app.post("/api/v1/{endpoint_name}")
                 async def {function_name}({parameters}):
                     \"\"\"
@@ -40,10 +39,8 @@ class CodeGeneratorAgent:
                         raise HTTPException(status_code=400, detail=str(e))
                     except Exception as e:
                         raise HTTPException(status_code=500, detail=str(e))
-            """
-            ),
-            "rest_api": textwrap.dedent(
-                """
+            """),
+            "rest_api": textwrap.dedent("""
                 # {title}
                 # Generated API endpoint
 
@@ -55,10 +52,8 @@ class CodeGeneratorAgent:
                 {models}
 
                 {endpoints}
-            """
-            ),
-            "crud_operations": textwrap.dedent(
-                """
+            """),
+            "crud_operations": textwrap.dedent("""
                 # CRUD operations for {entity}
 
                 @app.post("/{entity_plural}")
@@ -84,8 +79,7 @@ class CodeGeneratorAgent:
                     \"\"\"Delete {entity}\"\"\"
                     # Implementation here
                     pass
-            """
-            ),
+            """),
         }
 
     async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
