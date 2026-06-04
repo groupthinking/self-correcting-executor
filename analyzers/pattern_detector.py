@@ -3,42 +3,66 @@
 Pattern Detector for analyzing execution patterns and generating insights.
 """
 
+import asyncio
 import logging
-import sqlite3
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List
+
+from utils.db_tracker import ensure_tables_exist, get_db_connection
 
 logger = logging.getLogger(__name__)
+
+# The executions table is ensured once per process (the writer,
+# utils.db_tracker.track_outcome, also creates it on demand), so the read path
+# does not issue CREATE TABLE statements on every call.
+_tables_ready = False
 
 
 class PatternDetector:
     """
     Analyzes execution patterns and generates insights and recommendations.
-    """
 
-    def __init__(self, db_path: str = "data/executor.db"):
-        self.db_path = db_path
+    Execution history is read from the shared PostgreSQL ``protocol_executions``
+    table that ``utils.db_tracker`` writes to, so the detector sees the same
+    data the rest of the system records.
+    """
 
     async def detect_patterns(self) -> Dict[str, Any]:
         """
-        Detect patterns in execution history.
+        Detect patterns in execution history from the PostgreSQL
+        ``protocol_executions`` table.
+
+        The queries use the synchronous psycopg2 driver, so the blocking work
+        runs in a worker thread to avoid stalling the event loop.
 
         Returns:
             Dict[str, Any]: Detected patterns
         """
+        return await asyncio.to_thread(self._detect_patterns_sync)
+
+    def _detect_patterns_sync(self) -> Dict[str, Any]:
+        """Run the blocking database queries for :meth:`detect_patterns`."""
+        global _tables_ready
+        conn = None
         try:
-            conn = sqlite3.connect(self.db_path)
+            # Ensure the executions table exists once per process rather than on
+            # every call (the write path also creates it on demand).
+            if not _tables_ready:
+                ensure_tables_exist()
+                _tables_ready = True
+
+            conn = get_db_connection()
             cursor = conn.cursor()
 
-            # Get execution history for the last 7 days
-            seven_days_ago = (datetime.utcnow() - timedelta(days=7)).isoformat()
+            # Look at execution history for the last 7 days.
+            seven_days_ago = datetime.utcnow() - timedelta(days=7)
 
-            # Detect failure patterns
+            # Detect repeated failures.
             cursor.execute(
                 """
-                SELECT protocol_name, COUNT(*) as failure_count
-                FROM execution_history
-                WHERE success = 0 AND timestamp > ?
+                SELECT protocol_name, COUNT(*) AS failure_count
+                FROM protocol_executions
+                WHERE success = FALSE AND execution_time > %s
                 GROUP BY protocol_name
                 HAVING COUNT(*) > 1
                 ORDER BY failure_count DESC
@@ -47,8 +71,7 @@ class PatternDetector:
             )
 
             repeated_failures = []
-            for row in cursor.fetchall():
-                protocol, count = row
+            for protocol, count in cursor.fetchall():
                 severity = "high" if count > 3 else "medium"
                 repeated_failures.append(
                     {
@@ -58,12 +81,17 @@ class PatternDetector:
                     }
                 )
 
-            # Detect performance patterns
+            # Detect slow protocols. Duration is stored inside the JSONB
+            # ``details`` payload, so average only the numeric values present.
             cursor.execute(
-                """
-                SELECT protocol_name, AVG(duration) as avg_duration, COUNT(*) as exec_count
-                FROM execution_history
-                WHERE timestamp > ?
+                r"""
+                SELECT protocol_name,
+                       AVG((details ->> 'duration')::float) AS avg_duration,
+                       COUNT(*) AS exec_count
+                FROM protocol_executions
+                WHERE execution_time > %s
+                  AND details ? 'duration'
+                  AND (details ->> 'duration') ~ '^[0-9]+(\.[0-9]+)?$'
                 GROUP BY protocol_name
                 HAVING COUNT(*) > 2
                 ORDER BY avg_duration DESC
@@ -73,23 +101,22 @@ class PatternDetector:
             )
 
             slow_protocols = []
-            for row in cursor.fetchall():
-                protocol, avg_duration, count = row
-                if avg_duration > 1.0:  # More than 1 second
+            for protocol, avg_duration, count in cursor.fetchall():
+                if avg_duration is not None and avg_duration > 1.0:
                     slow_protocols.append(
                         {
                             "protocol": protocol,
-                            "avg_duration": avg_duration,
+                            "avg_duration": float(avg_duration),
                             "execution_count": count,
                         }
                     )
 
-            # Detect usage patterns
+            # Detect most-used protocols.
             cursor.execute(
                 """
-                SELECT protocol_name, COUNT(*) as usage_count
-                FROM execution_history
-                WHERE timestamp > ?
+                SELECT protocol_name, COUNT(*) AS usage_count
+                FROM protocol_executions
+                WHERE execution_time > %s
                 GROUP BY protocol_name
                 ORDER BY usage_count DESC
                 LIMIT 5
@@ -97,17 +124,12 @@ class PatternDetector:
                 (seven_days_ago,),
             )
 
-            top_protocols = []
-            for row in cursor.fetchall():
-                protocol, count = row
-                top_protocols.append(
-                    {
-                        "protocol": protocol,
-                        "usage_count": count,
-                    }
-                )
+            top_protocols = [
+                {"protocol": protocol, "usage_count": count}
+                for protocol, count in cursor.fetchall()
+            ]
 
-            conn.close()
+            cursor.close()
 
             return {
                 "failure_patterns": {
@@ -129,6 +151,9 @@ class PatternDetector:
                 "usage_patterns": {"top_protocols": []},
                 "error": str(e),
             }
+        finally:
+            if conn is not None:
+                conn.close()
 
     async def generate_insights(
         self,
