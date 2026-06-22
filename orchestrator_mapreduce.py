@@ -19,13 +19,16 @@ Usage:
     )
 """
 
+__all__ = ["HierarchicalOrchestrator", "OrchestratedJob", "SubTask", "TaskStatus"]
+
 import asyncio
 import uuid
 import time
+from pathlib import Path
 from typing import List, Dict, Any, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 
 from utils.logger import log
 from agents.mutator import mutate_protocol
@@ -88,13 +91,19 @@ class HierarchicalOrchestrator:
         max_concurrency: int = 10,
         verification_gate: Optional[Callable] = None,
         reducer: Optional[Callable] = None,
-        state_file: str = "STATE.md",
+        state_file: Optional[str] = None,
+        subtask_timeout: float = 300.0,
+        max_job_history: int = 1000,
     ):
         self.max_concurrency = max_concurrency
         self.verification_gate = verification_gate or self._default_gate
         self.reducer = reducer or self._default_reducer
         self.jobs: Dict[str, OrchestratedJob] = {}
-        self.state_file = state_file
+        self.state_file = state_file or str(
+            Path(__file__).parent / "STATE.md"
+        )
+        self.subtask_timeout = subtask_timeout
+        self.max_job_history = max_job_history
 
     # ─── Phase 1: PLAN ─────────────────────────────────────────
 
@@ -128,6 +137,7 @@ class HierarchicalOrchestrator:
             subtasks=subtasks,
         )
         self.jobs[job_id] = job
+        self._prune_job_history()
 
         log(f"📋 PLAN: Decomposed '{intent}' into {len(subtasks)} parallel subtasks")
         return job
@@ -141,6 +151,7 @@ class HierarchicalOrchestrator:
         """
         job.status = TaskStatus.RUNNING
         semaphore = asyncio.Semaphore(self.max_concurrency)
+        loop = asyncio.get_running_loop()
 
         log(
             f"🚀 MAP: Dispatching {len(job.subtasks)} workers "
@@ -154,21 +165,46 @@ class HierarchicalOrchestrator:
                 subtask.attempts += 1
 
                 try:
-                    result = await self._run_protocol_isolated(
-                        subtask.protocol, subtask.inputs
+                    # Apply timeout to prevent hanging protocols
+                    result = await asyncio.wait_for(
+                        self._run_protocol_isolated(
+                            subtask.protocol, subtask.inputs
+                        ),
+                        timeout=self.subtask_timeout,
                     )
                     subtask.result = result
                     subtask.status = TaskStatus.COMPLETED
-                    track_outcome(subtask.protocol, result)
+
+                    # Track outcome without blocking the event loop
+                    try:
+                        await loop.run_in_executor(
+                            None, track_outcome, subtask.protocol, result
+                        )
+                    except Exception:
+                        pass  # Tracking failure shouldn't fail the subtask
+
+                except asyncio.TimeoutError:
+                    subtask.error = (
+                        f"Protocol '{subtask.protocol}' timed out "
+                        f"after {self.subtask_timeout}s"
+                    )
+                    subtask.status = TaskStatus.FAILED
 
                 except Exception as e:
                     subtask.error = str(e)
                     subtask.status = TaskStatus.FAILED
-                    track_outcome(
-                        subtask.protocol, {"success": False, "error": str(e)}
-                    )
+                    try:
+                        await loop.run_in_executor(
+                            None,
+                            track_outcome,
+                            subtask.protocol,
+                            {"success": False, "error": str(e)},
+                        )
+                    except Exception:
+                        pass
 
-                subtask.completed_at = time.time()
+                finally:
+                    subtask.completed_at = time.time()
 
         # Fan-out: all subtasks run concurrently
         await asyncio.gather(
@@ -190,7 +226,10 @@ class HierarchicalOrchestrator:
         """
         Collect results, run through Verification Gateway,
         and trigger self-correction (mutation) on failure.
+        Retries up to max_attempts per subtask.
         """
+        loop = asyncio.get_running_loop()
+
         # Step 1: Reduce — aggregate results
         results = [st.result for st in job.subtasks if st.result]
         failures = [st for st in job.subtasks if st.status == TaskStatus.FAILED]
@@ -208,20 +247,33 @@ class HierarchicalOrchestrator:
             job.verification_passed = False
             log(f"❌ REDUCE: Verification FAILED — {verification['reason']}")
 
-            # Step 3: Self-Correct — retry failed subtasks with mutation
-            retryable = [
-                st for st in failures if st.attempts < st.max_attempts
-            ]
+            # Step 3: Self-Correct — retry loop until max_attempts exhausted
+            while True:
+                retryable = [
+                    st
+                    for st in job.subtasks
+                    if st.status == TaskStatus.FAILED
+                    and st.attempts < st.max_attempts
+                ]
 
-            if retryable:
+                if not retryable:
+                    break
+
                 log(
                     f"🔄 MUTATE: Retrying {len(retryable)} failed subtasks "
-                    f"after mutation"
+                    f"(attempt {retryable[0].attempts + 1}/{retryable[0].max_attempts})"
                 )
-                for st in retryable:
-                    mutated = mutate_protocol(st.protocol)
+
+                # Deduplicate protocols before mutating to avoid race conditions
+                unique_protocols = set(st.protocol for st in retryable)
+                for proto in unique_protocols:
+                    mutated = await loop.run_in_executor(
+                        None, mutate_protocol, proto
+                    )
                     if mutated:
-                        log(f"   → Protocol '{st.protocol}' mutated before retry")
+                        log(f"   → Protocol '{proto}' mutated before retry")
+
+                for st in retryable:
                     st.status = TaskStatus.RETRYING
 
                 # Re-run failed subtasks
@@ -240,14 +292,18 @@ class HierarchicalOrchestrator:
                     ],
                 )
                 re_verification = await self.verification_gate(job)
-                job.verification_passed = re_verification["passed"]
-                job.status = (
-                    TaskStatus.COMPLETED
-                    if re_verification["passed"]
-                    else TaskStatus.FAILED
-                )
-            else:
-                # All retries exhausted — escalate to human
+
+                if re_verification["passed"]:
+                    job.verification_passed = True
+                    job.status = TaskStatus.COMPLETED
+                    log(
+                        f"✅ REDUCE: Verification PASSED after retry "
+                        f"for job '{job.intent}'"
+                    )
+                    break
+
+            # If we exited the loop without passing — escalate
+            if not job.verification_passed:
                 job.status = TaskStatus.FAILED
                 await self._escalate_to_human(job, verification["reason"])
 
@@ -277,6 +333,7 @@ class HierarchicalOrchestrator:
         """
         Execute a protocol in isolation.
         Uses the existing protocol loader but wraps it in async.
+        Passes inputs to the protocol task function.
         """
         from protocols.loader import load_protocol
 
@@ -284,9 +341,24 @@ class HierarchicalOrchestrator:
         if not protocol:
             raise Exception(f"Protocol '{protocol_name}' not found")
 
-        # Run in executor to avoid blocking the event loop
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, protocol["task"])
+        task_fn = protocol["task"]
+        loop = asyncio.get_running_loop()
+
+        # Pass inputs to the protocol task function.
+        # Protocols that accept kwargs will receive them;
+        # legacy protocols with no parameters still work via fallback.
+        def _execute_with_inputs():
+            import inspect
+
+            sig = inspect.signature(task_fn)
+            if sig.parameters:
+                # Protocol accepts arguments — pass inputs as kwargs
+                return task_fn(**inputs)
+            else:
+                # Legacy protocol with no parameters — call without args
+                return task_fn()
+
+        result = await loop.run_in_executor(None, _execute_with_inputs)
         return result
 
     async def _retry_subtask(self, subtask: SubTask):
@@ -294,15 +366,25 @@ class HierarchicalOrchestrator:
         subtask.attempts += 1
         subtask.started_at = time.time()
         try:
-            result = await self._run_protocol_isolated(
-                subtask.protocol, subtask.inputs
+            result = await asyncio.wait_for(
+                self._run_protocol_isolated(
+                    subtask.protocol, subtask.inputs
+                ),
+                timeout=self.subtask_timeout,
             )
             subtask.result = result
             subtask.status = TaskStatus.COMPLETED
+        except asyncio.TimeoutError:
+            subtask.error = (
+                f"Protocol '{subtask.protocol}' timed out "
+                f"after {self.subtask_timeout}s on retry"
+            )
+            subtask.status = TaskStatus.FAILED
         except Exception as e:
             subtask.error = str(e)
             subtask.status = TaskStatus.FAILED
-        subtask.completed_at = time.time()
+        finally:
+            subtask.completed_at = time.time()
 
     async def _escalate_to_human(self, job: OrchestratedJob, reason: str):
         """
@@ -317,13 +399,13 @@ class HierarchicalOrchestrator:
         )
 
         # In production, uncomment to use your MCP Slack connector:
-        # import subprocess
+        # import subprocess, json
         # subprocess.run([
         #     "manus-mcp-cli", "tool", "call", "slack_post_message",
         #     "--server", "slack",
         #     "--input", json.dumps({
         #         "channel": "#agent-alerts",
-        #         "text": f"🚨 Loop failed: {job.intent}\nReason: {reason}\nManual review required."
+        #         "text": f"Loop failed: {job.intent}\nReason: {reason}\nManual review required."
         #     })
         # ])
 
@@ -337,10 +419,26 @@ class HierarchicalOrchestrator:
             f"{'PASSED' if job.verification_passed else 'FAILED'}\n"
             f"- **Subtasks:** {len(job.subtasks)} total, "
             f"{sum(1 for st in job.subtasks if st.status == TaskStatus.COMPLETED)} completed\n"
-            f"- **Timestamp:** {datetime.utcnow().isoformat()}\n"
+            f"- **Timestamp:** {datetime.now(timezone.utc).isoformat()}\n"
         )
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self._write_state_sync, state_entry)
+
+    def _write_state_sync(self, entry: str):
+        """Synchronous state file append (called via run_in_executor)."""
         with open(self.state_file, "a") as f:
-            f.write(state_entry)
+            f.write(entry)
+
+    def _prune_job_history(self):
+        """Prevent unbounded memory growth from stored jobs."""
+        if len(self.jobs) > self.max_job_history:
+            # Remove oldest jobs beyond the limit
+            sorted_jobs = sorted(
+                self.jobs.items(), key=lambda x: x[1].created_at
+            )
+            excess = len(self.jobs) - self.max_job_history
+            for job_id, _ in sorted_jobs[:excess]:
+                del self.jobs[job_id]
 
     # ─── Default Gate & Reducer ────────────────────────────────
 
