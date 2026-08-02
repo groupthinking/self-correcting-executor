@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from config.mcp_config import MCPConfig
+
 """
 Test Suite for REAL D-Wave Quantum MCP Connector
 

@@ -3,70 +3,144 @@
 Pattern Detector for analyzing execution patterns and generating insights.
 """
 
+import asyncio
 import logging
-import sqlite3
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List
+
+from utils.db_tracker import ensure_tables_exist, get_db_connection
 
 logger = logging.getLogger(__name__)
 
+# The executions table is ensured once per process (the writer,
+# utils.db_tracker.track_outcome, also creates it on demand), so the read path
+# does not issue CREATE TABLE statements on every call.
+_tables_ready = False
+
 
 class PatternDetector:
-    """Detects patterns in execution data to guide mutations"""
-    
-    def __init__(self):
-        self.patterns = {}
-        self.insights = []
-        self.mutation_recommendations = []
-        
-    async def analyze_execution_patterns(self, time_window: timedelta = None) -> Dict:
-        """Analyze execution patterns from database"""
-        # Get execution history
-        history = await self._get_execution_data(time_window)
-        
-        # Detect various patterns
-        failure_patterns = await self._detect_failure_patterns(history)
-        performance_patterns = await self._detect_performance_patterns(history)
-        usage_patterns = await self._detect_usage_patterns(history)
-        
-        # Generate insights
-        insights = await self._generate_insights(
-            failure_patterns,
-            performance_patterns,
-            usage_patterns
-        )
-        
-        # Generate mutation recommendations
-        recommendations = await self._generate_mutation_recommendations(insights)
-        
-        return {
-            'patterns': {
-                'failures': failure_patterns,
-                'performance': performance_patterns,
-                'usage': usage_patterns
-            },
-            'insights': insights,
-            'recommendations': recommendations,
-            'analysis_timestamp': datetime.utcnow().isoformat()
-        }
-    
-    async def _get_execution_data(self, time_window: timedelta = None) -> List[Dict]:
-        """Get execution data from database"""
-        # In real implementation, would query database
-        # For now, return Real data
-        return [
-            {
-                'protocol': 'data_processor',
-                'success': False,
-                'error': 'FileNotFoundError',
-                'duration': 0.5,
-                'timestamp': datetime.utcnow().isoformat()
-            },
-            {
-                'protocol': 'api_health_checker',
-                'success': True,
-                'duration': 1.2,
-                'timestamp': datetime.utcnow().isoformat()
+    """
+    Analyzes execution patterns and generates insights and recommendations.
+
+    Execution history is read from the shared PostgreSQL ``protocol_executions``
+    table that ``utils.db_tracker`` writes to, so the detector sees the same
+    data the rest of the system records.
+    """
+
+    async def detect_patterns(self) -> Dict[str, Any]:
+        """
+        Detect patterns in execution history from the PostgreSQL
+        ``protocol_executions`` table.
+
+        The queries use the synchronous psycopg2 driver, so the blocking work
+        runs in a worker thread to avoid stalling the event loop.
+
+        Returns:
+            Dict[str, Any]: Detected patterns
+        """
+        return await asyncio.to_thread(self._detect_patterns_sync)
+
+    def _detect_patterns_sync(self) -> Dict[str, Any]:
+        """Run the blocking database queries for :meth:`detect_patterns`."""
+        global _tables_ready
+        conn = None
+        try:
+            # Ensure the executions table exists once per process rather than on
+            # every call (the write path also creates it on demand).
+            if not _tables_ready:
+                ensure_tables_exist()
+                _tables_ready = True
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            # Look at execution history for the last 7 days.
+            seven_days_ago = datetime.utcnow() - timedelta(days=7)
+
+            # Detect repeated failures.
+            cursor.execute(
+                """
+                SELECT protocol_name, COUNT(*) AS failure_count
+                FROM protocol_executions
+                WHERE success = FALSE AND execution_time > %s
+                GROUP BY protocol_name
+                HAVING COUNT(*) > 1
+                ORDER BY failure_count DESC
+                """,
+                (seven_days_ago,),
+            )
+
+            repeated_failures = []
+            for protocol, count in cursor.fetchall():
+                severity = "high" if count > 3 else "medium"
+                repeated_failures.append(
+                    {
+                        "protocol": protocol,
+                        "failure_count": count,
+                        "severity": severity,
+                    }
+                )
+
+            # Detect slow protocols. Duration is stored inside the JSONB
+            # ``details`` payload, so average only the numeric values present.
+            cursor.execute(
+                r"""
+                SELECT protocol_name,
+                       AVG((details ->> 'duration')::float) AS avg_duration,
+                       COUNT(*) AS exec_count
+                FROM protocol_executions
+                WHERE execution_time > %s
+                  AND details ? 'duration'
+                  AND (details ->> 'duration') ~ '^[0-9]+(\.[0-9]+)?$'
+                GROUP BY protocol_name
+                HAVING COUNT(*) > 2
+                ORDER BY avg_duration DESC
+                LIMIT 5
+                """,
+                (seven_days_ago,),
+            )
+
+            slow_protocols = []
+            for protocol, avg_duration, count in cursor.fetchall():
+                if avg_duration is not None and avg_duration > 1.0:
+                    slow_protocols.append(
+                        {
+                            "protocol": protocol,
+                            "avg_duration": float(avg_duration),
+                            "execution_count": count,
+                        }
+                    )
+
+            # Detect most-used protocols.
+            cursor.execute(
+                """
+                SELECT protocol_name, COUNT(*) AS usage_count
+                FROM protocol_executions
+                WHERE execution_time > %s
+                GROUP BY protocol_name
+                ORDER BY usage_count DESC
+                LIMIT 5
+                """,
+                (seven_days_ago,),
+            )
+
+            top_protocols = [
+                {"protocol": protocol, "usage_count": count}
+                for protocol, count in cursor.fetchall()
+            ]
+
+            cursor.close()
+
+            return {
+                "failure_patterns": {
+                    "repeated_failures": repeated_failures,
+                },
+                "performance_patterns": {
+                    "slow_protocols": slow_protocols,
+                },
+                "usage_patterns": {
+                    "top_protocols": top_protocols,
+                },
             }
 
         except Exception as e:
@@ -77,6 +151,9 @@ class PatternDetector:
                 "usage_patterns": {"top_protocols": []},
                 "error": str(e),
             }
+        finally:
+            if conn is not None:
+                conn.close()
 
     async def generate_insights(
         self,

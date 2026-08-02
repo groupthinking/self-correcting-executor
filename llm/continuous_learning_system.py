@@ -17,6 +17,7 @@ Features:
 import asyncio
 import json
 import logging
+import pickle
 import time
 import os
 from typing import Dict, List, Any, Optional
@@ -24,7 +25,6 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 import numpy as np
 import hashlib
-import json
 from pathlib import Path
 
 # Import existing components
@@ -290,12 +290,6 @@ class ContinuousLearningLLM:
             version_id: Version ID to rollback to
         """
         try:
- copilot/fix-94a3a2ef-451e-4b72-9782-aff6506fa546
-            # Find version in history
-            version_path = self.model_dir / f"{version_id}.json"
-
-            if not version_path.exists():
-
             # Find version in history (try JSON first, then pickle for backward compatibility)
             json_path = self.model_dir / f"{version_id}.json"
             pkl_path = self.model_dir / f"{version_id}.pkl"
@@ -309,19 +303,11 @@ class ContinuousLearningLLM:
                 with open(pkl_path, "rb") as f:
                     model_data = pickle.load(f)
             else:
- master
                 return {
                     "success": False,
                     "error": f"Model version {version_id} not found",
                 }
 
- copilot/fix-94a3a2ef-451e-4b72-9782-aff6506fa546
-            # Load the version
-            with open(version_path, "r") as f:
-                model_data = json.load(f)
-
-=======
- master
             # Set as current model
             self.current_model_version = model_data["version_info"]
 
@@ -597,15 +583,7 @@ class ContinuousLearningLLM:
             training_data_size=self.training_stats["total_samples_processed"],
             quantum_optimized=self.quantum_connector.connected,
             file_path=str(self.model_dir / f"{version_id}.json"),
- copilot/fix-213aa9e3-0b23-4bd9-9b0c-2eb2bc585c94
             checksum=hashlib.sha256(version_id.encode()).hexdigest(),
-
- copilot/fix-94a3a2ef-451e-4b72-9782-aff6506fa546
-            checksum=hashlib.sha256(version_id.encode()).hexdigest(),
-
-            checksum=hashlib.md5(version_id.encode()).hexdigest(),
- master
- master
         )
 
         # Save model version using custom JSON encoder
@@ -615,18 +593,8 @@ class ContinuousLearningLLM:
             "model_state": "simulated_model_state",
         }
 
- copilot/fix-213aa9e3-0b23-4bd9-9b0c-2eb2bc585c94
-        with open(version.file_path, "w") as f:
-            json.dump(model_data, f, indent=2, default=str)
-
- copilot/fix-94a3a2ef-451e-4b72-9782-aff6506fa546
-        with open(version.file_path, "w") as f:
-            json.dump(model_data, f, indent=2, default=str)
-
         with open(version.file_path, "w", encoding="utf-8") as f:
             json.dump(model_data, f, cls=ModelVersionJSONEncoder, indent=2)
- master
- master
 
         # Update current version
         self.current_model_version = version
@@ -667,26 +635,16 @@ class ContinuousLearningLLM:
     async def _load_or_create_model(self):
         """Load existing model or create new one"""
         try:
- copilot/fix-94a3a2ef-451e-4b72-9782-aff6506fa546
-            # Look for existing model versions
-            model_files = list(self.model_dir.glob("*.json"))
-
             # Look for existing model versions (first try JSON, then fallback to PKL for backward compatibility)
             json_files = list(self.model_dir.glob("*.json"))
             pkl_files = list(self.model_dir.glob("*.pkl"))
 
- copilot/fix-213aa9e3-0b23-4bd9-9b0c-2eb2bc585c94
-                with open(latest_file, "r") as f:
-                    model_data = json.load(f)
-
             if json_files:
                 # Load latest JSON version
                 latest_file = max(json_files, key=lambda f: f.stat().st_mtime)
- master
 
                 with open(latest_file, "r", encoding="utf-8") as f:
                     model_data = json.load(f, cls=ModelVersionJSONDecoder)
- master
 
                 self.current_model_version = model_data["version_info"]
                 logger.info(

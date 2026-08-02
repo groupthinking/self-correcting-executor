@@ -4,14 +4,7 @@ Supports quantum agent applications and real-time code analysis
 """
 
 import asyncio
- copilot/fix-94a3a2ef-451e-4b72-9782-aff6506fa546
-import traceback
 import os
- copilot/fix-213aa9e3-0b23-4bd9-9b0c-2eb2bc585c94
-=======
-=======
- master
- master
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
@@ -271,10 +264,7 @@ class MCPDebugTool(MCPConnector):
                 if response.status == 200:
                     return await response.json()
                 else:
-                    self.logger.warning(
-                        f"GCP API returned status {
-                            response.status}"
-                    )
+                    self.logger.warning(f"GCP API returned status {response.status}")
                     return await self._fallback_reasoning(code, error)
         except Exception as e:
             self.logger.error(f"GCP API call failed: {str(e)}")
@@ -687,8 +677,8 @@ MCP_DEBUG_TOOL_SCHEMA = {
 async def example_usage():
     """Example usage of the MCP Debug Tool"""
     async with MCPDebugTool(
-        gcp_endpoint=os.getenv("GCP_API_ENDPOINT", "https://api.example.com"), 
-        auth_token=os.getenv("GCP_AUTH_TOKEN", "development-token")
+        gcp_endpoint=os.getenv("GCP_API_ENDPOINT", "https://api.example.com"),
+        auth_token=os.getenv("GCP_AUTH_TOKEN", "development-token"),
     ) as debug_tool:
 
         # Debug quantum code

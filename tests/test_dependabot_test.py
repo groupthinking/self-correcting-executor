@@ -20,7 +20,9 @@ class TestDependabotTest:
 
     def test_module_imports_successfully(self):
         """Test that the dependabot_test module can be imported without errors"""
-        assert dependabot_test is not None, "dependabot_test module should be importable"
+        assert (
+            dependabot_test is not None
+        ), "dependabot_test module should be importable"
 
     @pytest.fixture
     def mock_file_system(self):
@@ -45,8 +47,7 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name))
-            and not name.startswith("_")
+            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
         ]
         assert functions, "Module should contain at least one function"
 
@@ -112,8 +113,7 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name))
-            and not name.startswith("_")
+            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
         ]
 
         for func in functions:
@@ -133,8 +133,7 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name))
-            and not name.startswith("_")
+            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
         ]
 
         for func in functions:
@@ -153,8 +152,7 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name))
-            and not name.startswith("_")
+            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
         ]
 
         for func in functions:
@@ -180,8 +178,7 @@ class TestDependabotTest:
             functions = [
                 getattr(dependabot_test, name)
                 for name in dir(dependabot_test)
-                if callable(getattr(dependabot_test, name))
-                and not name.startswith("_")
+                if callable(getattr(dependabot_test, name)) and not name.startswith("_")
             ]
 
             for func in functions:
@@ -202,8 +199,7 @@ class TestDependabotTest:
             functions = [
                 getattr(dependabot_test, name)
                 for name in dir(dependabot_test)
-                if callable(getattr(dependabot_test, name))
-                and not name.startswith("_")
+                if callable(getattr(dependabot_test, name)) and not name.startswith("_")
             ]
 
             for func in functions:
@@ -232,8 +228,7 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name))
-            and not name.startswith("_")
+            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
         ]
 
         for func in functions:
@@ -243,7 +238,9 @@ class TestDependabotTest:
                 except (TypeError, ValueError, AttributeError):
                     pass
                 except Exception as e:
-                    print(f"Unexpected exception in {func.__name__} with {edge_case}: {e}")
+                    print(
+                        f"Unexpected exception in {func.__name__} with {edge_case}: {e}"
+                    )
 
     def test_concurrent_execution(self):
         """Test concurrent execution safety"""
@@ -255,8 +252,7 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name))
-            and not name.startswith("_")
+            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
         ]
 
         if not functions:
@@ -290,8 +286,7 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name))
-            and not name.startswith("_")
+            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
         ]
 
         initial_objects = len(gc.get_objects())
@@ -316,8 +311,7 @@ class TestDependabotTest:
             functions = [
                 getattr(dependabot_test, name)
                 for name in dir(dependabot_test)
-                if callable(getattr(dependabot_test, name))
-                and not name.startswith("_")
+                if callable(getattr(dependabot_test, name)) and not name.startswith("_")
             ]
 
             for func in functions:
@@ -341,8 +335,7 @@ class TestDependabotTest:
         functions = [
             getattr(dependabot_test, name)
             for name in dir(dependabot_test)
-            if callable(getattr(dependabot_test, name))
-            and not name.startswith("_")
+            if callable(getattr(dependabot_test, name)) and not name.startswith("_")
         ]
 
         for config in test_configs:
@@ -352,7 +345,9 @@ class TestDependabotTest:
                 except (TypeError, KeyError, AttributeError):
                     pass
                 except Exception as e:
-                    print(f"Unexpected exception in {func.__name__} with config {config}: {e}")
+                    print(
+                        f"Unexpected exception in {func.__name__} with config {config}: {e}"
+                    )
 
 
 class TestDependabotTestIntegration:
@@ -379,8 +374,7 @@ class TestDependabotTestIntegration:
             functions = [
                 getattr(dependabot_test, name)
                 for name in dir(dependabot_test)
-                if callable(getattr(dependabot_test, name))
-                and not name.startswith("_")
+                if callable(getattr(dependabot_test, name)) and not name.startswith("_")
             ]
 
             for func in functions:
@@ -404,8 +398,7 @@ class TestDependabotTestIntegration:
             functions = [
                 getattr(dependabot_test, name)
                 for name in dir(dependabot_test)
-                if callable(getattr(dependabot_test, name))
-                and not name.startswith("_")
+                if callable(getattr(dependabot_test, name)) and not name.startswith("_")
             ]
 
             for func in functions:

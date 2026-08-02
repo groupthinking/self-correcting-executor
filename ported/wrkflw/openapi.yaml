@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+  title: ConstructionOnline - MVP API
+  version: 0.1.0
+servers:
+  - url: http://localhost:4000
+paths:
+  /auth/signup:
+    post:
+      summary: Sign up
+      requestBody:
+        required: true
+      responses:
+        '200':
+          description: OK
+  /auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+      responses:
+        '200':
+          description: OK
+  /projects:
+    get:
+      summary: List projects
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create project
+      requestBody:
+        required: true
+      responses:
+        '201':
+          description: Created
+  /projects/{projectId}/daily-logs:
+    post:
+      summary: Create daily log
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+      responses:
+        '201':
+          description: Created
+  /projects/{projectId}/ai/daily-summary:
+    post:
+      summary: Trigger AI daily summary (prototype)
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+      responses:
+        '200':
+          description: Summary queued
+components:
+  schemas:
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string

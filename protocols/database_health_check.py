@@ -33,18 +33,15 @@ def task():
         connection_count = cursor.fetchone()[0]
 
         # Check table count
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT count(*) 
             FROM information_schema.tables 
             WHERE table_schema = 'public';
-        """
-        )
+        """)
         table_count = cursor.fetchone()[0]
 
         # Create a test table if it doesn't exist
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS protocol_executions (
                 id SERIAL PRIMARY KEY,
                 protocol_name VARCHAR(100),
@@ -52,8 +49,7 @@ def task():
                 success BOOLEAN,
                 details JSONB
             );
-        """
-        )
+        """)
 
         # Insert a test record
         cursor.execute(
