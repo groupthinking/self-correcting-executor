@@ -1,6 +1,6 @@
 # Minimal requirements for CI/CD pipeline
 # Core dependencies
-aiohttp>=3.8.0
+aiohttp>=3.14.3
 pydantic>=2.0.0
 fastapi>=0.100.0
 uvicorn>=0.20.0
