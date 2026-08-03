@@ -43,7 +43,7 @@ httptools==0.6.4
 httpx==0.28.1
 httpx-sse==0.4.0
 huggingface-hub==0.33.0
-idna==3.10
+idna==3.18
 importlib_metadata==8.7.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
