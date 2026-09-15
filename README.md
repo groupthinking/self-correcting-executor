@@ -34,3 +34,11 @@ Open http://localhost:8080/health to verify the API is running.
 ## Development
 
 The workspace includes a **DevContainer** definition – simply open the folder in VS Code or Cursor and choose *Reopen in Container* to get an IDE connected to the running services. 
+
+## Repo assist
+
+For a repo-specific map of the current tree, dependency snapshot, mermaid
+architecture diagram, MCP capability-verification notes, and agent workflow
+checklist, see
+`/home/runner/work/self-correcting-executor/self-correcting-executor/docs/REPO_MAP.md`
+(also tracked in the repository as [`docs/REPO_MAP.md`](docs/REPO_MAP.md)).
