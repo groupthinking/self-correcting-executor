@@ -48,7 +48,6 @@ from utils.logger import log
 from agents.mutator import mutate_protocol
 from utils.tracker import track_outcome, get_protocol_stats
 
-
 # ─── Data Models ───────────────────────────────────────────────
 
 
@@ -116,9 +115,7 @@ class SemanticGate:
         """
         # Layer 1: Mechanical gate (fast pre-filter)
         total = len(job.subtasks)
-        succeeded = sum(
-            1 for st in job.subtasks if st.status == TaskStatus.COMPLETED
-        )
+        succeeded = sum(1 for st in job.subtasks if st.status == TaskStatus.COMPLETED)
         rate = succeeded / total if total > 0 else 0
 
         if rate < self.threshold:
@@ -127,8 +124,7 @@ class SemanticGate:
                 "layer": "mechanical",
                 "success_rate": rate,
                 "reason": (
-                    f"Success rate {rate:.0%} below "
-                    f"{self.threshold:.0%} threshold"
+                    f"Success rate {rate:.0%} below " f"{self.threshold:.0%} threshold"
                 ),
             }
 
@@ -139,7 +135,11 @@ class SemanticGate:
         except Exception as e:
             # If LLM is unavailable, fall back to mechanical pass
             log(f"⚠️  Semantic gate unavailable ({e}), using mechanical only")
-            return {"passed": True, "layer": "mechanical_fallback", "success_rate": rate}
+            return {
+                "passed": True,
+                "layer": "mechanical_fallback",
+                "success_rate": rate,
+            }
 
     async def _llm_evaluate(self, job: OrchestratedJob) -> Dict[str, Any]:
         """Call the LLM to semantically evaluate the job output."""
@@ -209,12 +209,8 @@ class StateStore:
     """
 
     def __init__(self, db_path: Optional[str] = None, md_path: Optional[str] = None):
-        self.db_path = db_path or str(
-            Path(__file__).parent / "loop_state.db"
-        )
-        self.md_path = md_path or str(
-            Path(__file__).parent / "STATE.md"
-        )
+        self.db_path = db_path or str(Path(__file__).parent / "loop_state.db")
+        self.md_path = md_path or str(Path(__file__).parent / "STATE.md")
         self._init_db()
 
     def _init_db(self):
@@ -261,12 +257,8 @@ class StateStore:
         conn = sqlite3.connect(self.db_path)
         now = datetime.now(timezone.utc).isoformat()
 
-        succeeded = sum(
-            1 for st in job.subtasks if st.status == TaskStatus.COMPLETED
-        )
-        failed = sum(
-            1 for st in job.subtasks if st.status == TaskStatus.FAILED
-        )
+        succeeded = sum(1 for st in job.subtasks if st.status == TaskStatus.COMPLETED)
+        failed = sum(1 for st in job.subtasks if st.status == TaskStatus.FAILED)
 
         conn.execute(
             """INSERT OR REPLACE INTO jobs
@@ -305,12 +297,16 @@ class StateStore:
                     st.error,
                     st.attempts,
                     (
-                        datetime.fromtimestamp(st.started_at, tz=timezone.utc).isoformat()
+                        datetime.fromtimestamp(
+                            st.started_at, tz=timezone.utc
+                        ).isoformat()
                         if st.started_at
                         else None
                     ),
                     (
-                        datetime.fromtimestamp(st.completed_at, tz=timezone.utc).isoformat()
+                        datetime.fromtimestamp(
+                            st.completed_at, tz=timezone.utc
+                        ).isoformat()
                         if st.completed_at
                         else None
                     ),
@@ -322,9 +318,7 @@ class StateStore:
 
     def persist_markdown(self, job: OrchestratedJob):
         """Append a human-readable summary to STATE.md."""
-        succeeded = sum(
-            1 for st in job.subtasks if st.status == TaskStatus.COMPLETED
-        )
+        succeeded = sum(1 for st in job.subtasks if st.status == TaskStatus.COMPLETED)
         entry = (
             f"\n## Job: {job.id}\n"
             f"- **Intent:** {job.intent}\n"
@@ -458,7 +452,9 @@ class SafeMutator:
 
         subtask.inputs.update(strategy_hints)
 
-        log(f"   → Tier 2 (Strategy Mutation): Injected strategy hints for '{protocol_name}'")
+        log(
+            f"   → Tier 2 (Strategy Mutation): Injected strategy hints for '{protocol_name}'"
+        )
         return {"tier": 2, "strategy_note": strategy_hints["_instruction"]}
 
     async def _mutate_code_sandboxed(
@@ -470,12 +466,12 @@ class SafeMutator:
         The mutation is tested in a sandboxed dry-run before being applied.
         """
         # Perform the mutation via the existing mutator
-        mutated = await loop.run_in_executor(
-            None, mutate_protocol, protocol_name
-        )
+        mutated = await loop.run_in_executor(None, mutate_protocol, protocol_name)
 
         if not mutated:
-            log(f"   → Tier 3 (Code Mutation): mutate_protocol returned None for '{protocol_name}'")
+            log(
+                f"   → Tier 3 (Code Mutation): mutate_protocol returned None for '{protocol_name}'"
+            )
             return {"tier": 3, "code_mutated": False, "reason": "Mutator returned None"}
 
         # Sandbox test: attempt to load and validate the mutated protocol
@@ -486,7 +482,9 @@ class SafeMutator:
                 None, load_protocol, protocol_name
             )
             if test_protocol and callable(test_protocol.get("task")):
-                log(f"   → Tier 3 (Code Mutation): Mutation applied and validated for '{protocol_name}'")
+                log(
+                    f"   → Tier 3 (Code Mutation): Mutation applied and validated for '{protocol_name}'"
+                )
                 return {"tier": 3, "code_mutated": True}
             else:
                 log(f"   → Tier 3 (Code Mutation): Mutated protocol failed validation")
@@ -514,9 +512,7 @@ class SlackEscalation:
         Post a structured failure alert to Slack.
         Includes job ID, intent, failure reason, and failed subtask details.
         """
-        failed_subtasks = [
-            st for st in job.subtasks if st.status == TaskStatus.FAILED
-        ]
+        failed_subtasks = [st for st in job.subtasks if st.status == TaskStatus.FAILED]
         failed_details = "\n".join(
             f"  • `{st.protocol}` — {st.error or 'unknown error'}"
             for st in failed_subtasks[:5]
@@ -535,9 +531,7 @@ class SlackEscalation:
         loop = asyncio.get_running_loop()
 
         try:
-            await loop.run_in_executor(
-                None, self._post_to_slack, message
-            )
+            await loop.run_in_executor(None, self._post_to_slack, message)
             log(f"📨 Escalation posted to Slack {self.channel}")
         except Exception as e:
             # If Slack fails, log locally — never let escalation failure crash the system
@@ -684,9 +678,7 @@ class HierarchicalOrchestrator:
 
                 try:
                     result = await asyncio.wait_for(
-                        self._run_protocol_isolated(
-                            subtask.protocol, subtask.inputs
-                        ),
+                        self._run_protocol_isolated(subtask.protocol, subtask.inputs),
                         timeout=self.subtask_timeout,
                     )
                     subtask.result = result
@@ -727,9 +719,7 @@ class HierarchicalOrchestrator:
             return_exceptions=True,
         )
 
-        completed = sum(
-            1 for st in job.subtasks if st.status == TaskStatus.COMPLETED
-        )
+        completed = sum(1 for st in job.subtasks if st.status == TaskStatus.COMPLETED)
         failed = sum(1 for st in job.subtasks if st.status == TaskStatus.FAILED)
         log(f"📊 MAP complete: {completed} succeeded, {failed} failed")
 
@@ -760,15 +750,16 @@ class HierarchicalOrchestrator:
             log(f"✅ REDUCE: Verification PASSED for job '{job.intent}'")
         else:
             job.verification_passed = False
-            log(f"❌ REDUCE: Verification FAILED — {verification.get('reason', 'unknown')}")
+            log(
+                f"❌ REDUCE: Verification FAILED — {verification.get('reason', 'unknown')}"
+            )
 
             # Step 3: Self-Correct with safe mutation hierarchy
             while True:
                 retryable = [
                     st
                     for st in job.subtasks
-                    if st.status == TaskStatus.FAILED
-                    and st.attempts < st.max_attempts
+                    if st.status == TaskStatus.FAILED and st.attempts < st.max_attempts
                 ]
 
                 if not retryable:
@@ -797,11 +788,7 @@ class HierarchicalOrchestrator:
                 # Re-verify after retry
                 job.reduced_result = await self.reducer(
                     [st.result for st in job.subtasks if st.result],
-                    [
-                        st
-                        for st in job.subtasks
-                        if st.status == TaskStatus.FAILED
-                    ],
+                    [st for st in job.subtasks if st.status == TaskStatus.FAILED],
                 )
                 job.attempt_count += 1
                 re_verification = await self.verification_gate(job)
@@ -875,9 +862,7 @@ class HierarchicalOrchestrator:
         subtask.started_at = time.time()
         try:
             result = await asyncio.wait_for(
-                self._run_protocol_isolated(
-                    subtask.protocol, subtask.inputs
-                ),
+                self._run_protocol_isolated(subtask.protocol, subtask.inputs),
                 timeout=self.subtask_timeout,
             )
             subtask.result = result
@@ -903,9 +888,7 @@ class HierarchicalOrchestrator:
     def _prune_job_history(self):
         """Prevent unbounded memory growth from stored jobs."""
         if len(self.jobs) > self.max_job_history:
-            sorted_jobs = sorted(
-                self.jobs.items(), key=lambda x: x[1].created_at
-            )
+            sorted_jobs = sorted(self.jobs.items(), key=lambda x: x[1].created_at)
             excess = len(self.jobs) - self.max_job_history
             for job_id, _ in sorted_jobs[:excess]:
                 del self.jobs[job_id]
@@ -918,9 +901,7 @@ class HierarchicalOrchestrator:
         Used only when use_semantic_gate=False and no custom gate provided.
         """
         total = len(job.subtasks)
-        succeeded = sum(
-            1 for st in job.subtasks if st.status == TaskStatus.COMPLETED
-        )
+        succeeded = sum(1 for st in job.subtasks if st.status == TaskStatus.COMPLETED)
         rate = succeeded / total if total > 0 else 0
 
         if rate >= 0.8:

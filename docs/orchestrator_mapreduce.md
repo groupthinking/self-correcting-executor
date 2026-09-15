@@ -18,7 +18,7 @@ The module is additive — it imports from existing project modules without modi
 
 ## Architecture
 
-```
+```text
                     ┌──────────────────────────────┐
                     │     orchestrator.run()        │
                     │     (Single Entry Point)      │
@@ -130,7 +130,7 @@ HierarchicalOrchestrator(
 | `verification_gate` | `Callable` | `_default_gate` | Async function that evaluates whether a job passes verification |
 | `reducer` | `Callable` | `_default_reducer` | Async function that aggregates subtask results into a single output |
 | `state_file` | `str` | `<module_dir>/STATE.md` | Path to the Markdown file where job state is persisted |
-| `subtask_timeout` | `float` | `300.0` | Maximum seconds a single subtask may run before being killed |
+| `subtask_timeout` | `float` | `300.0` | Maximum seconds to await a subtask before marking it failed; a running protocol thread may continue |
 | `max_job_history` | `int` | `1000` | Maximum number of completed jobs retained in memory |
 
 ---
@@ -143,10 +143,10 @@ The single entry point. Executes the full Plan → Map → Reduce cycle.
 
 ```python
 job = await orchestrator.run(
-    intent="Validate all API endpoints after deployment",
+    intent="Process multiple data directories",
     task_list=[
-        {"protocol": "api_health_checker", "inputs": {"endpoint": "/users"}},
-        {"protocol": "api_health_checker", "inputs": {"endpoint": "/orders"}},
+        {"protocol": "data_processor", "inputs": {"data_path": "/data/users"}},
+        {"protocol": "data_processor", "inputs": {"data_path": "/data/orders"}},
     ],
 )
 ```
@@ -157,6 +157,8 @@ job = await orchestrator.run(
 | `task_list` | `List[Dict]` | List of task definitions, each with `"protocol"` (required) and `"inputs"` (optional) keys |
 
 **Returns:** `OrchestratedJob` with final status, reduced results, and verification outcome.
+
+**Inputs:** Zero-argument `task()` functions ignore `inputs`. Parameterized tasks receive the full dict via `task(**inputs)` without key filtering, so callers must supply compatible keys or use a protocol accepting `**kwargs`.
 
 ---
 
@@ -180,7 +182,7 @@ Phase 2. Executes all subtasks in parallel with bounded concurrency. Each subtas
 **Behavior:**
 - Acquires a semaphore slot before executing each subtask
 - Applies `subtask_timeout` via `asyncio.wait_for()`
-- Tracks outcomes via `track_outcome()` (non-blocking, via `run_in_executor`)
+- Tracks successful returns and non-timeout exceptions via `track_outcome()` (non-blocking, via `run_in_executor`); timeout failures are not sent to this tracker
 - Sets `subtask.status` to `COMPLETED` or `FAILED`
 - Never raises — failures are captured on individual subtasks
 
@@ -278,11 +280,13 @@ The module uses `inspect.signature()` to determine how to call each protocol's `
 
 | Protocol Signature | Behavior |
 | :--- | :--- |
-| `def task():` | Called with no arguments (legacy compatibility) |
+| `def task():` | Called with no arguments; `inputs` is ignored (legacy compatibility) |
 | `def task(**kwargs):` | Receives the full `inputs` dict as keyword arguments |
-| `def task(endpoint, timeout=30):` | Receives matching keys from `inputs` as named arguments |
+| `def task(endpoint, timeout=30):` | Receives the full `inputs` dict as keyword arguments; extra keys or missing required keys raise `TypeError` and fail the subtask |
 
-**Example — New-style protocol (`protocols/api_health_checker.py`):**
+**Illustrative new-style protocol (not the current `protocols/api_health_checker.py`):**
+
+The repository's existing `api_health_checker.task()` takes no arguments and checks its own endpoint list. To use the parameterized examples, implement a separate protocol like the following and use its name in `task_list`:
 
 ```python
 import requests
@@ -333,7 +337,9 @@ The module implements a three-tier failure strategy:
 | :--- | :--- | :--- |
 | **Retry** | Subtask failed, `attempts < max_attempts` | Mutate protocol, re-execute |
 | **Escalate** | All retries exhausted, verification still failing | Log escalation, notify human (via MCP/Slack when configured) |
-| **Timeout** | Subtask exceeds `subtask_timeout` seconds | Kill subtask, mark as FAILED, enter retry tier |
+| **Timeout** | Awaiting the subtask exceeds `subtask_timeout` seconds | Mark as FAILED and enter retry tier; the underlying protocol thread may continue |
+
+`asyncio.wait_for()` bounds the wait for the executor result; it does not terminate an already-running thread. A timed-out protocol may still produce side effects, and a retry may overlap that work. Set timeouts inside blocking operations and make retryable protocols idempotent.
 
 To enable Slack escalation in production, uncomment the MCP connector call in `_escalate_to_human()` and configure your Slack channel.
 
@@ -375,20 +381,20 @@ asyncio.run(main())
 ### Fan-Out Same Protocol Across Many Inputs
 
 ```python
-async def validate_endpoints():
+async def process_data_directories():
     orchestrator = HierarchicalOrchestrator(
         max_concurrency=20,
         subtask_timeout=30.0,
     )
 
-    endpoints = ["/users", "/orders", "/payments", "/auth", "/products"]
+    data_paths = ["/data/users", "/data/orders", "/data/payments"]
     task_list = [
-        {"protocol": "api_health_checker", "inputs": {"endpoint": ep}}
-        for ep in endpoints
+        {"protocol": "data_processor", "inputs": {"data_path": data_path}}
+        for data_path in data_paths
     ]
 
     return await orchestrator.run(
-        intent="Post-deployment endpoint validation",
+        intent="Process multiple data directories",
         task_list=task_list,
     )
 ```
@@ -517,7 +523,7 @@ No modifications to these modules are required. The orchestrator wraps all synch
 
 ## Lifecycle Diagram
 
-```
+```text
 User Intent
     │
     ▼
