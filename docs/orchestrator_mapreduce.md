@@ -143,10 +143,10 @@ The single entry point. Executes the full Plan → Map → Reduce cycle.
 
 ```python
 job = await orchestrator.run(
-    intent="Validate all API endpoints after deployment",
+    intent="Process multiple data directories",
     task_list=[
-        {"protocol": "api_health_checker", "inputs": {"endpoint": "/users"}},
-        {"protocol": "api_health_checker", "inputs": {"endpoint": "/orders"}},
+        {"protocol": "data_processor", "inputs": {"data_path": "/data/users"}},
+        {"protocol": "data_processor", "inputs": {"data_path": "/data/orders"}},
     ],
 )
 ```
@@ -381,20 +381,20 @@ asyncio.run(main())
 ### Fan-Out Same Protocol Across Many Inputs
 
 ```python
-async def validate_endpoints():
+async def process_data_directories():
     orchestrator = HierarchicalOrchestrator(
         max_concurrency=20,
         subtask_timeout=30.0,
     )
 
-    endpoints = ["/users", "/orders", "/payments", "/auth", "/products"]
+    data_paths = ["/data/users", "/data/orders", "/data/payments"]
     task_list = [
-        {"protocol": "api_health_checker", "inputs": {"endpoint": ep}}
-        for ep in endpoints
+        {"protocol": "data_processor", "inputs": {"data_path": data_path}}
+        for data_path in data_paths
     ]
 
     return await orchestrator.run(
-        intent="Post-deployment endpoint validation",
+        intent="Process multiple data directories",
         task_list=task_list,
     )
 ```
