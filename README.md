@@ -38,3 +38,10 @@ The workspace includes a **DevContainer** definition – simply open the folder 
 ## Workflow consolidation runtime status
 
 The catalog auto-loads external definitions, but loader success alone is not runtime readiness. The construction flow now accepts explicit project records and calls the real analyzer and source-grounded summary connector. The TypeScript pipeline generates and compiles actual handlers, checks a supplied service URL and caches schema/report metadata using explicit Redis settings. Live provider access and integration requirements are described in [workflow execution and limits](docs/workflows/CONSOLIDATION.md). No full RFI, vector-search or deployment outcome is claimed.
+
+## Repo assist
+
+For a repo-specific map of the current tree, dependency snapshot, mermaid
+architecture diagram, MCP capability-verification notes, and agent workflow
+checklist, see [`docs/REPO_MAP.md`](docs/REPO_MAP.md).
+
