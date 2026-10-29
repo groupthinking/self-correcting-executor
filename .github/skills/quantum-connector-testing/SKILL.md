@@ -34,11 +34,14 @@ When testing or extending this code:
 
 3. **Never add a mock/simulated sampler as a fallback** in
    `connectors/dwave_quantum_connector.py` or related production files —
-   this is explicitly checked by
-   `tests/test_mcp_compliance.py::test_no_placeholder_code_in_production`
-   and `test_data_processor_no_simulation`, which scan for
-   `mock`/`simulated`/`placeholder` strings in production directories
-   (`agents`, `connectors`, `mcp_server`, `protocols`).
+   inspect production fallbacks directly. In `tests/test_mcp_compliance.py`,
+   `TestMCPCompliance.test_no_placeholder_code_in_production` reports
+   TODO/FIXME/XXX/HACK markers, `placeholder`, and `NotImplementedError`
+   in `agents`, `connectors`, `mcp_server`, and `protocols`; it does not
+   fail the test or scan for mock samplers.
+   `TestMCPCompliance.test_data_processor_no_simulation` checks the runtime
+   data-processing result for a real directory or an explicit missing-data
+   error; it does not inspect quantum samplers.
 
 4. **Run the relevant test files** after any change:
 

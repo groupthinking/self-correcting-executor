@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Baseline MCP capability negotiation tests.
 
-These tests prove that the repository's JSON-RPC based MCP server
-(`mcp_server/main.py`) implements the minimum handshake required for a host
-to negotiate capabilities with the server: `initialize`, `tools/list`, and
-`tools/call`. This is the smallest possible verification that MCP is
-functional for this repo, per the Model Context Protocol specification
-(https://modelcontextprotocol.io/specification).
+These tests exercise the repository's custom JSON-RPC handler directly.
+They check initialize, tool listing/calling, and unknown-method errors;
+they do not establish host/client transport compatibility or specification
+compliance.
 """
+
+import json
 
 import pytest
 
@@ -73,6 +73,13 @@ async def test_tools_call_executes_a_real_tool(mcp_server: MCPServer):
 
     assert "error" not in response
     assert response["result"]["tool"] == "code_analyzer"
+    analysis = json.loads(response["result"]["result"]["content"][0]["text"])
+    assert analysis == {
+        "lines_of_code": 2,
+        "functions": 1,
+        "complexity": 1,
+        "imports": [],
+    }
 
 
 @pytest.mark.asyncio

@@ -31,8 +31,7 @@ jobs:
         run: flake8 . || echo "Flake8 found issues but continuing CI"
         continue-on-error: true
       - name: Run tests with coverage
-        run: pytest --cov=. || echo "Tests failed but continuing CI"
-        continue-on-error: true
+        run: pytest --cov=.
 
   actions:
     runs-on: ubuntu-latest

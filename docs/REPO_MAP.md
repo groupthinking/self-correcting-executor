@@ -64,22 +64,22 @@ flowchart TD
         P4[...]
     end
 
-    A -- "JSON-RPC: initialize / tools/list / tools/call" --> M1
     M1 --> T1
     M1 --> T2
     M1 --> T3
-    A --> M2
-    A --> M3
     M2 --> C1
-    M2 --> C2
-    M2 --> C3
-    M2 --> C4
+    M2 --> P1
     A --> Protocols
     Protocols --> P1
     Protocols --> P2
     Protocols --> P3
     Protocols --> P4
 ```
+
+The MCP servers are separate entrypoints. This diagram does not imply that
+the task orchestrators call them or that an external client connection has
+been verified. `real_mcp_server.py` imports the D-Wave connector and the
+data processor; the other connectors are listed as repository components.
 
 ## Checklist for an agent run in this repo
 
@@ -90,11 +90,12 @@ Use this before proving/implementing anything live in this repo:
 - [x] **Tools** — MCP tools are declared in `mcp_server/main.py`
       (`code_analyzer`, `protocol_validator`, `self_corrector`).
 - [x] **MCP** — Baseline JSON-RPC server exists (`mcp_server/main.py`) and is
-      verified live in `tests/test_mcp_baseline.py` (`initialize`,
+      exercised in-process in `tests/test_mcp_baseline.py` (`initialize`,
       `tools/list`, `tools/call`, and error handling for unknown methods).
-- [ ] **Pull / Push / Commit / Merge** — Use `engine-tools-report_progress`
-      (or normal `git`/PR flow for humans); never push directly from an
-      agent sandbox. See `CONTRIBUTING.md`.
+- [ ] **Pull / Push / Commit / Merge** — Use the repository's branch, commit
+      and pull-request workflow with the tools available in the current
+      environment. Follow `CONTRIBUTING.md` and the user's authorization
+      before publishing changes or merging.
 - [ ] **Issues** — Track work items and link PRs with `Closes #<issue>`.
 - [ ] **Code** — Run `python -m pytest tests/` (see `pytest.ini`) and the
       lint config in `.flake8` before committing.
@@ -110,10 +111,10 @@ Use this before proving/implementing anything live in this repo:
 
 ## MCP capability negotiation baseline
 
-Per the [MCP specification](https://modelcontextprotocol.io/specification/2026-07-28),
-a host/server pair must be able to negotiate capabilities before any other
-request. This repo's `mcp_server/main.py` implements the minimum required
-surface:
+The custom handler in `mcp_server/main.py` exposes the following JSON-RPC
+methods. The tests below call that handler directly: they verify its current
+behavior, not MCP specification compliance or a host/client transport
+handshake.
 
 | Method | Purpose |
 | --- | --- |
@@ -123,8 +124,10 @@ surface:
 | `resources/list` / `resources/read` | Lists/reads MCP resources |
 | `notifications/list` / `notifications/subscribe` | Baseline notification support |
 
-This baseline is exercised live and asserted in
-`tests/test_mcp_baseline.py`. Run it with:
+`tests/test_mcp_baseline.py` asserts `initialize`, `tools/list`, the
+`code_analyzer` tool result, and unknown-method errors. Resource and
+notification methods are listed above as implemented surface area; this
+test file does not exercise them. Run the in-process checks with:
 
 ```bash
 python -m pytest tests/test_mcp_baseline.py -v
