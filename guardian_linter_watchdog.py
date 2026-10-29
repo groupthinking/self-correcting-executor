@@ -7,6 +7,7 @@ and runs a linter to provide immediate feedback on code quality.
 
 This is the first component of the Guardian Agent Protocol.
 """
+
 import asyncio
 import subprocess
 import logging

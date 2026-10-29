@@ -31,6 +31,7 @@ try:
     )
     from dwave.system.composites import LazyFixedEmbeddingComposite
     from dwave.cloud import Client
+
     # SimulatedAnnealingSampler removed - real QPU only
     import dimod
     from dimod import BinaryQuadraticModel, ConstrainedQuadraticModel
@@ -110,7 +111,9 @@ class DWaveQuantumConnector(MCPConnector):
 
             if not qpu_solvers:
                 # NO SIMULATION - Real QPU required
-                logger.error("No QPU solvers available. Real quantum hardware required.")
+                logger.error(
+                    "No QPU solvers available. Real quantum hardware required."
+                )
                 raise RuntimeError(
                     "No D-Wave QPU available. Please ensure:\n"
                     "1. Valid DWAVE_API_TOKEN is set\n"
@@ -167,48 +170,52 @@ class DWaveQuantumConnector(MCPConnector):
         """Send context to quantum system"""
         self.context = context
         return True
-    
+
     async def ensure_real_qpu(self) -> bool:
         """Ensure we have real QPU access - no simulations allowed"""
         if not self.connected:
             raise RuntimeError("Not connected to D-Wave service")
-        
-        if self.solver_info.get('type') != 'QPU':
+
+        if self.solver_info.get("type") != "QPU":
             raise RuntimeError(
                 f"Real QPU required but got {self.solver_info.get('type')}. "
                 "No simulations allowed in production."
             )
-        
+
         return True
-    
+
     async def list_solvers(self) -> List[Dict[str, Any]]:
         """List all available D-Wave solvers"""
         if not self.client:
             raise RuntimeError("Not connected to D-Wave service")
-        
+
         solvers = self.client.get_solvers()
         solver_list = []
-        
+
         for solver in solvers:
             solver_info = {
                 "id": solver.id,
                 "name": solver.name,
-                "is_qpu": hasattr(solver, 'qubits'),
-                "status": solver.status
+                "is_qpu": hasattr(solver, "qubits"),
+                "status": solver.status,
             }
-            
-            if hasattr(solver, 'qubits'):
-                solver_info.update({
-                    "num_qubits": len(solver.nodes),
-                    "num_couplers": len(solver.edges),
-                    "topology": getattr(solver, 'topology', 'Unknown')
-                })
-            
+
+            if hasattr(solver, "qubits"):
+                solver_info.update(
+                    {
+                        "num_qubits": len(solver.nodes),
+                        "num_couplers": len(solver.edges),
+                        "topology": getattr(solver, "topology", "Unknown"),
+                    }
+                )
+
             solver_list.append(solver_info)
-        
+
         return solver_list
-    
-    async def execute_action(self, action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+
+    async def execute_action(
+        self, action: str, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Execute quantum action"""
         if not self.connected:
             return {"error": "Not connected to D-Wave service"}
@@ -520,7 +527,7 @@ class DWaveQuantumConnector(MCPConnector):
 
         except Exception as e:
             return {"success": False, "error": str(e), "problem_type": "Knapsack"}
-    
+
     async def get_solver_info(self, params: Dict[str, Any] = {}) -> Dict[str, Any]:
         """Get information about the connected D-Wave solver"""
         if not self.connected:

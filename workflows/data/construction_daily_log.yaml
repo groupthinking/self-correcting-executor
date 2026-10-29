@@ -1,5 +1,7 @@
 name: construction_daily_log_external
 source_repo: WRKFLW
+required_inputs:
+  - field_capture
 summary: Ported daily log and RFI workflow using WRKFLW PRD data
 tags:
   - construction

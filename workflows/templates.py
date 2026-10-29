@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from copy import deepcopy
+
+from .self_correcting import apply_self_correction
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 import json
@@ -22,6 +25,7 @@ class WorkflowTemplate:
     steps: List[Dict[str, Any]]
     resilience: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    required_inputs: List[str] = field(default_factory=list)
 
     def materialize(self, intent: str) -> Dict[str, Any]:
         """Render a workflow dictionary ready for execution."""
@@ -31,7 +35,7 @@ class WorkflowTemplate:
             "intent": intent,
             "steps": [],
             "self_correction": {
-                "enabled": True,
+                "enabled": self.resilience.get("enabled", True) is True,
                 "policy": {
                     "max_attempts": self.resilience.get("max_attempts", 2),
                     "capture_telemetry": True,
@@ -40,26 +44,21 @@ class WorkflowTemplate:
                     ),
                 },
             },
-            "metadata": self.metadata,
+            "metadata": deepcopy(self.metadata),
+            "required_inputs": list(self.required_inputs),
         }
 
-        default_retry = {
-            "max_attempts": self.resilience.get("max_attempts", 2),
-            "strategy": "self_heal",
-        }
-
-        for step in self.steps:
-            step_copy = dict(step)
-            step_copy.setdefault("retry_policy", default_retry)
-            workflow["steps"].append(step_copy)
-
-        return workflow
+        workflow["steps"] = deepcopy(self.steps)
+        for step in workflow["steps"]:
+            step.setdefault("inputs", {})
+        return apply_self_correction(workflow)
 
 
 def _wrkflw_templates() -> WorkflowTemplate:
     """Workflows imported from the WRKFLW repository."""
     return WorkflowTemplate(
         name="construction_daily_log",
+        required_inputs=["field_capture"],
         source_repo="WRKFLW",
         summary=(
             "ConstructionOnline daily log with RFI routing and AI summary; "
@@ -69,7 +68,7 @@ def _wrkflw_templates() -> WorkflowTemplate:
             "construction",
             "daily log",
             "rfi",
-            "wrklfw",
+            "wrkflw",
             "field capture",
         ],
         steps=[
@@ -130,6 +129,7 @@ def _typescript_workflows_template() -> WorkflowTemplate:
     """Templates based on the workflows TypeScript definitions repository."""
     return WorkflowTemplate(
         name="typescript_service_pipeline",
+        required_inputs=["service_health_url", "cache_config"],
         source_repo="workflows",
         summary=(
             "TypeScript workflow definitions: service scaffold, CI verification, "
@@ -162,14 +162,18 @@ def _typescript_workflows_template() -> WorkflowTemplate:
                 "type": "protocol",
                 "name": "api_health_checker",
                 "description": "Run health checks mirroring CI workflow definitions",
-                "inputs": {"service": "generated_code"},
+                "inputs": {"service": "generated_code", "url": "service_health_url"},
                 "outputs": ["health_report"],
             },
             {
                 "type": "protocol",
                 "name": "redis_cache_manager",
                 "description": "Warm cache with schema + health report metadata",
-                "inputs": {"service": "generated_code"},
+                "inputs": {
+                    "service": "generated_code",
+                    "health_report": "health_report",
+                    "config": "cache_config",
+                },
                 "outputs": ["deployment_artifacts"],
             },
         ],
@@ -189,6 +193,7 @@ def _self_correcting_core_template() -> WorkflowTemplate:
     """Native self-correcting executor workflow, preserved as the canonical core."""
     return WorkflowTemplate(
         name="self_correcting_core",
+        required_inputs=["user_data"],
         source_repo="self-correcting-executor",
         summary="Default intent-driven pipeline with self-healing and knowledge capture.",
         tags=["self-heal", "executor", "core"],
@@ -234,15 +239,17 @@ WORKFLOW_TEMPLATES: Dict[str, WorkflowTemplate] = {
 }
 
 
-def _load_external_templates_from_data_dir() -> Dict[str, WorkflowTemplate]:
+def _load_external_templates_from_data_dir(
+    data_dir: Optional[Path] = None,
+) -> Dict[str, WorkflowTemplate]:
     """Load templates from workflows/data (yaml or json)."""
-    data_dir = Path(__file__).parent / "data"
+    data_dir = data_dir if data_dir is not None else Path(__file__).parent / "data"
     templates: Dict[str, WorkflowTemplate] = {}
 
     if not data_dir.exists():
         return templates
 
-    for file in data_dir.glob("*.*"):
+    for file in sorted(data_dir.glob("*.*")):
         try:
             content: Dict[str, Any] = {}
             if file.suffix.lower() in [".yaml", ".yml"] and yaml:
@@ -252,7 +259,40 @@ def _load_external_templates_from_data_dir() -> Dict[str, WorkflowTemplate]:
             else:
                 continue
 
-            if not content.get("name"):
+            if not isinstance(content, dict) or not isinstance(
+                content.get("name"), str
+            ):
+                continue
+            if not content["name"].strip():
+                continue
+            steps = content.get("steps")
+            if (
+                not isinstance(steps, list)
+                or not steps
+                or not all(
+                    isinstance(step, dict)
+                    and step.get("type") in {"protocol", "analyzer", "agent"}
+                    and isinstance(step.get("name"), str)
+                    and bool(step["name"])
+                    and isinstance(step.get("inputs", {}), dict)
+                    and isinstance(step.get("retry_policy", {}), dict)
+                    for step in steps
+                )
+            ):
+                continue
+            if not isinstance(content.get("resilience", {}), dict):
+                continue
+            if not isinstance(content.get("metadata", {}), dict):
+                continue
+            if not isinstance(content.get("tags", []), list) or not all(
+                isinstance(tag, str) for tag in content.get("tags", [])
+            ):
+                continue
+
+            required_inputs = content.get("required_inputs", [])
+            if not isinstance(required_inputs, list) or not all(
+                isinstance(name, str) and name for name in required_inputs
+            ):
                 continue
 
             templates[content["name"]] = WorkflowTemplate(
@@ -263,6 +303,7 @@ def _load_external_templates_from_data_dir() -> Dict[str, WorkflowTemplate]:
                 steps=content.get("steps", []),
                 resilience=content.get("resilience", {}),
                 metadata=content.get("metadata", {}),
+                required_inputs=content.get("required_inputs", []),
             )
         except Exception:
             # Skip malformed entries; keep core templates intact

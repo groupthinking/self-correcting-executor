@@ -166,7 +166,7 @@ class UnifiedTransportLayer:
     ) -> Dict:
         """Shared memory transfer for large payloads"""
         # Serialize to shared memory using JSON (secure)
-        serialized = json.dumps(payload, default=str).encode('utf-8')
+        serialized = json.dumps(payload, default=str).encode("utf-8")
 
         if pipe.shared_memory:
             # Write to shared memory
@@ -197,7 +197,7 @@ class UnifiedTransportLayer:
         return {
             "status": "delivered",
             "method": "pipe",
-            "serialized_size": len(json.dumps(payload, default=str).encode('utf-8')),
+            "serialized_size": len(json.dumps(payload, default=str).encode("utf-8")),
         }
 
     async def _handle_passing_transfer(

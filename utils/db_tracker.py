@@ -24,8 +24,7 @@ def ensure_tables_exist():
 
     try:
         # Create protocol_executions table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS protocol_executions (
                 id SERIAL PRIMARY KEY,
                 protocol_name VARCHAR(100),
@@ -33,12 +32,10 @@ def ensure_tables_exist():
                 success BOOLEAN,
                 details JSONB
             );
-        """
-        )
+        """)
 
         # Create protocol_mutations table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS protocol_mutations (
                 id SERIAL PRIMARY KEY,
                 protocol_name VARCHAR(100) NOT NULL,
@@ -48,23 +45,18 @@ def ensure_tables_exist():
                 backup_code TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
-        """
-        )
+        """)
 
         # Create indexes for better performance
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_executions_protocol 
             ON protocol_executions(protocol_name);
-        """
-        )
+        """)
 
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_executions_time 
             ON protocol_executions(execution_time);
-        """
-        )
+        """)
 
         conn.commit()
         log("Database tables initialized successfully")
@@ -219,8 +211,7 @@ def get_all_stats():
     cursor = conn.cursor()
 
     try:
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT 
                 protocol_name,
                 COUNT(*) as total,
@@ -229,8 +220,7 @@ def get_all_stats():
             FROM protocol_executions
             GROUP BY protocol_name
             ORDER BY protocol_name
-        """
-        )
+        """)
 
         stats = []
         for row in cursor.fetchall():

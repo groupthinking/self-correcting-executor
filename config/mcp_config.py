@@ -4,123 +4,153 @@ import os
 from typing import Dict, Any, Optional
 from pathlib import Path
 
+
 class MCPConfig:
     """
     MCP configuration with real endpoints only.
     No mock URLs, no simulated services.
     """
-    
+
     @staticmethod
     def get_endpoints() -> Dict[str, str]:
         """Get real MCP endpoints from environment or defaults"""
         return {
             # Core MCP Server
-            'mcp_server': os.getenv('MCP_SERVER_URL', 'http://localhost:8090'),
-            
+            "mcp_server": os.getenv("MCP_SERVER_URL", "http://localhost:8090"),
             # Quantum Computing
-            'quantum_api': os.getenv('DWAVE_API_URL', 'https://cloud.dwavesys.com/sapi/v2'),
-            'quantum_solver_api': os.getenv('DWAVE_SOLVER_API', 'https://cloud.dwavesys.com/sapi/v2/solvers/remote'),
-            
+            "quantum_api": os.getenv(
+                "DWAVE_API_URL", "https://cloud.dwavesys.com/sapi/v2"
+            ),
+            "quantum_solver_api": os.getenv(
+                "DWAVE_SOLVER_API", "https://cloud.dwavesys.com/sapi/v2/solvers/remote"
+            ),
             # Data Services
-            'data_api': os.getenv('DATA_API_URL', 'http://localhost:8091/api'),
-            'data_storage': os.getenv('DATA_STORAGE_URL', 'http://localhost:8092/storage'),
-            
+            "data_api": os.getenv("DATA_API_URL", "http://localhost:8091/api"),
+            "data_storage": os.getenv(
+                "DATA_STORAGE_URL", "http://localhost:8092/storage"
+            ),
             # Database Services
-            'postgres_url': os.getenv('DATABASE_URL', 'postgresql://localhost:5432/mcp_db'),
-            'redis_url': os.getenv('REDIS_URL', 'redis://localhost:6379'),
-            
+            "postgres_url": os.getenv(
+                "DATABASE_URL", "postgresql://localhost:5432/mcp_db"
+            ),
+            "redis_url": os.getenv("REDIS_URL", "redis://localhost:6379"),
             # AI/ML Services
-            'inference_api': os.getenv('INFERENCE_API_URL', 'http://localhost:8093/inference'),
-            'training_api': os.getenv('TRAINING_API_URL', 'http://localhost:8094/training'),
-            
+            "inference_api": os.getenv(
+                "INFERENCE_API_URL", "http://localhost:8093/inference"
+            ),
+            "training_api": os.getenv(
+                "TRAINING_API_URL", "http://localhost:8094/training"
+            ),
             # Monitoring & Logging
-            'metrics_api': os.getenv('METRICS_API_URL', 'http://localhost:9090/metrics'),
-            'logging_api': os.getenv('LOGGING_API_URL', 'http://localhost:9091/logs'),
+            "metrics_api": os.getenv(
+                "METRICS_API_URL", "http://localhost:9090/metrics"
+            ),
+            "logging_api": os.getenv("LOGGING_API_URL", "http://localhost:9091/logs"),
         }
-    
+
     @staticmethod
     def get_auth_config() -> Dict[str, Any]:
         """Get authentication configuration"""
         return {
-            'jwt_secret': os.getenv('JWT_SECRET_KEY', ''),
-            'api_key': os.getenv('API_SECRET_KEY', ''),
-            'dwave_token': os.getenv('DWAVE_API_TOKEN', ''),
-            'auth_enabled': os.getenv('AUTH_ENABLED', 'true').lower() == 'true'
+            "jwt_secret": os.getenv("JWT_SECRET_KEY", ""),
+            "api_key": os.getenv("API_SECRET_KEY", ""),
+            "dwave_token": os.getenv("DWAVE_API_TOKEN", ""),
+            "auth_enabled": os.getenv("AUTH_ENABLED", "true").lower() == "true",
         }
-    
+
     @staticmethod
     def get_quantum_config() -> Dict[str, Any]:
         """Get quantum computing configuration"""
         return {
-            'dwave_token': os.getenv('DWAVE_API_TOKEN', ''),
-            'solver_name': os.getenv('DWAVE_SOLVER_NAME', ''),  # e.g., "Advantage_system6.4"
-            'default_num_reads': int(os.getenv('QUANTUM_NUM_READS', '1000')),
-            'annealing_time': int(os.getenv('QUANTUM_ANNEALING_TIME', '20')),  # microseconds
-            'require_qpu': os.getenv('REQUIRE_QPU', 'true').lower() == 'true',  # No simulations
+            "dwave_token": os.getenv("DWAVE_API_TOKEN", ""),
+            "solver_name": os.getenv(
+                "DWAVE_SOLVER_NAME", ""
+            ),  # e.g., "Advantage_system6.4"
+            "default_num_reads": int(os.getenv("QUANTUM_NUM_READS", "1000")),
+            "annealing_time": int(
+                os.getenv("QUANTUM_ANNEALING_TIME", "20")
+            ),  # microseconds
+            "require_qpu": os.getenv("REQUIRE_QPU", "true").lower()
+            == "true",  # No simulations
         }
-    
+
     @staticmethod
     def get_data_config() -> Dict[str, Any]:
         """Get data processing configuration"""
         return {
-            'data_dir': os.getenv('DATA_DIR', str(Path('./data').absolute())),
-            'cache_dir': os.getenv('CACHE_DIR', str(Path('./cache').absolute())),
-            'temp_dir': os.getenv('TEMP_DIR', '/tmp/mcp'),
-            'max_file_size': int(os.getenv('MAX_FILE_SIZE', str(100 * 1024 * 1024))),  # 100MB
-            'allowed_extensions': os.getenv('ALLOWED_EXTENSIONS', '.json,.csv,.txt,.parquet').split(',')
+            "data_dir": os.getenv("DATA_DIR", str(Path("./data").absolute())),
+            "cache_dir": os.getenv("CACHE_DIR", str(Path("./cache").absolute())),
+            "temp_dir": os.getenv("TEMP_DIR", "/tmp/mcp"),
+            "max_file_size": int(
+                os.getenv("MAX_FILE_SIZE", str(100 * 1024 * 1024))
+            ),  # 100MB
+            "allowed_extensions": os.getenv(
+                "ALLOWED_EXTENSIONS", ".json,.csv,.txt,.parquet"
+            ).split(","),
         }
-    
+
     @staticmethod
     def get_security_config() -> Dict[str, Any]:
         """Get security configuration"""
         return {
-            'encryption_key': os.getenv('ENCRYPTION_KEY', ''),
-            'enable_sandboxing': os.getenv('ENABLE_SANDBOXING', 'true').lower() == 'true',
-            'max_execution_time': int(os.getenv('MAX_EXECUTION_TIME', '300')),  # seconds
-            'allowed_hosts': os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(','),
-            'cors_origins': os.getenv('CORS_ORIGINS', 'http://localhost:3000').split(',')
+            "encryption_key": os.getenv("ENCRYPTION_KEY", ""),
+            "enable_sandboxing": os.getenv("ENABLE_SANDBOXING", "true").lower()
+            == "true",
+            "max_execution_time": int(
+                os.getenv("MAX_EXECUTION_TIME", "300")
+            ),  # seconds
+            "allowed_hosts": os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(
+                ","
+            ),
+            "cors_origins": os.getenv("CORS_ORIGINS", "http://localhost:3000").split(
+                ","
+            ),
         }
-    
+
     @staticmethod
     def validate_config() -> Dict[str, bool]:
         """Validate configuration and return status"""
         validation = {}
-        
+
         # Check required environment variables
         required_vars = [
-            ('DWAVE_API_TOKEN', 'Quantum computing'),
-            ('DATABASE_URL', 'Database connection'),
-            ('JWT_SECRET_KEY', 'Authentication'),
-            ('ENCRYPTION_KEY', 'Data encryption')
+            ("DWAVE_API_TOKEN", "Quantum computing"),
+            ("DATABASE_URL", "Database connection"),
+            ("JWT_SECRET_KEY", "Authentication"),
+            ("ENCRYPTION_KEY", "Data encryption"),
         ]
-        
+
         for var, feature in required_vars:
             validation[feature] = bool(os.getenv(var))
-        
+
         # Check endpoint accessibility (basic check)
         endpoints = MCPConfig.get_endpoints()
         for name, url in endpoints.items():
-            if url and not url.startswith(('http://', 'https://', 'redis://', 'postgresql://')):
+            if url and not url.startswith(
+                ("http://", "https://", "redis://", "postgresql://")
+            ):
                 validation[f"{name}_valid_url"] = False
             else:
                 validation[f"{name}_valid_url"] = True
-        
+
         return validation
-    
+
     @staticmethod
     def get_mcp_server_config() -> Dict[str, Any]:
         """Get MCP server specific configuration"""
         return {
-            'host': os.getenv('MCP_SERVER_HOST', '0.0.0.0'),
-            'port': int(os.getenv('MCP_SERVER_PORT', '8090')),
-            'workers': int(os.getenv('MCP_SERVER_WORKERS', '4')),
-            'transport': os.getenv('MCP_TRANSPORT', 'stdio'),  # stdio, websocket, http
-            'enable_tools': True,
-            'enable_resources': True,
-            'enable_prompts': True,
-            'max_request_size': int(os.getenv('MAX_REQUEST_SIZE', str(10 * 1024 * 1024))),  # 10MB
+            "host": os.getenv("MCP_SERVER_HOST", "0.0.0.0"),
+            "port": int(os.getenv("MCP_SERVER_PORT", "8090")),
+            "workers": int(os.getenv("MCP_SERVER_WORKERS", "4")),
+            "transport": os.getenv("MCP_TRANSPORT", "stdio"),  # stdio, websocket, http
+            "enable_tools": True,
+            "enable_resources": True,
+            "enable_prompts": True,
+            "max_request_size": int(
+                os.getenv("MAX_REQUEST_SIZE", str(10 * 1024 * 1024))
+            ),  # 10MB
         }
-    
+
     @staticmethod
     def create_env_template() -> str:
         """Create a template .env file with all required variables"""
@@ -176,15 +206,15 @@ LOGGING_API_URL=http://localhost:9091/logs
 ENVIRONMENT=development
 """
         return template
-    
+
     @staticmethod
     def check_no_mocks() -> bool:
         """Verify no mock URLs or endpoints are configured"""
         endpoints = MCPConfig.get_endpoints()
-        
+
         # List of mock indicators
-        real_indicators = ['mock', 'fake', 'simulated', 'actual', 'example.com', 'test']
-        
+        real_indicators = ["mock", "fake", "simulated", "actual", "example.com", "test"]
+
         for name, url in endpoints.items():
             if url:
                 url_lower = url.lower()
@@ -194,7 +224,7 @@ ENVIRONMENT=development
                             f"Mock URL detected in {name}: {url}\n"
                             "This codebase requires real endpoints only. No mocks allowed."
                         )
-        
+
         return True
 
 
@@ -203,18 +233,19 @@ def get_mcp_config() -> MCPConfig:
     """Get MCP configuration instance"""
     return MCPConfig()
 
+
 def validate_environment() -> None:
     """Validate environment and raise errors if configuration is invalid"""
     config = MCPConfig()
-    
+
     # Check for mocks
     config.check_no_mocks()
-    
+
     # Validate configuration
     validation = config.validate_config()
-    
+
     missing_features = [feature for feature, valid in validation.items() if not valid]
-    
+
     if missing_features:
         print("⚠️  Configuration Warning:")
         print(f"Missing configuration for: {', '.join(missing_features)}")

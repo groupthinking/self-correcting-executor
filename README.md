@@ -1,8 +1,4 @@
-# Unified MCP DevContainer & Runtime (UMDR)
 
-This repository contains a canonical Docker-based development environment for MCP services.
-
-## Deliverables
 
 - ✅ **Dockerfile** – Multi-stage, optimized build
 - ✅ **docker-compose.yml** – Complete service orchestration
@@ -32,9 +28,13 @@ make health
 
 Open http://localhost:8080/health to verify the API is running.
 
-WRKFLW and workflows repositories are archived; their workflow definitions now live in `workflows/templates.py` alongside the self-correcting engine.
-You can extend the catalog by dropping yaml/json workflow definitions into `workflows/data/`; they are auto-loaded at runtime.
+WRKFLW and workflows repositories are archived; selected workflow patterns from those repositories are represented in `workflows/templates.py` alongside the self-correcting engine.
+You can extend the catalog by dropping yaml/json workflow definitions into `workflows/data/`; they are auto-loaded when the catalog module is imported.
 
 ## Development
 
-The workspace includes a **DevContainer** definition – simply open the folder in VS Code or Cursor and choose *Reopen in Container* to get an IDE connected to the running services. 
+The workspace includes a **DevContainer** definition – simply open the folder in VS Code or Cursor and choose *Reopen in Container* to get an IDE connected to the running services.
+
+## Workflow consolidation runtime status
+
+The catalog auto-loads external definitions, but loader success alone is not runtime readiness. The construction flow now accepts explicit project records and calls the real analyzer and source-grounded summary connector. The TypeScript pipeline generates and compiles actual handlers, checks a supplied service URL and caches schema/report metadata using explicit Redis settings. Live provider access and integration requirements are described in [workflow execution and limits](docs/workflows/CONSOLIDATION.md). No full RFI, vector-search or deployment outcome is claimed.

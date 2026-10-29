@@ -74,35 +74,22 @@ def _analyze_massive_user_collection() -> Dict[str, Any]:
             folder_name = os.path.basename(base_path)
             analysis["folders_scanned"].append(folder_name)
 
-            # Get total file count for this directory using secure subprocess
+            # Get total file count for this directory
             try:
-                import subprocess
-                import shutil
-                
-                # Use absolute path for find command for security
-                find_path = shutil.which("find")
-                if not find_path:
-                    # Fallback to Python implementation if find is not available
-                    all_files = []
-                    for root, dirs, files in os.walk(base_path):
-                        for file in files:
-                            all_files.append(os.path.join(root, file))
-                    folder_file_count = len(all_files)
-                else:
-                    # Validate and sanitize the base_path to prevent command injection
-                    if not os.path.exists(base_path) or not os.path.isdir(base_path):
-                        raise ValueError(f"Invalid directory path: {base_path}")
-                        
-                    result = subprocess.run(
-                        [find_path, os.path.abspath(base_path), "-type", "f"],
-                        capture_output=True,
-                        text=True,
-                        timeout=30,  # Add timeout for security
-                    )
-                    all_files = (
-                        result.stdout.strip().split("\n") if result.stdout.strip() else []
-                    )
-                    folder_file_count = len(all_files)
+                import pathlib
+
+                # Validate the base path before walking it
+                if not os.path.exists(base_path) or not os.path.isdir(base_path):
+                    raise ValueError(f"Invalid directory path: {base_path}")
+
+                # Portable, dependency-free recursive file listing (replaces a
+                # non-portable subprocess call to the external `find` command).
+                all_files = [
+                    str(p.resolve())
+                    for p in pathlib.Path(base_path).rglob("*")
+                    if p.is_file()
+                ]
+                folder_file_count = len(all_files)
 
                 analysis["directory_stats"][folder_name] = {
                     "total_files": folder_file_count,

@@ -4,19 +4,37 @@ import csv
 import os
 from datetime import datetime
 
+
 class DataProcessor:
     """Data processor class for MCP server integration"""
-    
+
     def __init__(self):
         pass
-    
+
     def process(self):
         """Process data files and extract insights"""
         return task()
 
 
-def task(data_path=None):
+def task(data_path=None, source=None):
     """Process data files and extract insights"""
+    if source is not None:
+        if data_path is not None:
+            raise ValueError("Provide source or data_path, not both")
+        if isinstance(source, dict):
+            from workflows.field_capture import normalize_field_capture
+
+            return normalize_field_capture(source)
+        if isinstance(source, str) and os.path.isfile(source):
+            with open(source, encoding="utf-8") as handle:
+                from workflows.field_capture import normalize_field_capture
+
+                return normalize_field_capture(json.load(handle))
+        if not isinstance(source, str) or not os.path.isdir(source):
+            raise ValueError("source must be field-capture data or an existing path")
+        data_path = source
+    if data_path is not None and not os.path.isdir(data_path):
+        raise ValueError(f"Data directory does not exist: {data_path}")
     # Use provided data path or try multiple possible data directories
     if data_path and os.path.exists(data_path) and os.path.isdir(data_path):
         data_dir = data_path
@@ -38,13 +56,13 @@ def task(data_path=None):
     if not data_dir:
         # NO SIMULATIONS - Real data required
         return {
-            'success': False,
-            'action': 'data_processing',
-            'error': 'No data directory found. Please set DATA_DIR environment variable or ensure /data exists.',
-            'checked_paths': possible_dirs,
-            'timestamp': datetime.utcnow().isoformat()
+            "success": False,
+            "action": "data_processing",
+            "error": "No data directory found. Please set DATA_DIR environment variable or ensure /data exists.",
+            "checked_paths": possible_dirs,
+            "timestamp": datetime.utcnow().isoformat(),
         }
-    
+
     try:
         processed_count = 0
         total_records = 0

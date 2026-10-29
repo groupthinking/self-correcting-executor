@@ -4,8 +4,14 @@ import re
 from collections import Counter
 
 
-def task():
+def task(source=None):
     """Analyze log files for errors, warnings, and patterns"""
+    if source is not None:
+        # The engine awaits this coroutine. Legacy no-argument log-file analysis
+        # remains synchronous for existing callers.
+        from connectors.llm_connector import llm_connector
+
+        return llm_connector.summarize_project_records(source)
     log_dir = os.environ.get("LOG_DIR", "/app/logs")
 
     try:

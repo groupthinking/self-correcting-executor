@@ -4,12 +4,14 @@ import os
 from utils.logger import log
 
 
-def load_protocol(name):
+def load_protocol(name, *, create_if_missing=True):
     """Dynamically load a protocol module by name"""
     try:
         module = importlib.import_module(f"protocols.{name}")
         return {"name": name, "task": module.task}
     except ImportError as e:
+        if not create_if_missing:
+            raise ImportError(f"Protocol {name} could not be loaded") from e
         log(f"Failed to load protocol {name}: {e}")
         # Create default protocol if it doesn't exist
         create_default_protocol(name)

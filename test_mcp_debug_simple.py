@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from config.mcp_config import MCPConfig
+
 """
 Simplified test suite for MCP Debug Tool
 Tests core debugging capabilities without complex dependencies
@@ -80,10 +81,12 @@ class SimpleMCPDebugTest:
     async def test_debug_tool_init(self) -> bool:
         """Test MCP Debug Tool initialization"""
         try:
-            async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
-                has_quantum_analyzers = hasattr(debug_tool, 'quantum_analyzers')
-                has_gcp_endpoint = hasattr(debug_tool, 'gcp_endpoint')
-                has_connector_id = hasattr(debug_tool, 'connector_id')
+            async with MCPDebugTool(
+                "config.get_endpoints()['mcp_server']"
+            ) as debug_tool:
+                has_quantum_analyzers = hasattr(debug_tool, "quantum_analyzers")
+                has_gcp_endpoint = hasattr(debug_tool, "gcp_endpoint")
+                has_connector_id = hasattr(debug_tool, "connector_id")
                 return has_quantum_analyzers and has_gcp_endpoint and has_connector_id
         except Exception as e:
             logger.error(f"Initialization error: {e}")
@@ -108,7 +111,9 @@ class SimpleMCPDebugTest:
         """
 
         try:
-            async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
+            async with MCPDebugTool(
+                "config.get_endpoints()['mcp_server']"
+            ) as debug_tool:
                 analysis = await debug_tool._analyze_code_structure(quantum_code)
 
                 required_keys = [
@@ -140,9 +145,13 @@ class SimpleMCPDebugTest:
         """
 
         try:
-            async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
-                result = await debug_tool._analyze_qubit_state(problematic_quantum_code, {})
-                
+            async with MCPDebugTool(
+                "config.get_endpoints()['mcp_server']"
+            ) as debug_tool:
+                result = await debug_tool._analyze_qubit_state(
+                    problematic_quantum_code, {}
+                )
+
                 # Updated to check for issues without requiring operations (which might be empty in this test case)
                 has_issues = len(result["issues"]) > 0
                 needs_review = result["state_quality"] == "needs_review"
@@ -166,7 +175,9 @@ class SimpleMCPDebugTest:
         """
 
         try:
-            async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
+            async with MCPDebugTool(
+                "config.get_endpoints()['mcp_server']"
+            ) as debug_tool:
                 result = await debug_tool._analyze_entanglement(entanglement_code, {})
 
                 has_operations = len(result["entanglement_operations"]) > 0
@@ -197,7 +208,9 @@ class SimpleMCPDebugTest:
         ]
 
         try:
-            async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
+            async with MCPDebugTool(
+                "config.get_endpoints()['mcp_server']"
+            ) as debug_tool:
                 all_patterns_detected = True
 
                 for error in errors:
@@ -215,8 +228,7 @@ class SimpleMCPDebugTest:
 
     async def test_performance_metrics(self) -> bool:
         """Test performance metrics calculation"""
-        complex_code = (
-            """
+        complex_code = """
         def complex_quantum_function():
             for i in range(10):
                 if i % 2 == 0:
@@ -228,12 +240,12 @@ class SimpleMCPDebugTest:
                             continue
                     else:
                         pass
-        """
-            + "\n" * 150
-        )  # Make it long
+        """ + "\n" * 150  # Make it long
 
         try:
-            async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
+            async with MCPDebugTool(
+                "config.get_endpoints()['mcp_server']"
+            ) as debug_tool:
                 debug_context = MCPDebugContext(
                     file="test.py",
                     line=1,
@@ -263,7 +275,9 @@ class SimpleMCPDebugTest:
     async def test_mcp_context_creation(self) -> bool:
         """Test MCP debug context creation and validation"""
         try:
-            async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
+            async with MCPDebugTool(
+                "config.get_endpoints()['mcp_server']"
+            ) as debug_tool:
                 mcp_data = {
                     "file": "test_quantum.py",
                     "line": 42,

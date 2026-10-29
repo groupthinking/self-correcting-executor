@@ -70,10 +70,7 @@ def task():
         total_size = sum(stats["size"] for stats in data_stats.values())
 
         if available_dirs:
-            insights.append(
-                f"Found {
-                    len(available_dirs)} accessible directories"
-            )
+            insights.append(f"Found {len(available_dirs)} accessible directories")
             insights.append(f"Total files scanned: {total_files}")
             insights.append(f"Total size: {total_size / (1024**2):.2f} MB")
 

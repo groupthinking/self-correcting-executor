@@ -94,10 +94,13 @@ class QuantumDebugTestSuite:
         """Test MCP Debug Tool initialization"""
         try:
             from config.mcp_config import MCPConfig
+
             config = MCPConfig()
-            mcp_url = config.get_endpoints()['mcp_server']
+            mcp_url = config.get_endpoints()["mcp_server"]
             async with MCPDebugTool(mcp_url) as debug_tool:
-                return debug_tool is not None and hasattr(debug_tool, 'quantum_analyzers')
+                return debug_tool is not None and hasattr(
+                    debug_tool, "quantum_analyzers"
+                )
         except Exception:
             return False
 
@@ -118,7 +121,7 @@ class QuantumDebugTestSuite:
         backend = Aer.get_backend('qasm_simulator')
         result = execute(circuit, backend, shots=1024).result()
         """
-        
+
         async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             analysis = await debug_tool._analyze_code_structure(quantum_code)
 
@@ -143,7 +146,7 @@ class QuantumDebugTestSuite:
         qc.measure(0, 0)  # Premature measurement
         qc.cx(0, 1)  # Operation after measurement
         """
-        
+
         async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_qubit_state(problematic_quantum_code, {})
 
@@ -164,7 +167,7 @@ class QuantumDebugTestSuite:
         qc.cx(0, 3)
         qc.bell_state(0, 1)  # Custom bell state
         """
-        
+
         async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_entanglement(entanglement_code, {})
 
@@ -176,8 +179,7 @@ class QuantumDebugTestSuite:
 
     async def test_decoherence_analysis(self) -> bool:
         """Test decoherence risk assessment"""
-        risky_code = (
-            """
+        risky_code = """
         import time
         qc = QuantumCircuit(10)
         for i in range(100):  # Long loop
@@ -186,7 +188,7 @@ class QuantumDebugTestSuite:
             qc.cx(i % 10, (i + 1) % 10)
         # This is a very long quantum program with many operations
         # """ + "\n" * 60  # Make it long
-        
+
         async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_decoherence(risky_code, {})
 
@@ -210,7 +212,7 @@ class QuantumDebugTestSuite:
         qc.cx(0, 1)
         qc.cx(1, 2)
         """
-        
+
         async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_gate_fidelity(gate_heavy_code, {})
 
@@ -236,7 +238,7 @@ class QuantumDebugTestSuite:
             'TypeError: can only concatenate str (not "int") to str',
             "IndexError: list index out of range",
         ]
-        
+
         async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             all_patterns_detected = True
 
@@ -250,8 +252,7 @@ class QuantumDebugTestSuite:
 
     async def test_performance_metrics(self) -> bool:
         """Test performance metrics calculation"""
-        complex_code = (
-            """
+        complex_code = """
         def complex_quantum_function():
             for i in range(10):
                 if i % 2 == 0:
@@ -264,7 +265,7 @@ class QuantumDebugTestSuite:
                     else:
                         pass
         """ + "\n" * 150  # Make it long
-        
+
         async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             debug_context = MCPDebugContext(
                 file="test.py",
@@ -319,7 +320,7 @@ class QuantumDebugTestSuite:
             
             return qc
         """
-        
+
         async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             mcp_data = {
                 "file": "quantum_teleportation.py",
