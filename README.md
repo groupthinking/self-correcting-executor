@@ -39,6 +39,4 @@ The workspace includes a **DevContainer** definition – simply open the folder 
 
 For a repo-specific map of the current tree, dependency snapshot, mermaid
 architecture diagram, MCP capability-verification notes, and agent workflow
-checklist, see
-`/home/runner/work/self-correcting-executor/self-correcting-executor/docs/REPO_MAP.md`
-(also tracked in the repository as [`docs/REPO_MAP.md`](docs/REPO_MAP.md)).
+checklist, see [`docs/REPO_MAP.md`](docs/REPO_MAP.md).

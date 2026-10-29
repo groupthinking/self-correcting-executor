@@ -6,7 +6,7 @@ description: Generate a repo-specific map of self-correcting-executor, including
 When asked to summarize or orient an agent in this repository, use the current
 repo structure instead of generic MCP examples.
 
-1. Start from `/home/runner/work/self-correcting-executor/self-correcting-executor`.
+1. Start from the current repository root (`git rev-parse --show-toplevel`).
 2. Build the summary around these directories:
    - `agents/`
    - `connectors/`
@@ -24,28 +24,16 @@ repo structure instead of generic MCP examples.
    - **client**: external MCP-aware caller
    - **server**: the repo's implementations in `mcp_server/` and
      `quantum_mcp_server/`
-5. Use the live baseline verification sequence before claiming MCP is working:
+5. Use the in-process handler checks before reporting that baseline as verified:
 
-   ```python
-   import asyncio
-   from mcp_server.main import MCPServer
-
-   async def main():
-       server = MCPServer()
-       await server.handle_request(
-           {
-               "jsonrpc": "2.0",
-               "id": 1,
-               "method": "initialize",
-               "params": {"clientInfo": {"name": "summary-skill", "version": "1.0"}},
-           }
-       )
-       await server.handle_request(
-           {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
-       )
-
-   asyncio.run(main())
+   ```bash
+   cd "$(git rev-parse --show-toplevel)"
+   python -m scripts.verify_mcp_baseline
+   python -m pytest tests/test_mcp_baseline_verifier.py -q
    ```
+
+   These checks exercise the custom handler in-process; they do not verify
+   an external MCP client/transport connection.
 
 6. Point the reader to `docs/REPO_MAP.md` for the maintained tree, mermaid
    diagram, dependency snapshot, workflow checklist, and CI/MCP notes.

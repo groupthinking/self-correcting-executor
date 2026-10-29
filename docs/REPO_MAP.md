@@ -3,7 +3,7 @@
 This repository mixes agent orchestration, MCP servers, connectors, protocols,
 and a small frontend. This document makes the issue's requested "repo assist"
 material specific to `groupthinking/self-correcting-executor` so an agent can
-map the repo, verify the MCP baseline live, and decide what to check before
+map the repo, verify the MCP handler in-process, and decide what to check before
 commit/merge.
 
 ## Repo tree (focused map)
@@ -44,7 +44,8 @@ self-correcting-executor/
   SQLAlchemy, Redis, and transformer-related packages.
 - CI/test dependencies: `requirements-ci.txt` contains the lightweight
   verification stack (`black`, `flake8`, `pytest`, `pytest-cov`,
-  `pytest-asyncio`).
+  `pytest-asyncio`) plus the MCP, NumPy, and PostgreSQL imports needed by
+  the collected tests. MCP/Pydantic match the production compatibility pair.
 - Frontend runtime dependencies: `frontend/package.json` currently declares
   **7** runtime packages (`react`, `react-dom`, `@tanstack/react-query`,
   `axios`, `framer-motion`, `lucide-react`, `three`) and **12** dev
@@ -84,22 +85,22 @@ flowchart TD
     end
 
     H --> O
-    O --> M1
-    O --> M2
-    O --> M3
     M1 --> T1
     M1 --> T2
     M1 --> T3
-    M2 --> C1
     M2 --> C2
-    M2 --> C3
-    M2 --> C4
+    M2 --> P1
     O --> Tasks
     Tasks --> P1
     Tasks --> P2
     Tasks --> P3
     Tasks --> P4
 ```
+
+The MCP servers are separate entrypoints; no direct orchestrator-to-server
+call is implied. `real_mcp_server.py` imports the D-Wave connector and the
+data processor. Other connectors are shown as repository components, not
+as dependencies of that server.
 
 ## Agentic workflow checklist for this repo
 
@@ -129,17 +130,16 @@ flowchart TD
 
 Yes. The repository is using MCP in two forms:
 
-1. A custom JSON-RPC server in `/home/runner/work/self-correcting-executor/self-correcting-executor/mcp_server/main.py`
+1. A custom JSON-RPC server in `mcp_server/main.py`
    with explicit MCP methods such as `initialize`, `tools/list`, `tools/call`,
    `resources/list`, and `resources/read`.
-2. A FastMCP-based server in `/home/runner/work/self-correcting-executor/self-correcting-executor/mcp_server/real_mcp_server.py`
+2. A FastMCP-based server in `mcp_server/real_mcp_server.py`
    built on the `mcp` package.
 
-Compared with the MCP architecture/specification dated `2026-07-28`, this repo
-already covers the **server** side baseline well enough to negotiate tools and
-resources, but it does **not** implement a full host/client runtime in-repo.
-That is acceptable for this codebase because GitHub Copilot/GitHub MCP acts as
-the host environment around these servers.
+The custom handler advertises protocol version `2024-11-05`. Direct calls
+can verify its advertised tool and resource behavior, but do not establish
+MCP specification compliance or successful transport negotiation with an
+external host/client. Those require a separate integration test.
 
 ### Host / client / server mapping for this repo
 
@@ -152,56 +152,28 @@ the host environment around these servers.
 
 ## Live verification steps
 
-The minimum capability-negotiation proof for this repo is to exercise the
-custom MCP server directly and confirm that `initialize` advertises
-capabilities, then `tools/list` and `tools/call` work end-to-end.
+The focused verifier calls the custom handler in-process. It asserts the
+initialize response, the advertised/listed tool names, and the actual
+`code_analyzer` result. Any JSON-RPC error, missing capability or incorrect
+analysis raises an exception and makes the command exit unsuccessfully.
+This proves the handler behavior, not an external MCP transport connection.
+
+From any directory inside the checkout:
 
 ```bash
-cd /home/runner/work/self-correcting-executor/self-correcting-executor
-python - <<'PY'
-import asyncio
-import json
-from mcp_server.main import MCPServer
-
-async def main():
-    server = MCPServer()
-    for request in (
-        {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "initialize",
-            "params": {"clientInfo": {"name": "repo-assist", "version": "1.0"}},
-        },
-        {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
-        {
-            "jsonrpc": "2.0",
-            "id": 3,
-            "method": "tools/call",
-            "params": {
-                "name": "code_analyzer",
-                "arguments": {"code": "def verify():\n    return 1\n"},
-            },
-        },
-    ):
-        print(json.dumps(await server.handle_request(request), indent=2))
-
-asyncio.run(main())
-PY
-```
-
-Focused automated verification for the repo-assist additions:
-
-```bash
-python -m pytest tests/test_repo_assist_docs.py -q
+cd "$(git rev-parse --show-toplevel)"
+python -m scripts.verify_mcp_baseline
+python -m pytest tests/test_repo_assist_docs.py tests/test_mcp_baseline_verifier.py -q
 ```
 
 ## CI baseline observed from GitHub Actions
 
 - The repo has active `Python CI` and `Frontend CI` workflows.
-- The inspected recent `Python CI` job logs showed `black` passing.
-- The same logs also showed that `flake8` findings and `pytest` collection
-  errors are currently masked by `|| echo ...` and `continue-on-error`, so the
-  workflow can report success even when Python imports/tests are not clean.
+- `Python CI` runs `black --check .` as a blocking step. Inspect the current
+  head's logs; a previous run's result is not evidence for a new commit.
+- `pytest --cov=.` is blocking: collection failures and failed assertions fail
+  the matrix job. `flake8` remains advisory in the existing workflow, so a
+  green workflow alone does not prove the repository is free of lint findings.
 
 ## Skills added for this repo
 

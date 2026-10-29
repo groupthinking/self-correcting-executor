@@ -13,45 +13,31 @@ commands.
 2. Get job logs for the failed run or failed jobs.
 3. Interpret the result against this repo's workflow behavior:
    - `python-ci.yml` runs `black --check .`
-   - `python-ci.yml` currently masks `flake8` and `pytest` failures with
-     `|| echo ...` and `continue-on-error`, so a green workflow does not always
-     mean imports/tests are healthy
+   - `python-ci.yml` runs pytest as a blocking step. Its existing `flake8`
+     step remains advisory via `|| echo ...` and `continue-on-error`, so a
+     green workflow does not establish a lint-clean repository.
    - `frontend-ci.yml` runs `npm ci || npm install`, then lint/test/build from
      `/frontend`
 4. Reproduce only the relevant local command:
 
    ```bash
-   cd /home/runner/work/self-correcting-executor/self-correcting-executor
+   cd "$(git rev-parse --show-toplevel)"
    python -m pytest tests/ -q
-   cd /home/runner/work/self-correcting-executor/self-correcting-executor/frontend
+   cd "$(git rev-parse --show-toplevel)/frontend"
    npm run lint
    npm run build
    ```
 
-5. If the failure touches MCP behavior, also run the repo's live MCP baseline:
+5. If the failure touches MCP behavior, also run the repo's in-process MCP handler checks:
 
    ```bash
-   cd /home/runner/work/self-correcting-executor/self-correcting-executor
-   python -m pytest tests/test_repo_assist_docs.py -q
-   python - <<'PY'
-   import asyncio
-   from mcp_server.main import MCPServer
-
-   async def main():
-       server = MCPServer()
-       response = await server.handle_request(
-           {
-               "jsonrpc": "2.0",
-               "id": 1,
-               "method": "initialize",
-               "params": {"clientInfo": {"name": "ci-debug", "version": "1.0"}},
-           }
-       )
-       print(response["result"]["serverInfo"])
-
-   asyncio.run(main())
-   PY
+   cd "$(git rev-parse --show-toplevel)"
+   python -m scripts.verify_mcp_baseline
+   python -m pytest tests/test_mcp_baseline_verifier.py -q
    ```
+
+   These checks exercise the custom handler in-process; they do not verify
+   an external MCP client/transport connection.
 
 6. Keep fixes surgical. Do not "clean up" unrelated files just because the
    workflow surfaced pre-existing noise.
