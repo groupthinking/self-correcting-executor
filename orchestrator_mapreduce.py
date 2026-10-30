@@ -6,17 +6,24 @@ Drop-in module for the self-correcting-executor project.
 Extends the existing OrchestrationEngine with parallel fan-out,
 verification gateway, self-correcting mutation on failure,
 semantic LLM verification, structured state persistence,
-safe mutation hierarchy, and live Slack escalation.
+attempt-based mutation, and Slack CLI escalation.
+
+Worker threads share process state. Timeouts bound the wait, not thread lifetime;
+semantic verification falls back to mechanical approval on provider failure.
+See docs/orchestrator_mapreduce.md for the actual guarantees and limitations.
 
 Usage:
     from orchestrator_mapreduce import HierarchicalOrchestrator
 
-    orchestrator = HierarchicalOrchestrator(max_concurrency=10)
+    # These data directories must exist. Disable optional provider verification.
+    orchestrator = HierarchicalOrchestrator(
+        max_concurrency=10, use_semantic_gate=False
+    )
     job = await orchestrator.run(
-        intent="Validate all API endpoints after deployment",
+        intent="Process existing data directories",
         task_list=[
-            {"protocol": "api_health_checker", "inputs": {"endpoint": "/users"}},
-            {"protocol": "api_health_checker", "inputs": {"endpoint": "/orders"}},
+            {"protocol": "data_processor", "inputs": {"data_path": "/data/users"}},
+            {"protocol": "data_processor", "inputs": {"data_path": "/data/orders"}},
         ],
     )
 """
@@ -111,7 +118,8 @@ class SemanticGate:
         1. Mechanical: Check execution success rate (fast, cheap)
         2. Semantic: Ask LLM to evaluate output quality (deeper)
 
-        Both must pass for the job to be considered verified.
+        A provider/client failure falls back to mechanical approval; in that
+        case no semantic verdict is obtained.
         """
         # Layer 1: Mechanical gate (fast pre-filter)
         total = len(job.subtasks)
@@ -202,7 +210,8 @@ class StateStore:
     SQLite-backed structured state persistence.
     Provides queryable run history alongside the human-readable STATE.md.
 
-    Every job run is recorded with full metadata, enabling:
+    Final job/subtask snapshots replace rows by ID; attempts are not retained
+    as separate history. The stored final rows enable:
     - Querying past runs by protocol, status, or time range
     - Computing success rates over time
     - Identifying recurring failure patterns
@@ -369,10 +378,11 @@ class SafeMutator:
     Three-tier mutation hierarchy that escalates risk gradually:
       1. Mutate INPUTS (safest) — change what goes into the protocol
       2. Mutate STRATEGY (medium) — change how the protocol approaches the task
-      3. Mutate CODE (last resort) — rewrite the protocol, sandboxed
+      3. Mutate CODE (last resort) — invoke the legacy source mutator
 
-    Only escalates to the next tier if the previous tier has been
-    attempted and failed.
+    Selects a tier from the execution attempt count. Added keyword arguments
+    require a compatible protocol signature. The code tier does not provide
+    a process sandbox or rollback.
     """
 
     def __init__(self):
@@ -463,7 +473,8 @@ class SafeMutator:
         """
         Tier 3: Mutate the protocol's source code.
         This is the most dangerous tier — only used as a last resort.
-        The mutation is tested in a sandboxed dry-run before being applied.
+        The existing mutator runs before a callable-task check. This is not a
+        sandbox or dry-run, and an imported module can remain cached.
         """
         # Perform the mutation via the existing mutator
         mutated = await loop.run_in_executor(None, mutate_protocol, protocol_name)
@@ -567,7 +578,7 @@ class HierarchicalOrchestrator:
     """
     Three-phase orchestration:
       1. PLAN  — Decompose intent into subtasks
-      2. MAP   — Execute subtasks in parallel (isolated state)
+      2. MAP   — Execute subtasks in parallel (shared process state)
       3. REDUCE — Collect, verify, and self-correct
 
     Now with:
@@ -658,8 +669,8 @@ class HierarchicalOrchestrator:
 
     async def map_execute(self, job: OrchestratedJob) -> OrchestratedJob:
         """
-        Execute all subtasks in parallel with bounded concurrency.
-        Each subtask runs in isolation — no shared mutable state.
+        Execute subtasks with an initial-map semaphore and shared worker threads.
+        Inputs/module state are not isolated; timed-out threads may keep running.
         """
         job.status = TaskStatus.RUNNING
         semaphore = asyncio.Semaphore(self.max_concurrency)
@@ -834,8 +845,9 @@ class HierarchicalOrchestrator:
         self, protocol_name: str, inputs: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Execute a protocol in isolation.
-        Passes inputs to the protocol task function.
+        Dispatch a synchronous protocol in the shared executor.
+        Pass all inputs as kwargs when the task has parameters; otherwise
+        ignore them. Coroutine return values are not awaited here.
         """
         from protocols.loader import load_protocol
 
@@ -897,7 +909,8 @@ class HierarchicalOrchestrator:
 
     async def _default_gate(self, job: OrchestratedJob) -> Dict[str, Any]:
         """
-        Fallback mechanical gate: passes if >80% of subtasks succeeded.
+        Fallback mechanical gate: passes if at least 80% returned normally.
+        It does not inspect result success fields.
         Used only when use_semantic_gate=False and no custom gate provided.
         """
         total = len(job.subtasks)
