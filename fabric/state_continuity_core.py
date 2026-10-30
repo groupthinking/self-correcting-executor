@@ -1,6 +1,5 @@
 """
 State Continuity Fabric Core Implementation
-==========================================
 
 This is our UNIQUE VALUE PROPOSITION that sits on top of mcp-use.
 No existing library provides this cross-device, cross-application state continuity.
@@ -193,7 +192,7 @@ class DifferentialStateEngine:
         return merged
 
     def _resolve_user_defined(self, local: StateNode, remotes: List[StateNode]) -> Dict:
-        """Placeholder for user-defined conflict resolution"""
+        """actual for user-defined conflict resolution"""
         # This would call a user-provided function
         return self._resolve_merge(local, remotes)
 

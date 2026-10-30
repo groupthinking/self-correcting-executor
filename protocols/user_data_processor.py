@@ -61,7 +61,8 @@ def task():
                                         "size": size,
                                     }
                                 )
-                        except BaseException:
+                        except OSError:
+                            # Ignore files we cannot access or whose size cannot be determined
                             pass
 
         # Generate insights
@@ -69,10 +70,7 @@ def task():
         total_size = sum(stats["size"] for stats in data_stats.values())
 
         if available_dirs:
-            insights.append(
-                f"Found {
-                    len(available_dirs)} accessible directories"
-            )
+            insights.append(f"Found {len(available_dirs)} accessible directories")
             insights.append(f"Total files scanned: {total_files}")
             insights.append(f"Total size: {total_size / (1024**2):.2f} MB")
 
@@ -91,10 +89,7 @@ def task():
             "data_statistics": data_stats,
             # Sample of processed files
             "processed_files": processed_files[:10],
-            "insights": insights,
-            "timestamp": datetime.utcnow().isoformat(),
         }
-
     except Exception as e:
         return {
             "success": False,

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Real D-Wave Quantum MCP Connector
-================================
 
 LEGITIMATE quantum computing integration using D-Wave Ocean SDK and Leap cloud service.
 Based on official D-Wave examples and documentation.
@@ -28,11 +27,15 @@ try:
     from dwave.system import (
         DWaveSampler,
         EmbeddingComposite,
+        FixedEmbeddingComposite,
     )
+    from dwave.system.composites import LazyFixedEmbeddingComposite
     from dwave.cloud import Client
 
     # SimulatedAnnealingSampler removed - real QPU only
     import dimod
+    from dimod import BinaryQuadraticModel, ConstrainedQuadraticModel
+    import dwave.inspector
 
     DWAVE_AVAILABLE = True
 except ImportError:
@@ -107,14 +110,17 @@ class DWaveQuantumConnector(MCPConnector):
             qpu_solvers = [s for s in solvers if hasattr(s, "qubits")]
 
             if not qpu_solvers:
-                logger.warning("No QPU solvers available, using simulated annealing")
-                raise RuntimeError("Real QPU required - no simulations")
-                self.solver_info = {
-                    "name": "SimulatedAnnealingSampler",
-                    "type": "software",
-                    "num_qubits": "unlimited",
-                    "connectivity": "complete",
-                }
+                # NO SIMULATION - Real QPU required
+                logger.error(
+                    "No QPU solvers available. Real quantum hardware required."
+                )
+                raise RuntimeError(
+                    "No D-Wave QPU available. Please ensure:\n"
+                    "1. Valid DWAVE_API_TOKEN is set\n"
+                    "2. Active D-Wave Leap account with QPU access\n"
+                    "3. Internet connection to D-Wave cloud\n"
+                    "Visit: https://cloud.dwavesys.com/leap/"
+                )
             else:
                 # Use specified solver or first available QPU
                 if self.solver_name:
@@ -164,6 +170,48 @@ class DWaveQuantumConnector(MCPConnector):
         """Send context to quantum system"""
         self.context = context
         return True
+
+    async def ensure_real_qpu(self) -> bool:
+        """Ensure we have real QPU access - no simulations allowed"""
+        if not self.connected:
+            raise RuntimeError("Not connected to D-Wave service")
+
+        if self.solver_info.get("type") != "QPU":
+            raise RuntimeError(
+                f"Real QPU required but got {self.solver_info.get('type')}. "
+                "No simulations allowed in production."
+            )
+
+        return True
+
+    async def list_solvers(self) -> List[Dict[str, Any]]:
+        """List all available D-Wave solvers"""
+        if not self.client:
+            raise RuntimeError("Not connected to D-Wave service")
+
+        solvers = self.client.get_solvers()
+        solver_list = []
+
+        for solver in solvers:
+            solver_info = {
+                "id": solver.id,
+                "name": solver.name,
+                "is_qpu": hasattr(solver, "qubits"),
+                "status": solver.status,
+            }
+
+            if hasattr(solver, "qubits"):
+                solver_info.update(
+                    {
+                        "num_qubits": len(solver.nodes),
+                        "num_couplers": len(solver.edges),
+                        "topology": getattr(solver, "topology", "Unknown"),
+                    }
+                )
+
+            solver_list.append(solver_info)
+
+        return solver_list
 
     async def execute_action(
         self, action: str, params: Dict[str, Any]
@@ -433,15 +481,9 @@ class DWaveQuantumConnector(MCPConnector):
         Solve 0-1 Knapsack problem using quantum annealing
         """
         try:
-            # List of {'weight': w, 'value': v}
-            items = params.get("items", [])
+            items = params.get("items", [])  # List of {'weight': w, 'value': v}
             capacity = params.get("capacity", 10)
 
-            n = len(items)
-            if n == 0:
-                return {"error": "No items provided"}
-
-            # QUBO formulation for knapsack
             Q = {}
             penalty = max(item["value"] for item in items) * 2  # Large penalty
 
@@ -451,6 +493,7 @@ class DWaveQuantumConnector(MCPConnector):
 
             # Constraint: weight <= capacity
             # (sum(w_i * x_i) - capacity)^2 penalty term
+            n = len(items)  # Define n as the number of items
             for i in range(n):
                 for j in range(i, n):
                     weight_product = items[i]["weight"] * items[j]["weight"]
@@ -483,13 +526,9 @@ class DWaveQuantumConnector(MCPConnector):
             return result
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "problem_type": "Knapsack",
-            }
+            return {"success": False, "error": str(e), "problem_type": "Knapsack"}
 
-    async def get_solver_info(self, params: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def get_solver_info(self, params: Dict[str, Any] = {}) -> Dict[str, Any]:
         """Get information about the connected D-Wave solver"""
         if not self.connected:
             return {"error": "Not connected to D-Wave service"}
@@ -501,8 +540,16 @@ class DWaveQuantumConnector(MCPConnector):
             "connection_status": ("connected" if self.connected else "disconnected"),
         }
 
+    async def ensure_real_qpu(self) -> bool:
+        """Ensure we're using a real QPU, not a simulator"""
+        if not self.solver_info or self.solver_info.get("type") != "QPU":
+            raise RuntimeError("No D-Wave QPU available - real QPU required")
+        return True
+
 
 # Example usage and testing
+
+
 async def example_usage():
     """Example of using the real D-Wave quantum connector"""
 

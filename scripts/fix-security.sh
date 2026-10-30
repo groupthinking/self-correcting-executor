@@ -49,7 +49,9 @@ try:
         config = yaml.safe_load(f)
     
     # Enable authentication
-    config['api']['authentication']['enabled'] = True
+    api_cfg = config.setdefault('api', {})
+    auth_cfg = api_cfg.setdefault('authentication', {})
+    auth_cfg['enabled'] = True
     print("✓ Enabled API authentication")
     
     # Enable sandboxing
@@ -296,19 +298,6 @@ if not auth.users:
     secure_password = ''.join(secrets.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(16))
     auth.create_user('admin', secure_password, 'admin')
     auth.enforce_password_reset('admin')
-    print(f"⚠️  Default admin user created with a secure password: {secure_password}")
-    print("⚠️  You must change this password on first login!")
-
-# Initialize auth
-auth = BasicAuth()
-
-# Create default admin user if none exists
-if not auth.users:
-    print("Creating default admin user...")
-    import secrets
-    import string
-    secure_password = ''.join(secrets.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(16))
-    auth.create_user('admin', secure_password, 'admin')
     print(f"⚠️  Default admin user created with a secure password: {secure_password}")
     print("⚠️  You must change this password on first login!")
 EOF

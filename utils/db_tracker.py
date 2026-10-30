@@ -24,8 +24,7 @@ def ensure_tables_exist():
 
     try:
         # Create protocol_executions table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS protocol_executions (
                 id SERIAL PRIMARY KEY,
                 protocol_name VARCHAR(100),
@@ -33,12 +32,10 @@ def ensure_tables_exist():
                 success BOOLEAN,
                 details JSONB
             );
-        """
-        )
+        """)
 
         # Create protocol_mutations table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS protocol_mutations (
                 id SERIAL PRIMARY KEY,
                 protocol_name VARCHAR(100) NOT NULL,
@@ -48,23 +45,18 @@ def ensure_tables_exist():
                 backup_code TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
-        """
-        )
+        """)
 
         # Create indexes for better performance
-        cursor.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_executions_protocol
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_executions_protocol 
             ON protocol_executions(protocol_name);
-        """
-        )
+        """)
 
-        cursor.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_executions_time
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_executions_time 
             ON protocol_executions(execution_time);
-        """
-        )
+        """)
 
         conn.commit()
         log("Database tables initialized successfully")
@@ -89,7 +81,7 @@ def track_outcome(protocol_name, outcome):
         # Insert execution record
         cursor.execute(
             """
-            INSERT INTO protocol_executions
+            INSERT INTO protocol_executions 
             (protocol_name, execution_time, success, details)
             VALUES (%s, %s, %s, %s)
         """,
@@ -103,10 +95,7 @@ def track_outcome(protocol_name, outcome):
 
         conn.commit()
         log(
-            f"Outcome tracked in database for {protocol_name}: {
-                outcome.get(
-                    'success',
-                    'unknown')}"
+            f"Outcome tracked in database for {protocol_name}: {outcome.get('success', 'unknown')}"
         )
 
     except Exception as e:
@@ -145,7 +134,7 @@ def get_protocol_stats(protocol_name):
     try:
         cursor.execute(
             """
-            SELECT
+            SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes,
                 SUM(CASE WHEN NOT success THEN 1 ELSE 0 END) as failures,
@@ -222,9 +211,8 @@ def get_all_stats():
     cursor = conn.cursor()
 
     try:
-        cursor.execute(
-            """
-            SELECT
+        cursor.execute("""
+            SELECT 
                 protocol_name,
                 COUNT(*) as total,
                 SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes,
@@ -232,8 +220,7 @@ def get_all_stats():
             FROM protocol_executions
             GROUP BY protocol_name
             ORDER BY protocol_name
-        """
-        )
+        """)
 
         stats = []
         for row in cursor.fetchall():
@@ -285,7 +272,7 @@ def track_mutation(protocol_name, failure_rate, new_code, backup_code):
     try:
         cursor.execute(
             """
-            INSERT INTO protocol_mutations
+            INSERT INTO protocol_mutations 
             (protocol_name, mutation_time, previous_failure_rate, new_code, backup_code)
             VALUES (%s, %s, %s, %s, %s)
         """,
@@ -317,7 +304,7 @@ def get_mutation_history(protocol_name):
     try:
         cursor.execute(
             """
-            SELECT
+            SELECT 
                 mutation_time,
                 previous_failure_rate,
                 new_code

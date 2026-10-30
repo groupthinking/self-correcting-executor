@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 A2A (Agent-to-Agent) MCP Integration Framework
-==============================================
 
 This implements a complete agent-to-agent communication system that integrates
 with the Model Context Protocol (MCP) for intelligent, semantic-aware agent
@@ -149,7 +148,7 @@ class MCPEnabledA2AAgent(BaseAgent):
                 if not recipient:
                     return {
                         "status": "error",
-                        "message": "recipient not specified",
+                        "message": "recipient not specified for send_message intent",
                     }
                 return await self.send_contextualized_message(
                     recipient=recipient,
@@ -175,7 +174,7 @@ class MCPEnabledA2AAgent(BaseAgent):
                 if not tool_name:
                     return {
                         "status": "error",
-                        "message": "tool_name not specified",
+                        "message": "tool_name not specified for tool_request intent",
                     }
                 return await self._execute_mcp_tool(tool_name, intent.get("params", {}))
             else:
@@ -252,7 +251,9 @@ class MCPEnabledA2AAgent(BaseAgent):
         # 6. Check SLA compliance
         if latency_ms > self.sla_requirements["max_latency_ms"]:
             self.performance_stats["sla_violations"] += 1
-            logger.warning("SLA violation: latency exceeded")
+            logger.warning(
+                f"SLA violation: latency exceeded {latency_ms:.2f}ms > {self.sla_requirements['max_latency_ms']}ms"
+            )
 
         return {
             "message_id": a2a_msg.id,
@@ -499,20 +500,19 @@ class MCPEnabledA2AAgent(BaseAgent):
         try:
             # Use the real MCP client with stdio transport
             result = await execute_mcp_tool(tool_name, params)
-            
+
             if result.get("status") == "success":
                 return {
                     "status": "success",
                     "tool": tool_name,
                     "result": result.get("result", {}),
                     "latency_ms": result.get("latency_ms", 0),
-                    "timestamp": result.get("timestamp")
+                    "timestamp": result.get("timestamp"),
                 }
             else:
                 logger.error(f"MCP tool execution failed: {result.get('error')}")
                 # Fallback to direct tool execution if MCP server call fails
                 return await self._execute_tool_direct(tool_name, params)
-                
         except Exception as e:
             logger.error(f"MCP tool execution error: {e}")
             # Fallback to direct tool execution if MCP client fails
@@ -528,9 +528,7 @@ class MCPEnabledA2AAgent(BaseAgent):
             return process_data_task()
         elif tool_name == "quantum_optimize":
             # Real quantum optimization
-            from connectors.dwave_quantum_connector import (
-                DWaveQuantumConnector,
-            )
+            from connectors.dwave_quantum_connector import DWaveQuantumConnector
 
             connector = DWaveQuantumConnector()
             if await connector.connect({}):
@@ -580,27 +578,36 @@ class MCPEnabledA2AAgent(BaseAgent):
                     "code_analyzer",
                     {
                         "code": data["code"],
-                        "language": data.get("language", "python")
-                    }
+                        "language": data.get("language", "python"),
+                    },
                 )
             else:
-                # Use self_corrector for general data analysis
-                data_str = json.dumps(data) if isinstance(data, dict) else str(data)
+                # Use MCP data processing for general data analysis
                 result = await self._execute_mcp_tool(
-                    "self_corrector",
+                    "process_data",
                     {
-                        "code": data_str,
-                        "strict_mode": True
-                    }
+                        "data_path": data.get("path", "./data"),
+                        "operation": "analyze",
+                    },
                 )
+                analysis = result.get("result", result)
+                return {
+                    "analysis_type": "comprehensive",
+                    "status": analysis.get("status", result.get("status", "completed")),
+                    "file_count": analysis.get("file_count", 0),
+                    "total_size": analysis.get("total_size_bytes", 0),
+                    "file_types": analysis.get("file_types", {}),
+                    "timestamp": analysis.get("analysis_timestamp"),
+                    "confidence": 0.95,
+                }
 
             # Process real MCP results
             if result.get("status") == "success":
                 mcp_result = result.get("result", {})
-                
+
                 # Calculate confidence based on MCP response
                 confidence = 0.95 if "error" not in str(mcp_result) else 0.5
-                
+
                 return {
                     "analysis_type": "mcp_comprehensive",
                     "status": "completed",
@@ -608,7 +615,7 @@ class MCPEnabledA2AAgent(BaseAgent):
                     "latency_ms": result.get("latency_ms", 0),
                     "confidence": confidence,
                     "timestamp": result.get("timestamp"),
-                    "tool_used": result.get("tool")
+                    "tool_used": result.get("tool"),
                 }
             else:
                 return {
@@ -616,9 +623,9 @@ class MCPEnabledA2AAgent(BaseAgent):
                     "status": "failed",
                     "error": result.get("error", "Unknown MCP error"),
                     "confidence": 0.0,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
-                
+
         except Exception as e:
             logger.error(f"Data analysis failed: {e}")
             return {
@@ -642,29 +649,40 @@ class MCPEnabledA2AAgent(BaseAgent):
 
             # Generate initial code template
             template_code = self._generate_code_template(code_spec)
-            
-            # Use real MCP code analyzer to validate and improve the generated code
+
+            executable_template = code_spec["language"] == "python" and (
+                code_spec["type"] == "function"
+                or (
+                    code_spec["type"] == "api_endpoint"
+                    and code_spec["framework"] == "fastapi"
+                )
+            )
+            tool_name = "execute_code" if executable_template else "code_analyzer"
             result = await self._execute_mcp_tool(
-                "code_analyzer",
+                tool_name,
                 {
                     "code": template_code,
-                    "language": code_spec["language"]
-                }
+                    "language": code_spec["language"],
+                },
             )
 
             if result.get("status") == "success":
                 mcp_result = result.get("result", {})
                 
-                # Use self_corrector to improve the code
-                corrector_result = await self._execute_mcp_tool(
-                    "self_corrector",
-                    {
-                        "code": template_code,
-                        "language": code_spec["language"],
-                        "strict_mode": False
-                    }
-                )
-                
+                # Use self_corrector when the MCP server provides it.
+                try:
+                    corrector_result = await self._execute_mcp_tool(
+                        "self_corrector",
+                        {
+                            "code": template_code,
+                            "language": code_spec["language"],
+                            "strict_mode": False,
+                        },
+                    )
+                except Exception as e:
+                    logger.warning(f"Code correction unavailable: {e}")
+                    corrector_result = {}
+
                 return {
                     "code_type": code_spec["type"],
                     "language": code_spec["language"],
@@ -720,17 +738,12 @@ async def process_data(request: RequestModel):
         raise HTTPException(status_code=500, detail=str(e))
 '''
             elif code_type == "function":
-                return f'''def {
-                    spec.get(
-                        'name',
-                        'process')}(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Generated function: {
-                    spec.get(
-                        'description',
-                        'Process data')}"""
+                description = repr(str(spec.get("description", "Process data")))
+                return f'''def {spec.get('name', 'process')}(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Generated function."""
+    description = {description}
     # Implementation
-    result = {
-                    "processed": True, "input": data}
+    result = {{"processed": True, "input": data}}
     return result
 '''
 
@@ -819,7 +832,7 @@ class PerformanceMonitor:
         """Update performance statistics from real MCP metrics"""
         try:
             from connectors.real_mcp_client import get_mcp_client_pool
-            
+
             # Get real metrics from MCP client pool
             pool = await get_mcp_client_pool()
             pool_stats = pool.stats
@@ -830,9 +843,9 @@ class PerformanceMonitor:
                 "avg_latency_ms": pool_stats.get("avg_latency_ms", 0.0),
                 "active_connections": pool_stats.get("active_connections", 0),
                 "error_rate": pool_stats.get("error_rate", 0.0),
-                "last_updated": datetime.utcnow().isoformat()
+                "last_updated": datetime.utcnow().isoformat(),
             })
-            
+
         except Exception as e:
             logger.error(f"Failed to update performance stats: {e}")
 

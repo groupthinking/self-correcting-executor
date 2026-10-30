@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Production MCP Deployment with State Continuity Extensions
-==========================================================
 
 This demonstrates the strategic approach:
 1. Use mcp-use for core MCP functionality (commodity)

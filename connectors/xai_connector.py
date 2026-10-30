@@ -1,6 +1,5 @@
 """
 xAI Connector for MCP Integration
-=================================
 
 Integrates xAI's Grok models with our MCP infrastructure,
 including live search capabilities.
@@ -148,10 +147,7 @@ class XAIConnector:
         messages = [
             {
                 "role": "system",
-                "content": (
-                    "You are a helpful assistant with access to current information. "
-                    "Search for and summarize the requested information."
-                ),
+                "content": "You are a helpful assistant with access to current information. Search for and summarize the requested information.",
             },
             {"role": "user", "content": query},
         ]

@@ -4,11 +4,6 @@ Comprehensive test suite for MCP Debug Tool with Quantum Agent Applications
 Tests all debugging capabilities, quantum analysis, and GCP integration
 """
 
-from quantum_mcp_server.quantum_mcp import QuantumMCPServer
-from connectors.mcp_debug_tool import (
-    MCPDebugTool,
-    MCPDebugContext,
-)
 import asyncio
 import json
 import sys
@@ -20,6 +15,12 @@ import logging
 # Add project root to path
 sys.path.append(str(Path(__file__).parent))
 
+from connectors.mcp_debug_tool import (
+    MCPDebugTool,
+    MCPDebugContext,
+    DebugResponse,
+)
+from quantum_mcp_server.quantum_mcp import QuantumMCPServer
 
 # Configure logging
 logging.basicConfig(
@@ -92,7 +93,11 @@ class QuantumDebugTestSuite:
     async def test_debug_tool_init(self) -> bool:
         """Test MCP Debug Tool initialization"""
         try:
-            async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+            from config.mcp_config import MCPConfig
+
+            config = MCPConfig()
+            mcp_url = config.get_endpoints()["mcp_server"]
+            async with MCPDebugTool(mcp_url) as debug_tool:
                 return debug_tool is not None and hasattr(
                     debug_tool, "quantum_analyzers"
                 )
@@ -104,20 +109,20 @@ class QuantumDebugTestSuite:
         quantum_code = """
         import qiskit
         from qiskit import QuantumCircuit, execute, Aer
-
+        
         def create_bell_state():
             qc = QuantumCircuit(2, 2)
             qc.h(0)
             qc.cx(0, 1)
             qc.measure_all()
             return qc
-
+        
         circuit = create_bell_state()
         backend = Aer.get_backend('qasm_simulator')
         result = execute(circuit, backend, shots=1024).result()
         """
 
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             analysis = await debug_tool._analyze_code_structure(quantum_code)
 
             required_keys = [
@@ -142,7 +147,7 @@ class QuantumDebugTestSuite:
         qc.cx(0, 1)  # Operation after measurement
         """
 
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_qubit_state(problematic_quantum_code, {})
 
             has_operations = len(result["operations"]) > 0
@@ -163,7 +168,7 @@ class QuantumDebugTestSuite:
         qc.bell_state(0, 1)  # Custom bell state
         """
 
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_entanglement(entanglement_code, {})
 
             has_operations = len(result["entanglement_operations"]) > 0
@@ -174,8 +179,7 @@ class QuantumDebugTestSuite:
 
     async def test_decoherence_analysis(self) -> bool:
         """Test decoherence risk assessment"""
-        risky_code = (
-            """
+        risky_code = """
         import time
         qc = QuantumCircuit(10)
         for i in range(100):  # Long loop
@@ -183,11 +187,9 @@ class QuantumDebugTestSuite:
             time.sleep(0.01)  # Timing delay
             qc.cx(i % 10, (i + 1) % 10)
         # This is a very long quantum program with many operations
-        # """
-            + "\n" * 60
-        )  # Make it long
+        # """ + "\n" * 60  # Make it long
 
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_decoherence(risky_code, {})
 
             has_risks = len(result["risks"]) > 0
@@ -211,7 +213,7 @@ class QuantumDebugTestSuite:
         qc.cx(1, 2)
         """
 
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             result = await debug_tool._analyze_gate_fidelity(gate_heavy_code, {})
 
             has_gates = result["total_gates"] > 5
@@ -237,7 +239,7 @@ class QuantumDebugTestSuite:
             "IndexError: list index out of range",
         ]
 
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             all_patterns_detected = True
 
             for error in errors:
@@ -250,8 +252,7 @@ class QuantumDebugTestSuite:
 
     async def test_performance_metrics(self) -> bool:
         """Test performance metrics calculation"""
-        complex_code = (
-            """
+        complex_code = """
         def complex_quantum_function():
             for i in range(10):
                 if i % 2 == 0:
@@ -263,11 +264,9 @@ class QuantumDebugTestSuite:
                             continue
                     else:
                         pass
-        """
-            + "\n" * 150
-        )  # Make it long
+        """ + "\n" * 150  # Make it long
 
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             debug_context = MCPDebugContext(
                 file="test.py",
                 line=1,
@@ -295,34 +294,34 @@ class QuantumDebugTestSuite:
         teleportation_code = """
         import qiskit
         from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
-
+        
         def quantum_teleportation():
             # Create quantum registers
             qreg = QuantumRegister(3, 'q')
             creg = ClassicalRegister(3, 'c')
             qc = QuantumCircuit(qreg, creg)
-
+            
             # Prepare the state to be teleported (|+> state)
             qc.h(qreg[0])
-
+            
             # Create Bell pair between qubits 1 and 2
             qc.h(qreg[1])
             qc.cx(qreg[1], qreg[2])
-
+            
             # Bell measurement on qubits 0 and 1
             qc.cx(qreg[0], qreg[1])
             qc.h(qreg[0])
             qc.measure(qreg[0], creg[0])
             qc.measure(qreg[1], creg[1])
-
+            
             # Apply corrections based on measurement
             qc.cx(qreg[1], qreg[2])
             qc.cz(qreg[0], qreg[2])
-
+            
             return qc
         """
 
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             mcp_data = {
                 "file": "quantum_teleportation.py",
                 "line": 15,
@@ -386,7 +385,7 @@ class QuantumDebugTestSuite:
 
     async def test_mcp_context_creation(self) -> bool:
         """Test MCP debug context creation and validation"""
-        async with MCPDebugTool("https://mock-gcp-api") as debug_tool:
+        async with MCPDebugTool("config.get_endpoints()['mcp_server']") as debug_tool:
             mcp_data = {
                 "file": "test_quantum.py",
                 "line": 42,
@@ -446,9 +445,7 @@ class QuantumDebugTestSuite:
         logger.info(f"📊 Total Tests: {self.total_tests}")
         logger.info(f"✅ Passed: {self.passed_tests}")
         logger.info(f"❌ Failed: {self.total_tests - self.passed_tests}")
-        logger.info(
-            f"📈 Success Rate: {(self.passed_tests / self.total_tests) * 100:.1f}%"
-        )
+        logger.info(f"📈 Success Rate: {(self.passed_tests/self.total_tests)*100:.1f}%")
 
         if self.passed_tests == self.total_tests:
             logger.info("🎉 ALL TESTS PASSED! MCP Debug Tool is fully functional.")
@@ -466,21 +463,21 @@ async def run_debug_tool_demo():
     demo_code = """
     import qiskit
     from qiskit import QuantumCircuit, execute
-
+    
     def problematic_quantum_function():
         # Issue 1: Undefined qubit count
         qc = QuantumCircuit(undefined_qubits)
-
+        
         # Issue 2: Premature measurement
         qc.h(0)
         qc.measure(0, 0)
         qc.cx(0, 1)  # Operation after measurement
-
+        
         # Issue 3: High gate density
         for i in range(100):
             qc.h(i % 5)
             qc.cx(i % 5, (i + 1) % 5)
-
+        
         return qc
     """
 
@@ -508,18 +505,12 @@ async def run_debug_tool_demo():
 
         if result.quantum_insights:
             logger.info(
-                f"Quantum Insights: {
-                    json.dumps(
-                        result.quantum_insights,
-                        indent=2)}"
+                f"Quantum Insights: {json.dumps(result.quantum_insights, indent=2)}"
             )
 
         if result.performance_metrics:
             logger.info(
-                f"Performance Metrics: {
-                    json.dumps(
-                        result.performance_metrics,
-                        indent=2)}"
+                f"Performance Metrics: {json.dumps(result.performance_metrics, indent=2)}"
             )
 
 

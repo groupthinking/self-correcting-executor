@@ -46,7 +46,7 @@ fi
 
 # List TODO/FIXME items for tracking
 echo "📝 Generating TODO/FIXME report..."
-grep -rn "TODO\|FIXME\|HACK\|XXX\|PLACEHOLDER" . \
+grep -Ern "TODO|FIXME|HACK|XXX|PLACEHOLDER" . \
     --include="*.py" \
     --include="*.yaml" \
     --include="*.yml" \
@@ -57,7 +57,7 @@ grep -rn "TODO\|FIXME\|HACK\|XXX\|PLACEHOLDER" . \
 
 # List mock/fake implementations
 echo "🎭 Generating mock/fake implementation report..."
-grep -rn "mock\|fake\|simulated\|placeholder" . \
+grep -Ern "mock|fake|simulated|placeholder" . \
     --include="*.py" \
     --include="*.ts" \
     --include="*.tsx" \

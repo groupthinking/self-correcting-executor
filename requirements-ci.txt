@@ -1,0 +1,31 @@
+# Minimal requirements for CI/CD pipeline
+# Core dependencies
+aiohttp>=3.8.0
+# Match the production MCP SDK/Pydantic compatibility pair.
+pydantic==2.11.7
+fastapi>=0.100.0
+uvicorn>=0.20.0
+
+# Testing and linting
+black>=23.0.0
+flake8>=6.0.0
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+
+# Basic utilities
+requests>=2.28.0
+python-dotenv>=1.0.0
+PyYAML>=6.0.0
+# Imports exercised by the real MCP and database unit tests.
+mcp==1.9.4
+numpy>=1.24,<3
+psycopg2-binary>=2.9.9
+packaging>=23.0
+
+# Selected catalog protocols run their real monitor and Redis client paths.
+psutil==7.0.0
+redis==6.2.0
+
+# Real PDF intake for imported workflows (not upstream placeholder text).
+pypdf==6.21.4

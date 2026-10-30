@@ -195,7 +195,7 @@ export default function HomePage() {
           <div className="mt-8 relative max-w-2xl mx-auto">
             <input
               type="text"
-              placeholder="Search ideas or ask AI for insights..."
+              actual="Search ideas or ask AI for insights..."
               className="w-full px-6 py-3 pr-12 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

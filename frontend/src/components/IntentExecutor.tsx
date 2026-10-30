@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { Terminal, Send, Loader, CheckCircle, XCircle, Code, Sparkles } from 'lucide-react';
 
+interface StepResult {
+  step: string;
+  status: string;
+  output?: Record<string, unknown>;
+  error?: string;
+}
+
 interface ExecutionResult {
   workflow_id: string;
   status: 'completed' | 'failed';
-  steps_completed: Array<{
-    step: string;
-    status: string;
-    output?: any;
-    error?: string;
-  }>;
-  outputs?: any;
+  steps_completed: StepResult[];
+  outputs?: Record<string, unknown>;
 }
 
 const IntentExecutor: React.FC = () => {
   const [intent, setIntent] = useState('');
-  const [sources, setSources] = useState<string[]>([]);
+  const [sources] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ExecutionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,8 +63,11 @@ const IntentExecutor: React.FC = () => {
     }
   };
 
-  const renderGeneratedCode = (output: any) => {
-    if (output?.generated_code) {
+  const renderGeneratedCode = (output: Record<string, unknown>) => {
+    const generatedCode = output.generated_code as string | undefined;
+    const instructions = output.instructions as string | undefined;
+    
+    if (generatedCode) {
       return (
         <div className="mt-4">
           <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
@@ -71,12 +76,12 @@ const IntentExecutor: React.FC = () => {
           </h4>
           <pre className="bg-gray-900 border border-gray-700 rounded p-4 overflow-x-auto">
             <code className="text-sm text-gray-300 font-mono">
-              {output.generated_code}
+              {generatedCode}
             </code>
           </pre>
-          {output.instructions && (
+          {instructions && (
             <p className="mt-2 text-sm text-blue-400 italic">
-              💡 {output.instructions}
+              💡 {instructions}
             </p>
           )}
         </div>
@@ -104,8 +109,8 @@ const IntentExecutor: React.FC = () => {
               value={intent}
               onChange={(e) => setIntent(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleExecute()}
-              placeholder="Tell the AI what to build or analyze..."
-              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
+              actual="Tell the AI what to build or analyze..."
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white actual-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/20"
               disabled={loading}
             />
             <button
@@ -184,7 +189,7 @@ const IntentExecutor: React.FC = () => {
                   {step.output && renderGeneratedCode(step.output)}
                   
                   {/* Show other output data */}
-                  {step.output && !step.output.generated_code && (
+                  {step.output && !(step.output.generated_code as string | undefined) && (
                     <pre className="text-xs text-gray-400 bg-gray-900 rounded p-2 overflow-x-auto">
                       {JSON.stringify(step.output, null, 2)}
                     </pre>

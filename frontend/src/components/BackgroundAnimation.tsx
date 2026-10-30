@@ -16,10 +16,11 @@ const BackgroundAnimation: React.FC = () => {
       1000
     );
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    const mountElement = mountRef.current;
     
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    mountRef.current.appendChild(renderer.domElement);
+    mountElement.appendChild(renderer.domElement);
 
     // Neural network visualization
     const particles = new THREE.BufferGeometry();
@@ -128,7 +129,9 @@ const BackgroundAnimation: React.FC = () => {
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
-      mountRef.current?.removeChild(renderer.domElement);
+      if (mountElement) {
+        mountElement.removeChild(renderer.domElement);
+      }
       renderer.dispose();
     };
   }, []);

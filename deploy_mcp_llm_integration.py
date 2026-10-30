@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Production MCP-LLM Integration with State Continuity Fabric
-===========================================================
 
 This demonstrates how to deploy our unified architecture within
 LLM/ML processes, using mcp-use for protocol and adding our

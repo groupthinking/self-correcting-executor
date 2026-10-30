@@ -5,37 +5,61 @@ import os
 from datetime import datetime
 
 
-def task():
-    """Process data files and extract insights"""
-    # Try multiple possible data directories
-    possible_dirs = [
-        os.environ.get("DATA_DIR", "/data"),
-        "/data",
-        "/app/data",
-        "/tmp",
-        os.getcwd(),
-    ]
+class DataProcessor:
+    """Data processor class for MCP server integration"""
 
-    data_dir = None
-    for dir_path in possible_dirs:
-        if os.path.exists(dir_path) and os.path.isdir(dir_path):
-            data_dir = dir_path
-            break
+    def __init__(self):
+        pass
+
+    def process(self):
+        """Process data files and extract insights"""
+        return task()
+
+
+def task(data_path=None, source=None):
+    """Process data files and extract insights"""
+    if source is not None:
+        if data_path is not None:
+            raise ValueError("Provide source or data_path, not both")
+        if isinstance(source, dict):
+            from workflows.field_capture import normalize_field_capture
+
+            return normalize_field_capture(source)
+        if isinstance(source, str) and os.path.isfile(source):
+            with open(source, encoding="utf-8") as handle:
+                from workflows.field_capture import normalize_field_capture
+
+                return normalize_field_capture(json.load(handle))
+        if not isinstance(source, str) or not os.path.isdir(source):
+            raise ValueError("source must be field-capture data or an existing path")
+        data_path = source
+    if data_path is not None and not os.path.isdir(data_path):
+        raise ValueError(f"Data directory does not exist: {data_path}")
+    # Use provided data path or try multiple possible data directories
+    if data_path and os.path.exists(data_path) and os.path.isdir(data_path):
+        data_dir = data_path
+    else:
+        possible_dirs = [
+            os.environ.get("DATA_DIR", "/data"),
+            "/data",
+            "/app/data",
+            "/tmp",
+            os.getcwd(),
+        ]
+
+        data_dir = None
+        for dir_path in possible_dirs:
+            if os.path.exists(dir_path) and os.path.isdir(dir_path):
+                data_dir = dir_path
+                break
 
     if not data_dir:
-        # Create a mock result when no data directory exists
+        # NO SIMULATIONS - Real data required
         return {
-            "success": True,
+            "success": False,
             "action": "data_processing",
-            "mode": "simulation",
-            "message": "No data directory found, returning simulated results",
-            "files_processed": 3,
-            "total_records": 150,
-            "insights": [
-                "Simulated: Found 3 data files",
-                "Simulated: Processed 150 records total",
-                "Simulated: Average processing time 0.5s per file",
-            ],
+            "error": "No data directory found. Please set DATA_DIR environment variable or ensure /data exists.",
+            "checked_paths": possible_dirs,
             "timestamp": datetime.utcnow().isoformat(),
         }
 
@@ -72,12 +96,10 @@ def task():
                             total_records += 1
                         processed_count += 1
                         insights.append(
-                            f"{filename}: {
-                                type(data).__name__} with {
-                                len(data) if isinstance(
-                                    data, (list, dict)) else 1} items"
+                            f"{filename}: {type(data).__name__} with {len(data) if isinstance(data, (list, dict)) else 1} items"
                         )
-                except BaseException:
+                except (json.JSONDecodeError, OSError):
+                    # Skip files that can't be read or parsed
                     pass
 
             elif filename.endswith(".csv"):
@@ -88,7 +110,8 @@ def task():
                         total_records += row_count
                         processed_count += 1
                         insights.append(f"{filename}: CSV with {row_count} rows")
-                except BaseException:
+                except (csv.Error, OSError):
+                    # Skip CSV files that can't be read or parsed
                     pass
 
         # Always return success if we got this far

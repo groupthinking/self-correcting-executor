@@ -4,6 +4,7 @@ Supports quantum agent applications and real-time code analysis
 """
 
 import asyncio
+import os
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
@@ -263,10 +264,7 @@ class MCPDebugTool(MCPConnector):
                 if response.status == 200:
                     return await response.json()
                 else:
-                    self.logger.warning(
-                        f"GCP API returned status {
-                            response.status}"
-                    )
+                    self.logger.warning(f"GCP API returned status {response.status}")
                     return await self._fallback_reasoning(code, error)
         except Exception as e:
             self.logger.error(f"GCP API call failed: {str(e)}")
@@ -428,10 +426,7 @@ class MCPDebugTool(MCPConnector):
 
             if "measure" in line.lower() and "before" not in line.lower():
                 if i > 0 and "gate" not in lines[i - 1].lower():
-                    issues.append(
-                        f"Potential premature measurement at line {
-                            i + 1}"
-                    )
+                    issues.append(f"Potential premature measurement at line {i+1}")
 
         return {
             "operations": qubit_operations,
@@ -609,7 +604,7 @@ MCP_DEBUG_TOOL_SCHEMA = {
     "tools": [
         {
             "name": "DebugTool",
-            "endpoint": "https://your-gcp-api/v1/reason",
+            "endpoint": "https://api.example.com/v1/reason",
             "type": "debug",
             "schema": {
                 "code": {
@@ -664,7 +659,7 @@ MCP_DEBUG_TOOL_SCHEMA = {
             "version": "1.0.0",
             "authentication": {
                 "type": "oauth2",
-                "token_url": "https://your-gcp-api/oauth2/token",
+                "token_url": "https://api.example.com/oauth2/token",
                 "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
             },
             "timeout": 30000,
@@ -682,7 +677,8 @@ MCP_DEBUG_TOOL_SCHEMA = {
 async def example_usage():
     """Example usage of the MCP Debug Tool"""
     async with MCPDebugTool(
-        gcp_endpoint="https://your-gcp-api", auth_token="your-oauth-token"
+        gcp_endpoint=os.getenv("GCP_API_ENDPOINT", "https://api.example.com"),
+        auth_token=os.getenv("GCP_AUTH_TOKEN", "development-token"),
     ) as debug_tool:
 
         # Debug quantum code

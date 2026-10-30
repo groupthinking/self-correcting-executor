@@ -76,7 +76,7 @@ class ProtocolRegistry:
             log(f"Protocol {name} not found in registry")
             return False
 
-        registry["protocols"][name]
+        protocol_info = registry["protocols"][name]
 
         # Deployment logic based on target
         if target == "local":

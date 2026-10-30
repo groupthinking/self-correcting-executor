@@ -1,6 +1,5 @@
 """
 Unified MCP-A2A-Mojo Integration
-================================
 
 This module demonstrates how three complementary technologies create a
 sophisticated, high-performance agent runtime:
@@ -266,9 +265,7 @@ class IntelligentUnifiedAgent(BaseAgent):
         # Verify SLA compliance
         if transport_result["transport_latency_ms"] > self.sla["max_latency_ms"]:
             print(
-                f"⚠️  SLA violation: {
-                    transport_result['transport_latency_ms']:.2f}ms > {
-                    self.sla['max_latency_ms']}ms"
+                f"⚠️  SLA violation: {transport_result['transport_latency_ms']:.2f}ms > {self.sla['max_latency_ms']}ms"
             )
 
         return {

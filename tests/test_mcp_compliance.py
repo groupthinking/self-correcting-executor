@@ -2,45 +2,41 @@
 """MCP Compliance Tests - Ensure all components use real MCP, no mocks"""
 
 import pytest
+import asyncio
 import os
+import json
 from pathlib import Path
+from typing import Dict, Any, List
 import aiohttp
 
 # Import MCP components
 from config.mcp_config import MCPConfig
-from mcp_server.real_mcp_server import RealMCPServer
+from mcp_server.real_mcp_server import mcp
 from connectors.dwave_quantum_connector import DWaveQuantumConnector
-from agents.a2a_mcp_integration import MCPEnabledA2AAgent
+from agents.a2a_mcp_integration import MCPEnabledA2AAgent, a2a_mcp_orchestrator
 
 
 class TestMCPCompliance:
     """Test suite to ensure MCP compliance across the codebase"""
 
     @pytest.fixture
-    async def mcp_config(self):
+    def mcp_config(self):
         """Get MCP configuration"""
         return MCPConfig()
 
     @pytest.fixture
-    async def mcp_server(self):
-        """Create real MCP server instance"""
-        server = RealMCPServer()
-        return server
+    def mcp_server(self):
+        """Use the actual registered FastMCP server."""
+        return mcp
 
     def test_no_mock_endpoints(self, mcp_config):
         """Test that no mock endpoints are configured"""
         # This should raise an exception if any mock URLs are found
-        assert mcp_config.check_no_mocks()
+        assert mcp_config.check_no_mocks() == True
 
         # Verify all endpoints are real
         endpoints = mcp_config.get_endpoints()
-        mock_indicators = [
-            "mock",
-            "fake",
-            "simulated",
-            "placeholder",
-            "example.com",
-        ]
+        mock_indicators = ["mock", "fake", "simulated", "placeholder", "example.com"]
 
         for name, url in endpoints.items():
             if url:
@@ -89,50 +85,79 @@ class TestMCPCompliance:
             assert "No D-Wave QPU available" in str(e)
 
     @pytest.mark.asyncio
-    async def test_data_processor_no_simulation(self):
+    async def test_data_processor_no_simulation(self, tmp_path):
         """Test that data processor doesn't return simulated results"""
         from protocols.data_processor import task as process_data
 
-        result = process_data()
+        (tmp_path / "records.json").write_text(json.dumps([{"value": 1}, {"value": 2}]))
+        result = process_data(str(tmp_path))
 
         # Should either succeed with real data or fail
         if result["success"]:
             assert "simulation" not in str(result).lower()
             assert "simulated" not in str(result).lower()
-            assert result.get("directory") is not None
+            assert result["directory"] == str(tmp_path)
+            assert result["files_processed"] == 1
+            assert result["total_records"] == 2
         else:
             # Failed because no data directory - this is expected
             assert "error" in result
             assert "No data directory found" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_mcp_server_tools_are_real(self, mcp_server):
-        """Test that MCP server tools perform real operations"""
-        # Test data processing tool
-        result = await mcp_server.server.tool("process_data")(
-            data_path="./test_data", operation="analyze"
+    async def test_mcp_server_tools_are_real(self, mcp_server, tmp_path):
+        """Dispatch the registered tool and verify actual filesystem analysis."""
+        sample = tmp_path / "records.json"
+        sample.write_text(json.dumps([{"value": 1}]))
+        content = await mcp_server.call_tool(
+            "process_data", {"data_path": str(tmp_path), "operation": "analyze"}
         )
-
-        # Should return real analysis or error, never mock data
-        assert "mock" not in str(result).lower()
-        assert "simulated" not in str(result).lower()
+        result = json.loads(content[0].text)
+        assert result["status"] == "success"
+        assert result["file_count"] == 1
+        assert result["total_size_bytes"] == sample.stat().st_size
+        assert result["file_types"] == {".json": 1}
 
     @pytest.mark.asyncio
-    async def test_agents_use_real_mcp(self):
-        """Test that agents use real MCP for communication"""
+    async def test_mcp_server_reports_missing_data(self, mcp_server, tmp_path):
+        content = await mcp_server.call_tool(
+            "process_data",
+            {"data_path": str(tmp_path / "missing"), "operation": "analyze"},
+        )
+        result = json.loads(content[0].text)
+        assert result["status"] == "error"
+        assert "does not exist" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_agents_use_real_mcp(self, mcp_server, tmp_path, monkeypatch):
+        """Exercise the agent against registered tools without a network provider."""
+        sample = tmp_path / "sample.txt"
+        sample.write_text("real fixture data")
         agent = MCPEnabledA2AAgent("test_agent", ["analyze"])
+        calls = []
 
-        # Test data analysis uses real MCP
-        result = await agent._analyze_data({"path": "./data"})
+        async def dispatch_registered_tool(name, arguments):
+            calls.append((name, arguments))
+            content = await mcp_server.call_tool(name, arguments)
+            return json.loads(content[0].text)
 
-        # Should return real analysis results
-        assert result["analysis_type"] in ["comprehensive", "failed"]
-        assert "confidence" in result
+        monkeypatch.setattr(agent, "_execute_mcp_tool", dispatch_registered_tool)
+        result = await agent._analyze_data({"path": str(tmp_path)})
+        assert calls[0] == (
+            "process_data",
+            {"data_path": str(tmp_path), "operation": "analyze"},
+        )
+        assert result["analysis_type"] == "comprehensive"
+        assert result["status"] == "success"
+        assert result["file_count"] == 1
+        assert result["total_size"] == sample.stat().st_size
+        assert result["confidence"] > 0
 
-        # Test code generation
         result = await agent._generate_code({"type": "function", "language": "python"})
-
-        assert result["code_type"] in ["function", "error"]
+        assert calls[1][0] == "execute_code"
+        assert calls[1][1]["language"] == "python"
+        assert "def process" in calls[1][1]["code"]
+        assert result["code_type"] == "function"
         assert "code" in result
 
     def test_no_placeholder_code_in_production(self):
@@ -168,7 +193,7 @@ class TestMCPCompliance:
             print("\n⚠️  Placeholder code found in production files:")
             for issue in issues[:10]:  # Show first 10
                 print(f"  - {issue}")
-            (print(f"  ... and {len(issues) - 10} more") if len(issues) > 10 else None)
+            print(f"  ... and {len(issues) - 10} more") if len(issues) > 10 else None
 
     @pytest.mark.asyncio
     async def test_mcp_http_endpoints(self, mcp_config):
@@ -218,10 +243,7 @@ class TestMCPCompliance:
                             issues.append(f"{ts_file}:{i} - {line.strip()}")
 
             # These should all be replaced
-            assert (
-                len(issues) == 0
-            ), f"Found {
-                len(issues)} mock references in UI"
+            assert len(issues) == 0, f"Found {len(issues)} mock references in UI"
 
     def test_integration_points_documented(self):
         """Test that all MCP integration points are documented"""
@@ -232,13 +254,19 @@ class TestMCPCompliance:
 
         for doc in required_docs:
             doc_path = Path(doc)
-            if doc_path.exists():
-                content = doc_path.read_text()
+            assert doc_path.is_file(), f"Missing integration document: {doc}"
+            assert "MCP" in doc_path.read_text()
 
-                # Check for required sections
-                assert "Real" in content or "real" in content
-                assert "mock" not in content.lower() or "no mock" in content.lower()
-                assert "MCP" in content
+        # Migration plans legitimately discuss mocks. Verify the current runtime
+        # map against files that exist instead of banning a word in historical plans.
+        repo_map = Path("docs/REPO_MAP.md").read_text()
+        for source in [
+            "mcp_server/main.py",
+            "mcp_server/real_mcp_server.py",
+            "agents/a2a_mcp_integration.py",
+        ]:
+            assert Path(source).is_file()
+            assert source in repo_map, f"Undocumented integration: {source}"
 
     def test_env_template_exists(self):
         """Test that .env template exists with all required variables"""
@@ -291,7 +319,8 @@ def run_compliance_check():
                 content = py_file.read_text()
                 if "TODO:" in content or "FIXME:" in content:
                     placeholder_count += 1
-            except BaseException:
+            except (OSError, UnicodeDecodeError):
+                # Intentionally ignore files that can't be read/decoded; skip them in this quick placeholder scan
                 pass
 
     if placeholder_count > 0:

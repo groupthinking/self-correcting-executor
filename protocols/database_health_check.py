@@ -33,18 +33,15 @@ def task():
         connection_count = cursor.fetchone()[0]
 
         # Check table count
-        cursor.execute(
-            """
-            SELECT count(*)
-            FROM information_schema.tables
+        cursor.execute("""
+            SELECT count(*) 
+            FROM information_schema.tables 
             WHERE table_schema = 'public';
-        """
-        )
+        """)
         table_count = cursor.fetchone()[0]
 
         # Create a test table if it doesn't exist
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS protocol_executions (
                 id SERIAL PRIMARY KEY,
                 protocol_name VARCHAR(100),
@@ -52,8 +49,7 @@ def task():
                 success BOOLEAN,
                 details JSONB
             );
-        """
-        )
+        """)
 
         # Insert a test record
         cursor.execute(
@@ -73,20 +69,7 @@ def task():
         cursor.close()
         conn.close()
 
-        return {
-            "success": True,
-            "action": "database_health_check",
-            "database_info": {
-                # Truncate long version string
-                "version": db_version.split(",")[0],
-                "size_bytes": db_size,
-                "size_mb": round(db_size / (1024 * 1024), 2),
-                "connection_count": connection_count,
-                "table_count": table_count,
-            },
-            "test_write": "successful",
-            "timestamp": datetime.utcnow().isoformat(),
-        }
+        # Truncate long version string
 
     except Exception as e:
         return {

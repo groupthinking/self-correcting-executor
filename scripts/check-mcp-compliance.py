@@ -4,7 +4,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 
 def check_no_mock_endpoints() -> Tuple[bool, List[str]]:
@@ -59,14 +59,7 @@ def check_mock_implementations_in_code() -> Tuple[bool, List[str]]:
     ]
 
     # Directories to check
-    check_dirs = [
-        "agents",
-        "connectors",
-        "protocols",
-        "mcp_server",
-        "ui",
-        "frontend",
-    ]
+    check_dirs = ["agents", "connectors", "protocols", "mcp_server", "ui", "frontend"]
 
     for dir_name in check_dirs:
         dir_path = Path(dir_name)
@@ -85,7 +78,7 @@ def check_mock_implementations_in_code() -> Tuple[bool, List[str]]:
                             issues.append(
                                 f"{py_file}: {count} occurrences of '{pattern}'"
                             )
-                except Exception:
+                except Exception as e:
                     pass
 
             # Check TypeScript files
@@ -101,7 +94,7 @@ def check_mock_implementations_in_code() -> Tuple[bool, List[str]]:
                             issues.append(
                                 f"{ts_file}: {count} occurrences of '{pattern}'"
                             )
-                except Exception:
+                except Exception as e:
                     pass
 
     return len(issues) == 0, issues
@@ -110,13 +103,7 @@ def check_mock_implementations_in_code() -> Tuple[bool, List[str]]:
 def check_placeholder_code() -> Tuple[bool, List[str]]:
     """Check for TODO/FIXME/placeholder code"""
     issues = []
-    placeholder_patterns = [
-        "TODO:",
-        "FIXME:",
-        "XXX:",
-        "HACK:",
-        "NotImplementedError",
-    ]
+    placeholder_patterns = ["TODO:", "FIXME:", "XXX:", "HACK:", "NotImplementedError"]
 
     production_dirs = ["agents", "connectors", "mcp_server", "protocols"]
 
@@ -165,10 +152,7 @@ def check_environment_setup() -> Tuple[bool, List[str]]:
             missing_vars.append(f"{var} ({feature})")
 
     if missing_vars:
-        issues.append(
-            f"Missing environment variables: {
-                ', '.join(missing_vars)}"
-        )
+        issues.append(f"Missing environment variables: {', '.join(missing_vars)}")
 
     return len(issues) == 0, issues
 

@@ -17,7 +17,7 @@ def run_self_correcting_executor(protocol="default_protocol", iterations=1):
         log(f"\n--- Iteration {i + 1}/{iterations} ---")
 
         # Execute the protocol
-        execute_task(protocol)
+        outcome = execute_task(protocol)
 
         # Immediate mutation check after each execution
         mutated = mutate_protocol(protocol)

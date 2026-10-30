@@ -1,0 +1,53 @@
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  role: String!
+}
+
+type Project {
+  id: ID!
+  name: String!
+  location: String
+  startDate: String
+  endDate: String
+  members: [User!]!
+}
+
+type DailyLog {
+  id: ID!
+  projectId: ID!
+  authorId: ID!
+  date: String!
+  notes: String
+  attachments: [Attachment!]!
+}
+
+type Attachment {
+  id: ID!
+  url: String!
+  contentType: String
+  size: Int
+}
+
+type Task {
+  id: ID!
+  projectId: ID!
+  title: String!
+  description: String
+  assigneeId: ID
+  status: String!
+  createdAt: String!
+}
+
+type Query {
+  projects: [Project!]!
+  project(id: ID!): Project
+  dailyLogs(projectId: ID!, date: String): [DailyLog!]!
+}
+
+type Mutation {
+  createProject(name: String!, location: String): Project!
+  createDailyLog(projectId: ID!, notes: String, attachments: [String!]): DailyLog!
+  createTask(projectId: ID!, title: String!, assigneeId: ID): Task!
+}
