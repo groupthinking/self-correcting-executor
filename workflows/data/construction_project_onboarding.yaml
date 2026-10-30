@@ -1,0 +1,25 @@
+name: construction_project_onboarding
+source_repo: WRKFLW
+summary: Create the supplied project and send a scoped invitation; invitee acceptance remains a separate authenticated action.
+tags: [project onboarding]
+required_inputs: [project_parameters, invite_email, invite_role]
+resilience: {enabled: true, max_attempts: 1}
+metadata:
+  source: ported/wrkflw/PRD.md
+  requires_host_agent: construction_lifecycle
+steps:
+  - type: agent
+    name: construction_lifecycle
+    inputs:
+      operation: create_project
+      parameters: {$ref: inputs.project_parameters}
+    outputs: [created_project]
+  - type: agent
+    name: construction_lifecycle
+    inputs:
+      operation: invite
+      parameters:
+        project_id: {$ref: outputs.created_project.id}
+        email: {$ref: inputs.invite_email}
+        role: {$ref: inputs.invite_role}
+    outputs: [invitation]

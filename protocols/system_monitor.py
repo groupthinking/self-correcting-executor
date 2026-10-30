@@ -3,8 +3,14 @@ import psutil
 import platform
 
 
-def task():
+def task(scope="system"):
     """Monitor system resources and health"""
+    if not isinstance(scope, str) or scope not in {"system", "orchestration"}:
+        return {
+            "success": False,
+            "action": "system_monitoring",
+            "error": "Unsupported monitoring scope",
+        }
     try:
         # Get system info
         cpu_percent = psutil.cpu_percent(interval=1)
@@ -41,6 +47,8 @@ def task():
         return {
             "success": is_healthy,
             "action": "system_monitoring",
+            "scope": scope,
+            "observation": "Host running the orchestration process",
             "healthy": is_healthy,
             "system_info": system_info,
             "warnings": warnings,
