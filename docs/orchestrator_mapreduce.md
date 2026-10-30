@@ -139,7 +139,7 @@ HierarchicalOrchestrator(
 | `reducer` | `Callable` | `_default_reducer` | Async function that aggregates subtask results into a single output |
 | `state_file` | `str` | `<module_dir>/STATE.md` | Path to the Markdown file where job state is persisted |
 | `subtask_timeout` | `float` | `300.0` | Maximum seconds to await a subtask before marking it failed; a running protocol thread may continue |
-| `max_job_history` | `int` | `1000` | Maximum stored jobs of any status; oldest entries are pruned during planning |
+| `max_job_history` | `int` | `1000` | Maximum in-memory jobs of any status; oldest entries are pruned during planning |
 | `slack_channel` | `str` | `#agent-alerts` | Channel passed to the Slack MCP CLI on exhausted verification failure |
 | `use_semantic_gate` | `bool` | `True` | Use `SemanticGate` unless a custom gate is supplied; `False` selects mechanical verification |
 | `semantic_model` | `str` | `gpt-4o-mini` | Model for the optional OpenAI client |
@@ -381,7 +381,7 @@ Escalation is already active: `SlackEscalation` runs `manus-mcp-cli tool call sl
 
 ## Memory Management
 
-The orchestrator prevents unbounded memory growth through the `max_job_history` parameter. When the number of stored jobs exceeds this limit, the oldest jobs are pruned automatically during the `plan()` phase.
+The `max_job_history` parameter bounds the orchestrator's in-memory `self.jobs` history. During `plan()`, the oldest entries are pruned when this limit is exceeded, regardless of their status. Pruning does not delete rows from SQLite or entries from `STATE.md`; persistent-storage retention must be managed separately.
 
 ---
 
@@ -477,7 +477,7 @@ Task execution, initial outcome tracking and final persistence use `run_in_execu
 - For CPU-bound protocols: set `max_concurrency` to CPU core count
 - For I/O-bound protocols (API calls, file reads): set `max_concurrency` to 20–50
 - For long-running protocols: increase `subtask_timeout` accordingly
-- For high-throughput systems: increase `max_job_history` or implement external persistence
+- For high-throughput systems: size `max_job_history` for the desired in-memory history window and manage persistent-storage retention separately
 
 ---
 
@@ -491,7 +491,7 @@ User Intent
 │ PLAN                                                     │
 │  • Generate job ID                                       │
 │  • Create SubTask for each item in task_list             │
-│  • Prune old jobs if history exceeds max_job_history     │
+│  • Prune in-memory jobs beyond max_job_history           │
 └────────────────────────────┬────────────────────────────┘
                              │
                              ▼
