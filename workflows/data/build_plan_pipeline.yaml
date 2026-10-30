@@ -1,0 +1,42 @@
+name: build_plan_pipeline
+source_repo: workflows
+summary: Source intake, executive summary, BuildPlan, executable agent DAG, and stored TypeScript artifacts.
+tags: [build plan, agent graph]
+required_inputs: [source_url, task_inputs]
+resilience:
+  enabled: true
+  max_attempts: 2
+metadata:
+  imported_from: groupthinking/workflows
+  source_types: [url, video, pdf, doc]
+  agent_kinds: [SequentialAgent, ParallelAgent, LoopAgent, LlmAgent, CustomAgent]
+  requires_host_agent: imported_workflows
+  external_effects: Host must authorize and configure protocol clients and repair handlers.
+steps:
+  - type: agent
+    name: imported_workflows
+    inputs: {operation: ingest, url: {$ref: inputs.source_url}}
+    outputs: [source]
+  - type: agent
+    name: imported_workflows
+    inputs: {operation: summarize, source: {$ref: outputs.source}}
+    outputs: [exec_summary]
+  - type: agent
+    name: imported_workflows
+    inputs: {operation: plan, summary: {$ref: outputs.exec_summary}}
+    outputs: [build_plan]
+  - type: agent
+    name: imported_workflows
+    inputs: {operation: compile, plan: {$ref: outputs.build_plan}}
+    outputs: [compiled]
+  - type: agent
+    name: imported_workflows
+    inputs: {operation: run, compiled: {$ref: outputs.compiled}, inputs: {$ref: inputs.task_inputs}}
+    # Retrying a whole graph could repeat external effects. Its internal task
+    # wrapper owns correction and uses host-provided idempotency contracts.
+    retry_policy: {max_attempts: 1}
+    outputs: [execution]
+  - type: agent
+    name: imported_workflows
+    inputs: {operation: scaffold, plan: {$ref: outputs.build_plan}}
+    outputs: [code_scaffold]
