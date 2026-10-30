@@ -1,0 +1,556 @@
+# Intelligent Orchestration Engine
+# Coordinates agents, protocols, and services based on intent
+
+import asyncio
+import inspect
+from copy import deepcopy
+from typing import List, Dict, Any, Optional, Union
+from datetime import datetime
+from utils.logger import log
+from workflows.runtime import resolve_inputs, bind_outputs
+from workflows.correction import NonRetryableError, run_correcting
+from workflows.registry import materialize_workflow
+from workflows.self_correcting import apply_self_correction, positive_attempts
+
+# Import specialized agents
+code_generator_agent: Any = None
+file_system_agent: Any = None
+llm_connector: Any = None
+
+try:
+    from agents.specialized.code_generator import code_generator_agent
+    from agents.specialized.filesystem_agent import file_system_agent
+
+    specialized_agents_available = True
+except ImportError as e:
+    print(f"Warning: Could not import specialized agents: {e}")
+    specialized_agents_available = False
+
+# Import LLM connector
+try:
+    from connectors.llm_connector import llm_connector
+
+    llm_available = True
+except ImportError:
+    llm_available = False
+
+
+class OrchestrationEngine:
+    """
+    Multi-layer orchestration matching the architecture:
+    - Frontend Layer: Command interface
+    - API Gateway: Standardized access
+    - Orchestration: This layer - workflow optimization
+    - Agent Runtime: Specialized execution
+    - Protocol Implementation: MCP core
+    - Persistence: Knowledge graph
+    """
+
+    def __init__(self):
+        self.agents = {}
+        self.connectors = {}
+        self.repairs = (
+            {}
+        )  # Trusted host-registered repair handlers; plans only name them.
+        self.active_workflows = {}
+        self.message_bus = MessageBus()
+        self.knowledge_graph = KnowledgeGraph()
+
+        # Register specialized agents
+        if specialized_agents_available:
+            if code_generator_agent:
+                self.agents["code_generator"] = code_generator_agent
+            if file_system_agent:
+                self.agents["file_system_agent"] = file_system_agent
+
+    async def execute_intent(
+        self,
+        intent: str,
+        sources: Optional[List[str]] = None,
+        options: Optional[Dict] = None,
+    ):
+        """
+        Main entry point - processes user intent through the full stack
+        """
+        log(f"🎯 Processing intent: {intent}")
+        options = options or {}
+
+        # 1. Intent Analysis
+        analyzed_intent = await self.analyze_intent(intent)
+
+        # 2. Component Discovery
+        required_components = await self.discover_components(
+            analyzed_intent, sources or []
+        )
+
+        # 3. Workflow Generation
+        workflow = await self.generate_workflow(
+            analyzed_intent, required_components, options
+        )
+
+        # 4. Execute Workflow
+        result = await self.execute_workflow(workflow)
+
+        # 5. Learn from Execution
+        await self.learn_from_execution(workflow, result)
+
+        return result
+
+    async def analyze_intent(self, intent: str) -> Dict:
+        """Analyze user intent to determine required actions"""
+        intent_lower = intent.lower()
+
+        # Determine action type based on keywords
+        if any(
+            keyword in intent_lower
+            for keyword in ["generate", "create", "code", "api", "endpoint"]
+        ):
+            action = "generate_code"
+            target = "api"
+        elif any(
+            keyword in intent_lower
+            for keyword in ["list", "show files", "directory", "ls"]
+        ):
+            action = "list_directory"
+            target = "filesystem"
+        elif any(
+            keyword in intent_lower for keyword in ["read", "open", "cat", "show file"]
+        ):
+            action = "read_file"
+            target = "filesystem"
+        elif any(
+            keyword in intent_lower
+            for keyword in ["multi-modal", "llm", "ideate", "learn"]
+        ):
+            action = "multimodal_analysis"
+            target = "llm"
+        elif any(
+            keyword in intent_lower for keyword in ["analyze", "pattern", "insight"]
+        ):
+            action = "analyze"
+            target = "data"
+        elif any(keyword in intent_lower for keyword in ["check", "health", "status"]):
+            action = "monitor"
+            target = "system"
+        else:
+            action = "process"
+            target = "general"
+
+        return {
+            "original_intent": intent,
+            "parsed_intent": {
+                "action": action,
+                "target": target,
+                "details": self._extract_details(intent, action),
+                "constraints": [],
+                "requirements": [],
+            },
+            "confidence": 0.95,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+    def _extract_details(self, intent: str, action: str) -> Dict:
+        """Extract specific details like paths from the intent string."""
+        if action in ["list_directory", "read_file"]:
+            # Simple path extraction: assumes path is the last word
+            parts = intent.split()
+            path = parts[-1] if len(parts) > 1 and "/" in parts[-1] else "."
+            # A more robust NLP/regex solution would be better here in a real system
+            return {"path": path}
+        return {}
+
+    async def discover_components(self, intent: Dict, sources: List[str]) -> Dict:
+        """Discover which components are needed"""
+        components: dict[str, list[str]] = {
+            "agents": [],
+            "protocols": [],
+            "connectors": [],
+            "analyzers": [],
+            "services": [],
+        }
+
+        # Based on intent, determine needed components
+        action = intent["parsed_intent"]["action"]
+
+        if action == "generate_code":
+            components["agents"].append("code_generator")
+        elif action in ["list_directory", "read_file"]:
+            components["agents"].append("file_system_agent")
+        elif action == "analyze":
+            components["analyzers"].append("pattern_detector")
+            components["protocols"].append("data_processor")
+        elif action == "monitor":
+            components["protocols"].append("system_monitor")
+        else:
+            # Default workflow
+            components["protocols"].append("data_processor")
+            components["analyzers"].append("pattern_detector")
+
+        if sources:
+            for source in sources:
+                if source == "github":
+                    components["connectors"].append("github_mcp")
+                elif source == "claude":
+                    components["connectors"].append("claude_mcp")
+
+        return components
+
+    async def generate_workflow(
+        self, intent: Dict, components: Dict, options: Optional[Dict] = None
+    ) -> Dict:
+        """Generate optimized workflow from components and known templates"""
+        options = options or {}
+
+        templated = materialize_workflow(
+            intent.get("original_intent", ""), options.get("workflow_template")
+        )
+        if templated:
+            templated["id"] = (
+                templated.get("id") or f"wf_{datetime.utcnow().timestamp()}"
+            )
+            templated["intent"] = intent
+            templated["components"] = components
+            templated["inputs"] = deepcopy(options.get("inputs", {}))
+            return apply_self_correction(templated)
+
+        workflow: dict[str, Any] = {
+            "id": f"wf_{datetime.utcnow().timestamp()}",
+            "intent": intent,
+            "steps": [],
+            "parallel_groups": [],
+            "decision_points": [],
+            "inputs": deepcopy(options.get("inputs", {})),
+        }
+
+        # Build workflow steps based on action
+        action = intent["parsed_intent"]["action"]
+
+        if action == "generate_code" and "code_generator" in components["agents"]:
+            # Code generation workflow
+            workflow["steps"].append(
+                {
+                    "type": "agent",
+                    "name": "code_generator",
+                    "inputs": {
+                        "intent": intent["original_intent"],
+                        "context": {
+                            "endpoint_name": "generated-endpoint",
+                            "description": "Auto-generated API endpoint",
+                        },
+                    },
+                    "outputs": ["generated_code", "instructions"],
+                }
+            )
+        elif (
+            action in ["list_directory", "read_file"]
+            and "file_system_agent" in components["agents"]
+        ):
+            # Filesystem workflow
+            workflow["steps"].append(
+                {
+                    "type": "agent",
+                    "name": "file_system_agent",
+                    "inputs": {
+                        "action": action,
+                        "path": intent["parsed_intent"]
+                        .get("details", {})
+                        .get("path", "."),
+                    },
+                    "outputs": ["file_data"],
+                }
+            )
+        else:
+            # Default data processing workflow
+            if "data_processor" in components["protocols"]:
+                workflow["steps"].append(
+                    {
+                        "type": "protocol",
+                        "name": "data_processor",
+                        "inputs": {"source": "user_data"},
+                        "outputs": ["processed_data"],
+                    }
+                )
+
+            if "pattern_detector" in components["analyzers"]:
+                workflow["steps"].append(
+                    {
+                        "type": "analyzer",
+                        "name": "pattern_detector",
+                        "inputs": {"data": "processed_data"},
+                        "outputs": ["patterns", "insights"],
+                    }
+                )
+
+        return apply_self_correction(workflow)
+
+    async def execute_workflow(self, workflow: Dict) -> Dict:
+        """Execute the generated workflow"""
+        results = {
+            "workflow_id": workflow["id"],
+            "status": "running",
+            "steps_completed": [],
+            "outputs": {},
+        }
+
+        workflow_inputs = workflow.get("inputs", {})
+        if not isinstance(workflow_inputs, dict):
+            raise ValueError("Workflow inputs must be a mapping")
+        declared = set(workflow.get("required_inputs", []))
+        for definition in workflow["steps"]:
+            declared.update(definition.get("outputs", []))
+
+        results["attempt_history"] = []
+        for step in workflow["steps"]:
+            policy = step.get("retry_policy") or {}
+            attempts = positive_attempts(policy.get("max_attempts", 1))
+            enabled = workflow.get("self_correction", {}).get("enabled") is not False
+            if not enabled:
+                attempts = 1
+            last_output = None
+            bound_outputs = {}
+
+            async def operation(raw_inputs):
+                nonlocal last_output, bound_outputs
+                last_output = None
+                inputs = resolve_inputs(
+                    raw_inputs, workflow_inputs, results["outputs"], declared
+                )
+                dispatch = {
+                    "protocol": self.execute_protocol,
+                    "analyzer": self.execute_analyzer,
+                    "agent": self.execute_agent,
+                }
+                if step["type"] not in dispatch:
+                    raise ValueError(f"Unsupported step type: {step['type']}")
+                last_output = await dispatch[step["type"]](step["name"], inputs)
+                if isinstance(last_output, dict) and (
+                    last_output.get("success") is False
+                    or last_output.get("status") in {"failed", "error"}
+                ):
+                    raise RuntimeError(
+                        last_output.get("error") or "Step reported failure"
+                    )
+                try:
+                    bound_outputs = bind_outputs(step.get("outputs", []), last_output)
+                except Exception as binding_error:
+                    raise NonRetryableError(
+                        f"Step returned successfully but output binding failed; no replay: {binding_error}"
+                    ) from binding_error
+                return last_output
+
+            async def observe(entry):
+                if entry["status"] == "failed":
+                    await self._handle_step_failure(
+                        workflow, step, entry["attempt"], RuntimeError(entry["error"])
+                    )
+
+            repair_name = policy.get("repair")
+            repair = self.repairs.get(repair_name) if enabled else None
+            if enabled and repair_name and repair is None:
+                result = {
+                    "status": "failed",
+                    "error": f"Unknown repair: {repair_name}",
+                    "attempts": [],
+                }
+            else:
+                result = await run_correcting(
+                    operation,
+                    step.get("inputs", {}),
+                    attempts=attempts,
+                    repair=repair,
+                    observe=observe,
+                )
+            results["attempt_history"].append({"step": step["name"], **result})
+            entry = {
+                "step": step["name"],
+                "attempt": len(result["attempts"]),
+                "output": deepcopy(last_output),
+            }
+            if result["status"] == "failed":
+                results["steps_completed"].append(
+                    {**entry, "status": "failed", "error": result["error"]}
+                )
+                results["status"] = "failed"
+                break
+            results["steps_completed"].append({**entry, "status": "success"})
+            results["outputs"].update(bound_outputs)
+
+        if results["status"] == "running":
+            results["status"] = "completed"
+
+        return results
+
+    async def execute_protocol(self, name: str, inputs: Dict) -> Any:
+        """Execute a protocol"""
+        from protocols.loader import load_protocol
+
+        protocol = load_protocol(name, create_if_missing=False)
+        task = protocol["task"]
+        if not isinstance(inputs, dict):
+            raise ValueError("Protocol inputs must be a mapping")
+        # Binding rejects unsupported fields instead of quietly discarding them.
+        inspect.signature(task).bind(**inputs)
+        if inspect.iscoroutinefunction(task):
+            return await task(**inputs)
+        result = await asyncio.to_thread(task, **inputs)
+        return await result if inspect.isawaitable(result) else result
+
+    async def execute_analyzer(self, name: str, inputs: Dict) -> Any:
+        """Dispatch to the actual registered analyzer."""
+        if name != "pattern_detector":
+            raise ValueError(f"Unknown analyzer: {name}")
+        from analyzers.pattern_detector import PatternDetector
+
+        return await PatternDetector().analyze(**inputs)
+
+    async def execute_agent(self, name: str, inputs: Dict) -> Any:
+        """Execute an agent task"""
+        if name in self.agents:
+            return await self.agents[name].execute(inputs)
+        raise Exception(f"Agent {name} not found")
+
+    async def _handle_step_failure(
+        self, workflow: Dict, step: Dict, attempt: int, error: Exception
+    ):
+        """Publish failure details and prepare for self-healing retry."""
+        log(f"♻️  Self-heal attempt {attempt} for {step.get('name')} failed: {error}")
+        await self.message_bus.publish(
+            "workflow.failure",
+            {
+                "workflow_id": workflow.get("id"),
+                "step": step.get("name"),
+                "attempt": attempt,
+                "error": str(error),
+            },
+        )
+        await self.knowledge_graph.record_step_failure(
+            workflow.get("id"), step.get("name"), str(error), attempt
+        )
+
+    async def learn_from_execution(self, workflow: Dict, result: Dict):
+        """Learn from execution to improve future workflows"""
+        # Track execution metrics
+        execution_data = {
+            "workflow_id": workflow["id"],
+            "intent": workflow["intent"]["original_intent"],
+            "success": result["status"] == "completed",
+            "duration": datetime.utcnow().timestamp()
+            - float(workflow["id"].split("_")[1]),
+            "steps_count": len(result["steps_completed"]),
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+        # Store in knowledge graph for future optimization
+        await self.knowledge_graph.store_execution(execution_data)
+
+        # Trigger mutation if needed
+        if not execution_data["success"]:
+            await self.trigger_improvement(workflow, result)
+
+    async def trigger_improvement(self, workflow: Dict, result: Dict):
+        """Trigger system improvement based on failure"""
+        log(f"🔧 Triggering improvement for workflow {workflow['id']}")
+        # This would analyze the failure and potentially:
+        # - Mutate protocols
+        # - Adjust workflow generation
+        # - Update component selection logic
+
+
+class MessageBus:
+    """Handles A2A (Agent to Agent) communication"""
+
+    def __init__(self):
+        self.subscribers = {}
+        self.message_queue = asyncio.Queue()
+
+    async def publish(self, topic: str, message: Dict):
+        """Publish message to topic"""
+        await self.message_queue.put(
+            {
+                "topic": topic,
+                "message": message,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        )
+
+    async def subscribe(self, topic: str, callback):
+        """Subscribe to topic"""
+        if topic not in self.subscribers:
+            self.subscribers[topic] = []
+        self.subscribers[topic].append(callback)
+
+    async def process_messages(self):
+        """Process message queue"""
+        while True:
+            msg = await self.message_queue.get()
+            topic = msg["topic"]
+            if topic in self.subscribers:
+                for callback in self.subscribers[topic]:
+                    await callback(msg["message"])
+
+
+class KnowledgeGraph:
+    """Manages relationships and accelerates learning"""
+
+    def __init__(self):
+        self.graph = {}  # Simple in-memory for now
+
+    async def store_execution(self, data: Dict):
+        """Store execution data in graph"""
+        node_id = data["workflow_id"]
+        node = self.graph.setdefault(
+            node_id,
+            {"data": {}, "relationships": [], "insights": [], "failures": []},
+        )
+        node["data"] = data
+
+    async def record_step_failure(
+        self, workflow_id: Optional[str], step_name: str, error: str, attempt: int
+    ):
+        """Persist failure information to inform future retries."""
+        if not workflow_id:
+            return
+
+        node = self.graph.setdefault(
+            workflow_id,
+            {"data": {}, "relationships": [], "insights": [], "failures": []},
+        )
+        node.setdefault("failures", []).append(
+            {
+                "step": step_name,
+                "error": error,
+                "attempt": attempt,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        )
+
+    async def find_similar_executions(self, intent: str) -> List[Dict]:
+        """Find similar past executions"""
+        similar = []
+        for node_id, node in self.graph.items():
+            data = node.get("data", {})
+            stored_intent = data.get("intent")
+            if (
+                isinstance(stored_intent, str)
+                and intent.lower() in stored_intent.lower()
+            ):
+                similar.append(data)
+        return similar
+
+    async def get_optimization_hints(self, workflow: Dict) -> List[str]:
+        """Get hints for optimizing workflow"""
+        hints: list[str] = []
+        # Analyze past executions for patterns
+        # This would use ML/pattern recognition
+        return hints
+
+
+# CLI Interface matching your example
+async def run_mcp(intent: str, sources: List[str], quantum: bool = False) -> Dict:
+    """Run MCP orchestration from CLI"""
+    engine = OrchestrationEngine()
+
+    options = {"quantum_optimization": quantum, "sources": sources}
+
+    result = await engine.execute_intent(intent, sources, options)
+    return result

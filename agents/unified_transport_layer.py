@@ -334,7 +334,7 @@ class TradingAgent(UnifiedAgent):
     def __init__(self, agent_id: str):
         super().__init__(agent_id, ["trade", "analyze", "execute"])
         self.performance_requirements = {
-            "max_latency_ms": 0.1,  # 100 microseconds
+            "max_latency_ms": 1,  # 1ms (converted from 0.1ms for type consistency)
             "prefer_zero_copy": True,
             "require_handle_passing": True,  # For order handles
         }

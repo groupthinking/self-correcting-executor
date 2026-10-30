@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI SDK 5 Beta Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .nav {
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .nav-btn {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .nav-btn:hover, .nav-btn.active {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .content {
+            display: none;
+        }
+        
+        .content.active {
+            display: block;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.1);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-5px);
+        }
+        
+        .btn {
+            background: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        
+        .chat {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            margin-top: 1rem;
+        }
+        
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .message {
+            padding: 0.75rem;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        
+        .message.user {
+            background: rgba(59, 130, 246, 0.3);
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        
+        .message.assistant {
+            background: rgba(34, 197, 94, 0.3);
+            align-self: flex-start;
+        }
+        
+        .input-form {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .input-form input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            outline: none;
+        }
+        
+        .input-form input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .metric {
+            background: rgba(255,255,255,0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .metric h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-good { color: #4ade80; }
+        .status-warning { color: #fbbf24; }
+        .status-info { color: #60a5fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; margin-bottom: 2rem; font-size: 3rem;">
+            🤖 AI SDK 5 Beta Platform
+        </h1>
+        
+        <nav class="nav">
+            <button class="nav-btn active" onclick="showContent('dashboard')">🏠 Dashboard</button>
+            <button class="nav-btn" onclick="showContent('ai-sdk')">🤖 AI SDK 5</button>
+            <button class="nav-btn" onclick="showContent('advanced')">⚡ Advanced AI</button>
+            <button class="nav-btn" onclick="showContent('monitoring')">📊 Monitoring</button>
+        </nav>
+        
+        <!-- Dashboard Content -->
+        <div id="dashboard" class="content active">
+            <h2>Welcome to AI SDK 5 Beta Platform</h2>
+            <p style="opacity: 0.8; margin-bottom: 2rem;">
+                Experience the latest in AI development with cutting-edge features including quantum computing integration, 
+                MCP protocol support, and enterprise-grade security.
+            </p>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>🤖 AI SDK 5 Beta</h3>
+                    <p>Experience the new LanguageModelV2 architecture with enhanced streaming and tool calling capabilities.</p>
+                    <button class="btn" onclick="showContent('ai-sdk')">Try AI SDK</button>
+                </div>
+                
+                <div class="card">
+                    <h3>⚡ Advanced Features</h3>
+                    <p>Explore quantum computing tools, MCP integration, and agentic control with step-by-step execution.</p>
+                    <button class="btn" onclick="showContent('advanced')">Advanced AI</button>
+                </div>
+                
+                <div class="card">
+                    <h3>📊 Real-time Monitoring</h3>
+                    <p>Monitor system performance, AI metrics, security status, and get real-time analytics.</p>
+                    <button class="btn" onclick="showContent('monitoring')">View Metrics</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI SDK Content -->
+        <div id="ai-sdk" class="content">
+            <h2>🤖 AI SDK 5 Beta Integration</h2>
+            <p style="opacity: 0.8; margin-bottom: 1rem;">
+                Experience the new LanguageModelV2 architecture with enhanced streaming and tool calling
+            </p>
+            
+            <div style="margin-bottom: 1rem;">
+                <label>Model Selection:</label>
+                <select id="model-select" style="margin-left: 1rem; padding: 0.5rem; border-radius: 4px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                    <option value="gpt-4o">GPT-4o</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                </select>
+            </div>
+            
+            <div class="chat">
+                <div class="messages" id="messages">
+                    <div class="message assistant">
+                        <strong>Assistant:</strong> Hello! I'm your AI assistant powered by AI SDK 5 Beta with LanguageModelV2 architecture. How can I help you today?
+                    </div>
+                </div>
+                
+                <form class="input-form" onsubmit="sendMessage(event)">
+                    <input type="text" id="message-input" placeholder="Ask about AI SDK 5 Beta features..." required>
+                    <button type="submit" class="btn">Send</button>
+                </form>
+            </div>
+            
+            <div style="margin-top: 1rem; font-size: 0.875rem; opacity: 0.7;">
+                <p>✨ Features demonstrated:</p>
+                <ul style="padding-left: 1.5rem; margin-top: 0.5rem;">
+                    <li>LanguageModelV2 architecture</li>
+                    <li>Model selection and configuration</li>
+                    <li>Streaming response simulation</li>
+                    <li>Enhanced message system</li>
+                    <li>Real-time UI updates</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Advanced AI Content -->
+        <div id="advanced" class="content">
+            <h2>⚡ Advanced AI SDK 5 Beta Features</h2>
+            <p style="opacity: 0.8; margin-bottom: 2rem;">
+                Explore advanced capabilities including tool calling, agentic control, and quantum integration
+            </p>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>🔧 Configuration</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <label>System Prompt:</label>
+                        <textarea style="width: 100%; margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); resize: vertical;" rows="3">You are an advanced AI assistant with access to quantum computing tools and MCP protocols.</textarea>
+                    </div>
+                    
+                    <h4>Available Tools:</h4>
+                    <div style="margin-top: 0.5rem;">
+                        <label style="display: flex; align-items: center; margin-bottom: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;"> Quantum Tools <span style="margin-left: 0.5rem; color: #4ade80;">✓</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;"> MCP Tools <span style="margin-left: 0.5rem; color: #4ade80;">✓</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;"> Security Tools <span style="margin-left: 0.5rem; color: #4ade80;">✓</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" style="margin-right: 0.5rem;"> Analytics Tools
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>🛠️ Tool Status</h3>
+                    <div style="display: grid; gap: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(59, 130, 246, 0.2); border-radius: 4px;">
+                            <span>⚛️ Quantum Analyzer</span>
+                            <span class="status-good">Ready</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(139, 92, 246, 0.2); border-radius: 4px;">
+                            <span>🔗 MCP Connector</span>
+                            <span class="status-good">Connected</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(34, 197, 94, 0.2); border-radius: 4px;">
+                            <span>🔒 Security Scanner</span>
+                            <span class="status-good">Active</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(156, 163, 175, 0.2); border-radius: 4px;">
+                            <span>📊 Analytics Engine</span>
+                            <span style="color: #6b7280;">Disabled</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: 2rem;">
+                <h3>🌟 AI SDK 5 Beta Advanced Features</h3>
+                <div class="grid">
+                    <div style="background: rgba(59, 130, 246, 0.2); padding: 1rem; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                        <h4 style="color: #60a5fa;">🧠 LanguageModelV2</h4>
+                        <p style="font-size: 0.875rem; opacity: 0.8;">Enhanced architecture with improved type safety and content handling</p>
+                    </div>
+                    <div style="background: rgba(139, 92, 246, 0.2); padding: 1rem; border-radius: 6px; border: 1px solid rgba(139, 92, 246, 0.3);">
+                        <h4 style="color: #a78bfa;">⚡ Agentic Control</h4>
+                        <p style="font-size: 0.875rem; opacity: 0.8;">Step-by-step execution with termination conditions</p>
+                    </div>
+                    <div style="background: rgba(34, 197, 94, 0.2); padding: 1rem; border-radius: 6px; border: 1px solid rgba(34, 197, 94, 0.3);">
+                        <h4 style="color: #4ade80;">🔧 Tool Calling</h4>
+                        <p style="font-size: 0.875rem; opacity: 0.8;">Quantum computing and MCP integration</p>
+                    </div>
+                    <div style="background: rgba(245, 158, 11, 0.2); padding: 1rem; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3);">
+                        <h4 style="color: #fbbf24;">📡 Server-Sent Events</h4>
+                        <p style="font-size: 0.875rem; opacity: 0.8;">Standardized streaming protocol</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Monitoring Content -->
+        <div id="monitoring" class="content">
+            <h2>📊 Real-time Monitoring Dashboard</h2>
+            <p style="opacity: 0.8; margin-bottom: 2rem;">
+                Live system metrics and performance monitoring
+            </p>
+            
+            <div class="metrics-grid">
+                <div class="metric" style="border-left: 4px solid #4ade80;">
+                    <h3 class="status-good">✅ System Health</h3>
+                    <p>Status: <strong class="status-good">Healthy</strong></p>
+                    <p>CPU: 23% | Memory: 67% | Disk: 45%</p>
+                    <p>Uptime: 99.97% | Load: Low</p>
+                </div>
+                
+                <div class="metric" style="border-left: 4px solid #60a5fa;">
+                    <h3 class="status-info">🤖 AI Performance</h3>
+                    <p>Active Conversations: <strong>12</strong></p>
+                    <p>Avg Response Time: <strong>1.2s</strong></p>
+                    <p>Success Rate: <strong class="status-good">99.2%</strong></p>
+                    <p>Model: GPT-4o | Tokens: 145k</p>
+                </div>
+                
+                <div class="metric" style="border-left: 4px solid #a78bfa;">
+                    <h3 style="color: #a78bfa;">⚡ Quantum & Tools</h3>
+                    <p>Quantum Operations: <strong>47</strong></p>
+                    <p>MCP Connections: <strong>3</strong></p>
+                    <p>Tool Success Rate: <strong class="status-good">94.8%</strong></p>
+                    <p>Active Tools: 12</p>
+                </div>
+                
+                <div class="metric" style="border-left: 4px solid #fbbf24;">
+                    <h3 class="status-warning">🔒 Security</h3>
+                    <p>Threats Blocked: <strong>15</strong></p>
+                    <p>Auth Success: <strong class="status-good">99.8%</strong></p>
+                    <p>Compliance Score: <strong class="status-good">97%</strong></p>
+                    <p>Last Scan: 2 min ago</p>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: 2rem;">
+                <h3>🔄 Live Updates</h3>
+                <div id="live-updates" style="height: 200px; overflow-y: auto; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px; font-family: monospace; font-size: 0.875rem;">
+                    <div>[2024-01-20 10:30:15] ✅ System health check completed</div>
+                    <div>[2024-01-20 10:30:10] 🤖 New AI conversation started</div>
+                    <div>[2024-01-20 10:30:05] ⚡ Quantum tool executed successfully</div>
+                    <div>[2024-01-20 10:30:00] 🔒 Security scan completed - no threats</div>
+                    <div>[2024-01-20 10:29:55] 📊 Performance metrics updated</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showContent(contentId) {
+            // Hide all content
+            document.querySelectorAll('.content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected content
+            document.getElementById(contentId).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+        
+        function sendMessage(event) {
+            event.preventDefault();
+            
+            const input = document.getElementById('message-input');
+            const messagesContainer = document.getElementById('messages');
+            const model = document.getElementById('model-select').value;
+            
+            if (!input.value.trim()) return;
+            
+            // Add user message
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user';
+            userMessage.innerHTML = `<strong>You:</strong> ${input.value}`;
+            messagesContainer.appendChild(userMessage);
+            
+            const userInput = input.value;
+            input.value = '';
+            
+            // Add typing indicator
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'message assistant';
+            typingIndicator.innerHTML = '<strong>Assistant:</strong> <em>Thinking...</em>';
+            messagesContainer.appendChild(typingIndicator);
+            
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Simulate AI response
+            setTimeout(() => {
+                typingIndicator.innerHTML = `<strong>Assistant:</strong> I received your message: "${userInput}". This is a demo response showing AI SDK 5 Beta integration with ${model}. In a full implementation, this would connect to OpenAI's API with advanced features like tool calling, streaming, and quantum computing integration.`;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 1500);
+        }
+        
+        // Simulate live updates
+        function addLiveUpdate() {
+            const updates = [
+                '✅ System health check completed',
+                '🤖 New AI conversation started', 
+                '⚡ Quantum tool executed successfully',
+                '🔒 Security scan completed - no threats',
+                '📊 Performance metrics updated',
+                '🔗 MCP connection established',
+                '🛠️ Tool registry updated',
+                '📈 Analytics data processed'
+            ];
+            
+            const liveUpdates = document.getElementById('live-updates');
+            if (liveUpdates) {
+                const now = new Date();
+                const timestamp = now.toISOString().replace('T', ' ').substring(0, 19);
+                const randomUpdate = updates[Math.floor(Math.random() * updates.length)];
+                
+                const newUpdate = document.createElement('div');
+                newUpdate.innerHTML = `[${timestamp}] ${randomUpdate}`;
+                liveUpdates.insertBefore(newUpdate, liveUpdates.firstChild);
+                
+                // Keep only last 10 updates
+                while (liveUpdates.children.length > 10) {
+                    liveUpdates.removeChild(liveUpdates.lastChild);
+                }
+            }
+        }
+        
+        // Add live updates every 5 seconds
+        setInterval(addLiveUpdate, 5000);
+    </script>
+</body>
+</html>
