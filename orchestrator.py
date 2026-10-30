@@ -8,6 +8,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from utils.logger import log
 from workflows.runtime import resolve_inputs, bind_outputs
+from workflows.correction import NonRetryableError, run_correcting
 from workflows.registry import materialize_workflow
 from workflows.self_correcting import apply_self_correction, positive_attempts
 
@@ -47,6 +48,9 @@ class OrchestrationEngine:
     def __init__(self):
         self.agents = {}
         self.connectors = {}
+        self.repairs = (
+            {}
+        )  # Trusted host-registered repair handlers; plans only name them.
         self.active_workflows = {}
         self.message_bus = MessageBus()
         self.knowledge_graph = KnowledgeGraph()
@@ -294,74 +298,81 @@ class OrchestrationEngine:
         for definition in workflow["steps"]:
             declared.update(definition.get("outputs", []))
 
-        # Execute each step
+        results["attempt_history"] = []
         for step in workflow["steps"]:
-            retry_policy = step.get("retry_policy") or {}
-            attempts = positive_attempts(retry_policy.get("max_attempts", 1))
-            if workflow.get("self_correction", {}).get("enabled") is False:
+            policy = step.get("retry_policy") or {}
+            attempts = positive_attempts(policy.get("max_attempts", 1))
+            enabled = workflow.get("self_correction", {}).get("enabled") is not False
+            if not enabled:
                 attempts = 1
-            attempt = 0
+            last_output = None
+            bound_outputs = {}
 
-            while attempt < attempts:
-                attempt += 1
-                result = None
+            async def operation(raw_inputs):
+                nonlocal last_output, bound_outputs
+                last_output = None
+                inputs = resolve_inputs(
+                    raw_inputs, workflow_inputs, results["outputs"], declared
+                )
+                dispatch = {
+                    "protocol": self.execute_protocol,
+                    "analyzer": self.execute_analyzer,
+                    "agent": self.execute_agent,
+                }
+                if step["type"] not in dispatch:
+                    raise ValueError(f"Unsupported step type: {step['type']}")
+                last_output = await dispatch[step["type"]](step["name"], inputs)
+                if isinstance(last_output, dict) and (
+                    last_output.get("success") is False
+                    or last_output.get("status") in {"failed", "error"}
+                ):
+                    raise RuntimeError(
+                        last_output.get("error") or "Step reported failure"
+                    )
                 try:
-                    inputs = resolve_inputs(
-                        step.get("inputs", {}),
-                        workflow_inputs,
-                        results["outputs"],
-                        declared,
-                    )
-                    if step["type"] == "protocol":
-                        result = await self.execute_protocol(step["name"], inputs)
-                    elif step["type"] == "analyzer":
-                        result = await self.execute_analyzer(step["name"], inputs)
-                    elif step["type"] == "agent":
-                        result = await self.execute_agent(step["name"], inputs)
-                    else:
-                        raise ValueError(f"Unsupported step type: {step['type']}")
+                    bound_outputs = bind_outputs(step.get("outputs", []), last_output)
+                except Exception as binding_error:
+                    raise NonRetryableError(
+                        f"Step returned successfully but output binding failed; no replay: {binding_error}"
+                    ) from binding_error
+                return last_output
 
-                    if isinstance(result, dict) and (
-                        result.get("success") is False
-                        or result.get("status") in {"failed", "error"}
-                    ):
-                        raise RuntimeError(
-                            result.get("error") or "Step reported failure"
-                        )
-
-                    bound_outputs = bind_outputs(step.get("outputs", []), result)
-                    results["steps_completed"].append(
-                        {
-                            "step": step["name"],
-                            "status": "success",
-                            "attempt": attempt,
-                            "output": result,
-                        }
+            async def observe(entry):
+                if entry["status"] == "failed":
+                    await self._handle_step_failure(
+                        workflow, step, entry["attempt"], RuntimeError(entry["error"])
                     )
 
-                    # Store outputs for next steps
-                    results["outputs"].update(bound_outputs)
-
-                    break
-
-                except Exception as e:
-                    await self._handle_step_failure(workflow, step, attempt, e)
-
-                    if attempt >= attempts:
-                        results["steps_completed"].append(
-                            {
-                                "step": step["name"],
-                                "status": "failed",
-                                "attempt": attempt,
-                                "error": str(e),
-                                "output": deepcopy(result),
-                            }
-                        )
-                        results["status"] = "failed"
-                        break
-
-            if results["status"] == "failed":
+            repair_name = policy.get("repair")
+            repair = self.repairs.get(repair_name) if enabled else None
+            if enabled and repair_name and repair is None:
+                result = {
+                    "status": "failed",
+                    "error": f"Unknown repair: {repair_name}",
+                    "attempts": [],
+                }
+            else:
+                result = await run_correcting(
+                    operation,
+                    step.get("inputs", {}),
+                    attempts=attempts,
+                    repair=repair,
+                    observe=observe,
+                )
+            results["attempt_history"].append({"step": step["name"], **result})
+            entry = {
+                "step": step["name"],
+                "attempt": len(result["attempts"]),
+                "output": deepcopy(last_output),
+            }
+            if result["status"] == "failed":
+                results["steps_completed"].append(
+                    {**entry, "status": "failed", "error": result["error"]}
+                )
+                results["status"] = "failed"
                 break
+            results["steps_completed"].append({**entry, "status": "success"})
+            results["outputs"].update(bound_outputs)
 
         if results["status"] == "running":
             results["status"] = "completed"

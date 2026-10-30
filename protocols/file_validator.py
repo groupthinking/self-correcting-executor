@@ -44,7 +44,10 @@ def task(target=None):
                     or str(path) != name
                     or name in names
                     or name.startswith(("-", "@"))
-                    or path.suffix not in {".ts", ".json", ".md"}
+                    or (
+                        path.suffix not in {".ts", ".json", ".md"}
+                        and name not in {"Dockerfile", ".env.example"}
+                    )
                 ):
                     raise ValueError("Unsafe, duplicate or unsupported artifact path")
                 names.add(name)
@@ -55,7 +58,12 @@ def task(target=None):
                     json.loads(content)
                 if path.suffix == ".ts":
                     source_paths.append(str(destination))
-            if not {"src/service.ts", "package.json", "tsconfig.json"}.issubset(names):
+            entrypoint = (
+                "src/index.ts"
+                if target.get("kind") == "build_plan"
+                else "src/service.ts"
+            )
+            if not {entrypoint, "package.json", "tsconfig.json"}.issubset(names):
                 raise ValueError(
                     "Service source, package.json and tsconfig.json are required"
                 )

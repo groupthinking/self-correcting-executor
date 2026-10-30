@@ -1,6 +1,6 @@
 # Workflow consolidation and execution
 
-The catalog combines selected starter patterns from self-correcting-executor, WRKFLW and workflows. It loads `workflows/data/*.yaml|json` at module import. Restart after changing definitions. Autoloading a definition does not establish that every component or external service in it is operational.
+This page describes the original four catalog paths from self-correcting-executor, WRKFLW and workflows. The complete imported BuildPlan and construction lifecycle pattern mapping, host contracts, correction engine and runnable examples are in [Imported patterns](IMPORTED_PATTERNS.md). It loads `workflows/data/*.yaml|json` at module import. Restart after changing definitions. Autoloading a definition does not establish that every component or external service in it is operational.
 
 ## Inputs and outputs
 
@@ -41,7 +41,7 @@ The data processor validates the snapshot. PatternDetector computes observed cou
 
 Set `OPENAI_API_KEY` before starting the process. `WORKFLOW_SUMMARY_MODEL` optionally selects a compatible model; default `gpt-6-luna` supports the requested API/schema according to [OpenAI's model documentation](https://developers.openai.com/api/docs/models/gpt-6-luna). Model access, quota and live response quality remain account-specific. Requests time out after 60 seconds and do not redirect. Failed provider calls may be retried by the workflow policy; a timeout does not prove the provider did not process or bill a request.
 
-The returned `draft_summary` retains project/date, cited content, the supplied source records, requested/returned model metadata and prompt version. It is marked `draft` and `requires_pm_review`. This path implements generation from the supplied project snapshot. It does **not** fetch a project's database, embed/search a vector store, inspect images, persist a project note, notify a PM or publish a PDF. Those PRD integration outcomes remain outstanding; no credential alone establishes them.
+The returned `draft_summary` retains project/date, cited content, the supplied source records, requested/returned model metadata and prompt version. It is marked `draft` and `requires_pm_review`. This path implements generation from the supplied project snapshot. It does **not** fetch a project's database, embed/search a vector store, inspect images, persist a project note, notify a PM or publish a PDF. The additional `ConstructionLifecycle` adapter represents those retrieval, persistence, notification, review and PDF steps with configured services; see [Imported patterns](IMPORTED_PATTERNS.md). Their live provider acceptance remains unverified; no credential alone establishes it.
 
 The built-in `construction_daily_log` keeps its fourth code-generation step and returns an executable FastAPI scaffold plus integration instructions. That artifact does not implement RFI approval, audit storage or deployment. The external `construction_daily_log_external` retains its three daily-summary steps.
 

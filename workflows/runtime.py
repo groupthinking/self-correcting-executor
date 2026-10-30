@@ -18,9 +18,21 @@ def resolve_inputs(value: Any, inputs: Dict, outputs: Dict, declared: Iterable[s
             namespace, key = outputs, name
         else:
             namespace, key = inputs, name
-        if key not in namespace:
-            raise ValueError(f"Unresolved workflow reference: {name}")
-        return deepcopy(namespace[key])
+        if key in namespace:
+            return deepcopy(namespace[key])
+        current = namespace
+        for part in key.split("."):
+            if isinstance(current, dict) and part in current:
+                current = current[part]
+            elif (
+                isinstance(current, list)
+                and part.isdecimal()
+                and int(part) < len(current)
+            ):
+                current = current[int(part)]
+            else:
+                raise ValueError(f"Unresolved workflow reference: {name}")
+        return deepcopy(current)
 
     def resolve(item):
         if isinstance(item, dict):

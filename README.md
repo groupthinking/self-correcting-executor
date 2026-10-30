@@ -28,7 +28,7 @@ make health
 
 Open http://localhost:8080/health to verify the API is running.
 
-WRKFLW and workflows repositories are archived; selected workflow patterns from those repositories are represented in `workflows/templates.py` alongside the self-correcting engine.
+WRKFLW and workflows repositories are archived. Their BuildPlan/agent/DAG, source intake, construction lifecycle, and artifact patterns are mapped into the canonical engine alongside the original templates. See [source coverage and runnable examples](docs/workflows/IMPORTED_PATTERNS.md) for the exact contracts and required host services.
 You can extend the catalog by dropping yaml/json workflow definitions into `workflows/data/`; they are auto-loaded when the catalog module is imported.
 
 ## Development
@@ -37,7 +37,7 @@ The workspace includes a **DevContainer** definition – simply open the folder 
 
 ## Workflow consolidation runtime status
 
-The catalog auto-loads external definitions, but loader success alone is not runtime readiness. The construction flow now accepts explicit project records and calls the real analyzer and source-grounded summary connector. The TypeScript pipeline generates and compiles actual handlers, checks a supplied service URL and caches schema/report metadata using explicit Redis settings. Live provider access and integration requirements are described in [workflow execution and limits](docs/workflows/CONSOLIDATION.md). No full RFI, vector-search or deployment outcome is claimed.
+The catalog auto-loads external definitions, but loader success alone is not runtime readiness. The construction flow now accepts explicit project records and calls the real analyzer and source-grounded summary connector. The TypeScript pipeline generates and compiles actual handlers, checks a supplied service URL and caches schema/report metadata using explicit Redis settings. Live provider access and integration requirements are described in [workflow execution and limits](docs/workflows/CONSOLIDATION.md). The additional imported lifecycle adapters execute RFI state transitions and configured vector-retrieval contracts; live provider acceptance, web/mobile UI parity, and external deployment remain separate. See [imported patterns](docs/workflows/IMPORTED_PATTERNS.md).
 
 ## Repo assist
 

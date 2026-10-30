@@ -8,6 +8,7 @@ on:
       - 'requirements-ci.txt'
       - 'pytest.ini'
       - 'workflows/data/**'
+      - 'workflows/*.ts'
       - 'tools/typescript-validation/**'
       - '.github/workflows/python-ci.yml'
   pull_request:
@@ -16,6 +17,7 @@ on:
       - 'requirements-ci.txt'
       - 'pytest.ini'
       - 'workflows/data/**'
+      - 'workflows/*.ts'
       - 'tools/typescript-validation/**'
       - '.github/workflows/python-ci.yml'
 
