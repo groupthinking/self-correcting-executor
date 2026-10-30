@@ -4,6 +4,7 @@
 import textwrap
 from datetime import datetime
 from typing import Dict, Any
+from workflows.service_scaffold import generate_typescript_service
 
 
 class CodeGeneratorAgent:
@@ -35,8 +36,8 @@ class CodeGeneratorAgent:
                             "result": result,
                             "timestamp": datetime.utcnow().isoformat()
                         }}
-                    except ValidationError as e:
-                        raise HTTPException(status_code=400, detail=str(e))
+                    except HTTPException:
+                        raise
                     except Exception as e:
                         raise HTTPException(status_code=500, detail=str(e))
             """),
@@ -91,7 +92,9 @@ class CodeGeneratorAgent:
         generation_type = self._parse_intent(intent)
 
         # Generate appropriate code
-        if generation_type == "api_endpoint":
+        if generation_type == "typescript_service":
+            code = generate_typescript_service(context)
+        elif generation_type == "api_endpoint":
             code = self._generate_api_endpoint(context)
         elif generation_type == "crud":
             code = self._generate_crud_api(context)
@@ -104,7 +107,11 @@ class CodeGeneratorAgent:
             "success": True,
             "generated_code": code,
             "generation_type": generation_type,
-            "files_created": self._get_file_list(code),
+            "files_created": (
+                [item["path"] for item in code["files"]]
+                if isinstance(code, dict)
+                else self._get_file_list(code)
+            ),
             "instructions": self._get_implementation_instructions(generation_type),
             "timestamp": datetime.utcnow().isoformat(),
         }
@@ -113,7 +120,9 @@ class CodeGeneratorAgent:
         """Parse intent to determine generation type"""
         intent_lower = intent.lower()
 
-        if "crud" in intent_lower:
+        if "typescript" in intent_lower:
+            return "typescript_service"
+        elif "crud" in intent_lower:
             return "crud"
         elif "model" in intent_lower or "schema" in intent_lower:
             return "data_model"
@@ -144,17 +153,21 @@ class CodeGeneratorAgent:
             for param in params:
                 validation_logic += (
                     f"if not {param}:\n            "
-                    f"raise ValidationError('{param} is required')\n        "
+                    f"raise HTTPException(status_code=400, detail='{param} is required')\n        "
                 )
         else:
             validation_logic += "pass"
 
-        # Generate processing logic
-        processing_logic = """# Main processing logic
-        result = {
-            'processed': True,
-            'data': request
-        }"""
+        # Scaffolding returns the declared arguments; never reference a nonexistent request.
+        input_expression = (
+            "{" + ", ".join(f"{name!r}: {name}" for name in params) + "}"
+            if params
+            else "request"
+        )
+        processing_logic = (
+            "# Add application-specific behavior before deployment\n        "
+            f"result = {{'processed': True, 'data': {input_expression}}}"
+        )
 
         return self.templates["fastapi_endpoint"].format(
             endpoint_name=endpoint_name,
@@ -231,6 +244,7 @@ class {model_name}(BaseModel):
     def _get_implementation_instructions(self, generation_type: str) -> str:
         """Get instructions for implementing generated code"""
         instructions = {
+            "typescript_service": "Write the artifact files, run npm install and npm run build, then supply a Store implementation and HTTP adapter. See generated README.md; no deployment was performed.",
             "api_endpoint": "Add this endpoint to your main FastAPI application (mcp/main.py)",
             "crud": "Create a new file 'crud_api.py' and import it in your main application",
             "data_model": "Add this model to your models.py file or create one if it doesn't exist",

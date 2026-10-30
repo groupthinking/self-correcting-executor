@@ -6,6 +6,8 @@ Pattern Detector for analyzing execution patterns and generating insights.
 import asyncio
 import logging
 from datetime import datetime, timedelta
+from copy import deepcopy
+from collections import Counter
 from typing import Any, Dict, List
 
 from utils.db_tracker import ensure_tables_exist, get_db_connection
@@ -257,7 +259,60 @@ class PatternDetector:
 
         return recommendations
 
-    async def analyze(self) -> Dict[str, Any]:
+    def analyze_supplied_data(self, data):
+        """Aggregate observed supplied records, without inferred risk thresholds."""
+        if not isinstance(data, dict) or data.get("success") is not True:
+            raise ValueError("Analyzer requires a successful data-processing result")
+        if data.get("kind") == "field_capture":
+            from workflows.field_capture import normalize_field_capture
+
+            # Revalidate rather than trusting a caller-supplied provenance envelope.
+            normalized = normalize_field_capture(data["capture"])
+            records = normalized["records"]
+            patterns = {
+                "record_counts": {name: len(items) for name, items in records.items()},
+                "status_counts": {
+                    name: dict(
+                        Counter(
+                            item["status"]
+                            for item in items
+                            if isinstance(item.get("status"), str)
+                        )
+                    )
+                    for name, items in records.items()
+                },
+            }
+            insights = [
+                {
+                    "type": "field_capture",
+                    "project_id": normalized["project_id"],
+                    "report_date": normalized["report_date"],
+                    "sources": normalized["sources"],
+                    "observations": deepcopy(patterns),
+                }
+            ]
+        elif all(
+            key in data for key in ("files_processed", "total_records", "insights")
+        ):
+            patterns = {
+                "file_profile": {
+                    "directory": data.get("directory"),
+                    "files_processed": data["files_processed"],
+                    "total_records": data["total_records"],
+                }
+            }
+            insights = deepcopy(data["insights"])
+        else:
+            raise ValueError("Unsupported normalized data for pattern_detector")
+        return {
+            "success": True,
+            "patterns": patterns,
+            "insights": insights,
+            "recommendations": [],
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+    async def analyze(self, data=None) -> Dict[str, Any]:
         """
         Analyze execution history and generate insights and recommendations.
 
@@ -265,7 +320,11 @@ class PatternDetector:
             Dict[str, Any]: Analysis results
         """
         try:
+            if data is not None:
+                return self.analyze_supplied_data(data)
             patterns = await self.detect_patterns()
+            if patterns.get("error"):
+                raise RuntimeError(patterns["error"])
 
             insights = await self.generate_insights(
                 patterns["failure_patterns"],

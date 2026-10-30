@@ -355,7 +355,7 @@ from orchestrator_mapreduce import HierarchicalOrchestrator
 
 async def main():
     orchestrator = HierarchicalOrchestrator(max_concurrency=5)
-    
+
     job = await orchestrator.run(
         intent="Run smoke tests",
         task_list=[
@@ -364,7 +364,7 @@ async def main():
             {"protocol": "smoke_test", "inputs": {"service": "notifications"}},
         ],
     )
-    
+
     print(f"Status: {job.status.value}")
     print(f"Passed: {job.verification_passed}")
     print(f"Results: {job.reduced_result}")
@@ -465,7 +465,7 @@ async def controlled_execution():
         intent="Validate all endpoints",
         task_list=task_list,
     )
-    
+
     # Inspect the plan
     print(f"Will execute {len(job.subtasks)} subtasks")
     for st in job.subtasks:

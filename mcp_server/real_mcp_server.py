@@ -282,6 +282,27 @@ async def _execute_real_query(query: str, db_url: str) -> Dict[str, Any]:
         raise NotImplementedError("Only SQLite supported for now")
 
 
+# Registry used by tests to access real tool implementations
+TOOLS = {
+    "process_data": process_data,
+    "quantum_optimize": quantum_optimize,
+    "execute_code": execute_code,
+}
+
+
+class RealMCPServer:
+    """Lightweight wrapper exposing registered tools."""
+
+    def __init__(self):
+        # Mirror the FastMCP interface expected by tests
+        self.server = self
+
+    def tool(self, name: str):
+        if name not in TOOLS:
+            raise KeyError(f"Tool not found: {name}")
+        return TOOLS[name]
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     logger.info("Starting Real MCP Server (no mocks, no simulations)")

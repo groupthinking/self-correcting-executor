@@ -427,3 +427,6 @@ security_config.yaml.backup
 
 # ARC agent prototype generated artifacts
 agent_trajectory.png
+
+# Reviewed provenance for imported workflow definitions (not runtime data).
+!/workflows/source_manifest.json

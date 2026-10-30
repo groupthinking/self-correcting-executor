@@ -1,0 +1,23 @@
+name: construction_action
+source_repo: WRKFLW
+summary: Execute one authenticated project, capture, task, RFI, summary, or recovery operation with host services.
+tags: [construction lifecycle]
+required_inputs: [operation, parameters]
+resilience:
+  enabled: true
+  max_attempts: 1
+metadata:
+  requires_host_agent: construction_lifecycle
+  source: ported/wrkflw/PRD.md
+  patterns: [project_membership, offline_capture, task_update, rfi_approval, summary_draft, summary_review, pdf_publication, notification_recovery, timezone_lookup]
+  human_gate: Summary review and publication are separate authenticated PM operations.
+steps:
+  - type: agent
+    name: construction_lifecycle
+    inputs:
+      operation: {$ref: inputs.operation}
+      parameters: {$ref: inputs.parameters}
+    outputs: [construction_result]
+    # External adapters have their own bounded Repair wrapper and idempotency keys.
+    # Repeating a whole creation/approval operation can duplicate effects.
+    retry_policy: {max_attempts: 1}

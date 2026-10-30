@@ -22,3 +22,10 @@ mcp==1.9.4
 numpy>=1.24,<3
 psycopg2-binary>=2.9.9
 packaging>=23.0
+
+# Selected catalog protocols run their real monitor and Redis client paths.
+psutil==7.0.0
+redis==6.2.0
+
+# Real PDF intake for imported workflows (not upstream placeholder text).
+pypdf==6.21.4

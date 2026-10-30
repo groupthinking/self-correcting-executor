@@ -1,0 +1,152 @@
+{
+  "source_scope": "Workflow patterns and executable examples from the archived source definitions; not full web/mobile product parity.",
+  "original_issue": "https://github.com/groupthinking/self-correcting-executor/issues/105",
+  "source_files": [
+    {
+      "repository": "groupthinking/WRKFLW",
+      "path": "PRD.md",
+      "source_tree_sha": "c43f1411a82cc2f0ea21ca477c78019a6e9419f3",
+      "git_blob_sha": "119c25a4a9a76e8bba1f331bd76f604676c52f75",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/WRKFLW/blob/main/PRD.md"
+    },
+    {
+      "repository": "groupthinking/WRKFLW",
+      "path": "README.md",
+      "source_tree_sha": "c43f1411a82cc2f0ea21ca477c78019a6e9419f3",
+      "git_blob_sha": "93256c0a16870ba11d8d370ad0c2a253c17f292f",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/WRKFLW/blob/main/README.md"
+    },
+    {
+      "repository": "groupthinking/WRKFLW",
+      "path": "openapi.yaml",
+      "source_tree_sha": "c43f1411a82cc2f0ea21ca477c78019a6e9419f3",
+      "git_blob_sha": "391a08591fefc2235216be16a99f67b068075c1b",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/WRKFLW/blob/main/openapi.yaml"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "README.md",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "63880c6649391d6a01cdafbf3603b2be2394d0f3",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/README.md"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/ai-provider.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "3822e989ba20982aa3aa0298edbe455ed66306ef",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/ai-provider.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/code-generator-utils.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "2f751c1a7096301a8f674cddc01e012a8efee35d",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/code-generator-utils.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/code-generator.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "d0c172d1749ecd292261aa364a7daba768875483",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/code-generator.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/doc-extractor.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "fe4e8b2cdcc010a5a234b58ad9486c693db86715",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/doc-extractor.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/fetcher.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "036c92de1540700623fcd27081d424698fe11fbc",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/fetcher.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/pdf-extractor.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "43ff830e4730a2ce944602a22de21068fb17823e",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/pdf-extractor.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/planner.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "18ade849aeb800b14a55c86d1d56222f6aca32c7",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/planner.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/protocols/a2a-client.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "bbb06c6af7a1eca17845234b54306dae77f69b6c",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/protocols/a2a-client.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/protocols/ap2-client.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "262e63025c16b0265b20d8d189c81b0fc904141f",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/protocols/ap2-client.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/protocols/mcp-client.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "68c0a5a7d1f1c79f00913919b11a09d20a2b2dd9",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/protocols/mcp-client.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/summarizer.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "9814c43392fbc05c63e48b482eb13165098eab4b",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/summarizer.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/transcriber.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "71eec605c73c0841136fade5bbda3276d1924a2c",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/transcriber.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/services/workflow-compiler.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "212f472f72fae8fbfb8d38aeae9ff789fe824cc3",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/services/workflow-compiler.ts"
+    },
+    {
+      "repository": "groupthinking/workflows",
+      "path": "lib/types/workflow.ts",
+      "source_tree_sha": "058e001f8603c402d5c175ebc5f972dacd63811a",
+      "git_blob_sha": "71f2e8726149d3dc70c9fd7096c8c41ba0caae00",
+      "matches_observed_tree": true,
+      "source_url": "https://github.com/groupthinking/workflows/blob/main/lib/types/workflow.ts"
+    }
+  ],
+  "canonical_mapping": "docs/workflows/IMPORTED_PATTERNS.md",
+  "copied_types_match": true
+}
