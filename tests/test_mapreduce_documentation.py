@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from examples.mapreduce_local import demonstrate, make_orchestrator
+from examples.mapreduce_local import demonstrate, make_orchestrator, step_by_step
 import orchestrator_mapreduce as module
 from protocols import api_health_checker, data_processor, loader
 
@@ -61,6 +61,28 @@ async def test_all_five_local_patterns_process_actual_files_and_persist(tmp_path
             ).fetchone()
         assert row == ("completed", 1, len(job.subtasks))
         assert f"Job: {job.id}" in (saved / "STATE.md").read_text()
+
+
+@pytest.mark.asyncio
+async def test_step_by_step_inspection_can_amend_plan_before_dispatch(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "records.json").write_text(json.dumps([{"id": 1}, {"id": 2}]))
+    planned_path = tmp_path / "missing"
+    inspected_jobs = []
+
+    def inspect_plan(job):
+        assert len(job.subtasks) == 1
+        subtask = job.subtasks[0]
+        assert subtask.status == module.TaskStatus.PENDING
+        assert subtask.attempts == 0
+        assert subtask.inputs == {"data_path": str(planned_path)}
+        subtask.inputs["data_path"] = str(data_dir)
+        inspected_jobs.append(job.id)
+
+    job = await step_by_step(planned_path, tmp_path / "steps", inspect_plan)
+    assert inspected_jobs == [job.id]
+    assert job.subtasks[0].result["total_records"] == 2
 
 
 @pytest.mark.asyncio

@@ -371,7 +371,7 @@ The module implements a three-tier failure strategy:
 
 `asyncio.wait_for()` bounds the wait for the executor result; it does not terminate an already-running thread. A timed-out protocol may still produce side effects, and a retry may overlap that work. Set timeouts inside blocking operations and make retryable protocols idempotent.
 
-`SafeMutator` adds `_retry`, `_previous_error`, and `_attempt` on the first retry; on a timeout-like error it also adds/doubles `timeout`. The second retry adds strategy-hint keys. Protocols without compatible parameters or `**kwargs` will reject these added keys; hints are not proof of a correction. With the default three total attempts, code mutation is never reached. Raising a subtask's `max_attempts` beyond three permits the code tier, which invokes the existing mutator and checks that the loaded module exposes a callable task. Despite its method name, this is **not a process sandbox, transactional rollback, or successful dry-run**; the legacy mutator can rewrite source files and Python imports can remain cached.
+`SafeMutator` adds `_retry`, `_previous_error`, and `_attempt` on the first retry. It adds or doubles a `timeout` input only when the failure text contains the literal substring `timeout` (case-insensitive). The orchestrator's own timeout error says `timed out`, so that path does not increase the input timeout; `subtask_timeout` also remains fixed. The second retry adds strategy-hint keys. Protocols without compatible parameters or `**kwargs` will reject these added keys; hints are not proof of a correction. With the default three total attempts, code mutation is never reached. Raising a subtask's `max_attempts` beyond three permits the code tier, which invokes the existing mutator and checks that the loaded module exposes a callable task. Despite its method name, this is **not a process sandbox, transactional rollback, or successful dry-run**; the legacy mutator can rewrite source files and Python imports can remain cached.
 
 Escalation is already active: `SlackEscalation` runs `manus-mcp-cli tool call slack_post_message --server slack --input ...` with the configured channel and a 30-second subprocess timeout. It catches CLI errors and logs locally; logging is not delivery proof. There is no `_escalate_to_human()` method to uncomment. A failed full `run()` can therefore attempt an external Slack call. The local demonstration uses successful controlled inputs; tests replace escalation with a failing assertion to detect any unexpected external attempt.
 
@@ -444,10 +444,15 @@ The example's strict gate checks both execution status and `result["success"]`. 
 ```python
 from examples.mapreduce_local import step_by_step
 
-job = await step_by_step(data_path, output_dir)
+def inspect_plan(job):
+    assert [task.protocol for task in job.subtasks] == ["data_processor"]
+    print([(task.protocol, task.inputs) for task in job.subtasks])
+    # Review or adjust task.inputs before execution.
+
+job = await step_by_step(data_path, output_dir, inspect_plan=inspect_plan)
 ```
 
-`step_by_step` calls `plan()`, checks the pending plan, calls `map_execute()`, inspects returned statuses, then calls `reduce_verify()`. Inspecting `COMPLETED` alone is insufficient for business verification, so it uses the same result-aware custom gate.
+`step_by_step` calls `plan()`, checks the pending plan, and passes it to the optional synchronous `inspect_plan` callback before `map_execute()`. The callback can inspect or adjust the planned subtasks; raising an exception prevents dispatch. After execution, the helper inspects returned statuses and calls `reduce_verify()`. Inspecting `COMPLETED` alone is insufficient for business verification, so it uses the same result-aware custom gate. Without a callback, the helper runs through the phases without a caller inspection point.
 
 ---
 

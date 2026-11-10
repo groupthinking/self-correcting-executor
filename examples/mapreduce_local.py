@@ -88,12 +88,15 @@ async def custom_gate_and_reducer(data_path, output_dir):
     )
 
 
-async def step_by_step(data_path, output_dir):
+async def step_by_step(data_path, output_dir, inspect_plan=None):
+    """Let a caller inspect the pending job before dispatching its subtasks."""
     orchestrator = make_orchestrator(output_dir)
     job = await orchestrator.plan(
         "Inspect then count local records", data_tasks([data_path])
     )
     assert all(subtask.status == TaskStatus.PENDING for subtask in job.subtasks)
+    if inspect_plan is not None:
+        inspect_plan(job)
     job = await orchestrator.map_execute(job)
     assert all(subtask.status == TaskStatus.COMPLETED for subtask in job.subtasks)
     return await orchestrator.reduce_verify(job)
