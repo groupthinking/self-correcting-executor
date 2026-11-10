@@ -70,7 +70,7 @@ not as a product.
 | **Backend** | A single API server on :8080 | No unified server. Multiple FastAPI fragments, `mcp_server/`, `quantum_mcp_server/`, and vendored `mcp_runtime_template_hg/`. `entrypoint.sh` launches four different "modes" pointing at different mains. |
 | **Frontend** | One UI | **`frontend/` and `ui/` are two unrelated attempts.** `frontend/` is a real React app wired to a phantom API; `ui/` is an HTML glassmorphism mockup plus an uncompiled Next.js "Build a Website Guide" tutorial with mock data. |
 | **Deployment** | Docker Compose brings it up | **Two conflicting compose files.** `docker-compose.quantum.yml` builds `./frontend/Dockerfile`, **which does not exist**. The standard compose has no frontend at all. Frontend hardcodes `:8080`; quantum compose injects `:8000`. Neither stack is buildable end-to-end. |
-| **Secrets/config** | `.env.example` is the template | **`.env` is committed and tracked**, containing KEY/SECRET/TOKEN/PASSWORD entries. A live secret leak in version control. Separately, `config/mcp_config.py` (with a `check_no_mocks()` validator) is never loaded by `main.py` — the config meant to enforce "no mocks" is itself unwired. |
+| **Secrets/config** | `.env.example` is the template | **`.env` is committed and tracked**, containing KEY/SECRET/TOKEN/PASSWORD entries. The committed values are development placeholders (e.g. `DWAVE_API_TOKEN=development-mode`, `JWT_SECRET_KEY=dev-jwt-secret-key-...`), not live credentials — but a tracked `.env` should never exist regardless: the next contributor's real local values get committed by default. (Untracked in #112.) Separately, `config/mcp_config.py` (with a `check_no_mocks()` validator) is never loaded by `main.py` — the config meant to enforce "no mocks" is itself unwired. |
 | **Argument handling** | CLI args are protocols | `python main.py --development` caused the loader to **auto-create `protocols/--development.py`** — a garbage file committed to the repo. The entry point manufactures junk as a side effect of broken arg parsing. |
 
 ---
@@ -158,7 +158,7 @@ and **unextendable** (no stable contracts to extend against).
   workflows repos #107") — foreign architectures glued on, not integrated.
 - **Deploy scripts import packages that are not installed** (`mcp-use` in
   `deploy_production_mcp.py`) — cannot run against their own repo.
-- **Secret leak** in committed `.env`.
+- **Committed `.env`** (development placeholders, not live credentials) — tracked despite being in `.gitignore`; an anti-pattern that invites a real leak. (Untracked in #112.)
 
 ---
 
@@ -192,8 +192,9 @@ and **unextendable** (no stable contracts to extend against).
 
 ### Reconsider
 
-- **Rotate the secrets in the committed `.env` immediately**, then remove it from
-  VCS and rely on `.env.example` + runtime injection.
+- **Stop tracking `.env`** and rely on `.env.example` + runtime injection. The
+  committed values are dev placeholders, so no rotation is required — but the file
+  must not be tracked, or real secrets will eventually be committed. (Done in #112.)
 - **Redefine "self-correcting."** If it means "detect a failing integration and
   retry/reroute/alert," that is achievable and valuable. If it means "rewrite my own
   code to pass," that is the current dead end — drop it.
@@ -260,5 +261,4 @@ Extract the three or four genuine ingredients (the React shell, the protocol
 concept, the real health-check protocols, the Postgres tracker), define a
 falsifiable success contract, and rebuild the single-node loop clean.
 
-**Severity: Critical. Recommended action: Rebuild, do not repair. First, rotate the
-committed secrets.**
+**Severity: Critical. Recommended action: Rebuild, do not repair.**
