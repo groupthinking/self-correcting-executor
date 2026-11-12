@@ -191,7 +191,7 @@ job = await orchestrator.reduce_verify(job)
 
 ### `map_execute(job) → OrchestratedJob`
 
-Phase 2. Executes all subtasks using a semaphore and the event loop's shared thread pool. Inputs and protocol module state are not cloned or isolated. The loader runs on the event-loop thread before the task is submitted; blocking import work can delay the loop and timeout delivery.
+Phase 2. Executes all subtasks using a semaphore and the event loop's shared thread pool. Inputs and protocol module state are not cloned or isolated. Actual parallelism is also capped by the default executor's worker count (`min(32, os.cpu_count() + 4)` on Python 3.10+), and timed-out threads keep occupying workers. The `subtask_timeout` clock starts before the executor picks up the work, so time spent queued behind busy or timed-out workers counts toward the timeout. The loader runs on the event-loop thread before the task is submitted; blocking import work can delay the loop and timeout delivery.
 
 **Behavior:**
 - Acquires a semaphore slot before executing each subtask
@@ -352,6 +352,7 @@ On the normal return path after verification (pass or fail), the orchestrator ap
 - **Status:** completed
 - **Verification:** PASSED
 - **Subtasks:** 47 total, 45 completed
+- **Attempts:** 1
 - **Timestamp:** 2026-06-22T19:00:00.000000+00:00
 ```
 
@@ -479,8 +480,9 @@ Task execution, initial outcome tracking and final persistence use `run_in_execu
 | `state_file` | — | `<module_dir>/STATE.md` | Any writable path |
 
 **Tuning guidance:**
-- For CPU-bound protocols: set `max_concurrency` to CPU core count
-- For I/O-bound protocols (API calls, file reads): set `max_concurrency` to 20–50
+- Values above the default executor's worker count (`min(32, os.cpu_count() + 4)`) do not add parallelism; the extra subtasks queue inside the executor while their timeout runs
+- For CPU-bound pure-Python protocols: threads share the GIL, so raising `max_concurrency` does not add CPU parallelism
+- For I/O-bound protocols (API calls, file reads): raise `max_concurrency` up to the executor's worker count
 - For long-running protocols: increase `subtask_timeout` accordingly
 - For high-throughput systems: size `max_job_history` for the desired in-memory history window and manage persistent-storage retention separately
 

@@ -253,3 +253,57 @@ async def test_semantic_provider_failure_returns_documented_mechanical_fallback(
         "success_rate": 1.0,
     }
     assert calls == [job.id]
+
+
+def test_documented_state_md_example_matches_persisted_fields(tmp_path):
+    guide = Path(module.__file__).parent / "docs" / "orchestrator_mapreduce.md"
+    section = guide.read_text().split("## State Persistence", 1)[1]
+    example = section.split("```markdown", 1)[1].split("```", 1)[0]
+    documented = [line.split(":**")[0] for line in example.splitlines() if "**" in line]
+
+    store = module.StateStore(
+        db_path=str(tmp_path / "state.sqlite3"), md_path=str(tmp_path / "STATE.md")
+    )
+    store.persist_markdown(module.OrchestratedJob("job_fixture", "Fixture intent"))
+    written = (tmp_path / "STATE.md").read_text()
+    persisted = [line.split(":**")[0] for line in written.splitlines() if "**" in line]
+    assert documented == persisted
+
+
+@pytest.mark.asyncio
+async def test_timeout_includes_time_queued_behind_busy_executor_workers(
+    tmp_path, monkeypatch
+):
+    from concurrent.futures import ThreadPoolExecutor
+
+    release, queued_started = threading.Event(), threading.Event()
+
+    def busy():
+        release.wait(2)
+        return {"success": True}
+
+    def queued():
+        queued_started.set()
+        return {"success": True}
+
+    monkeypatch.setattr(
+        loader,
+        "load_protocol",
+        lambda name: {"task": {"busy": busy, "queued": queued}[name]},
+    )
+    executor = ThreadPoolExecutor(max_workers=1)
+    asyncio.get_running_loop().set_default_executor(executor)
+    orchestrator = make_orchestrator(tmp_path / "state", subtask_timeout=0.05)
+    job = await orchestrator.plan(
+        "Observe queued timeout", [{"protocol": "busy"}, {"protocol": "queued"}]
+    )
+    try:
+        await orchestrator.map_execute(job)
+        assert [st.status for st in job.subtasks] == [
+            module.TaskStatus.FAILED,
+            module.TaskStatus.FAILED,
+        ]
+        assert not queued_started.is_set()
+    finally:
+        release.set()
+        executor.shutdown(wait=True)

@@ -3,7 +3,7 @@ Hierarchical Orchestration Engine with Map/Reduce
 =================================================
 Drop-in module for the self-correcting-executor project.
 
-Extends the existing OrchestrationEngine with parallel fan-out,
+Complements (does not subclass) the existing OrchestrationEngine with fan-out,
 verification gateway, self-correcting mutation on failure,
 semantic LLM verification, structured state persistence,
 attempt-based mutation, and Slack CLI escalation.
@@ -153,7 +153,7 @@ class SemanticGate:
         """Call the LLM to semantically evaluate the job output."""
         from openai import OpenAI
 
-        client = OpenAI()  # Uses preconfigured OPENAI_API_KEY and OPENAI_API_BASE
+        client = OpenAI()  # Uses the installed SDK's environment configuration
 
         # Build a concise summary of results for the evaluator
         results_summary = []
@@ -413,7 +413,7 @@ class SafeMutator:
             # Tier 2: Mutate strategy/prompt
             return await self._mutate_strategy(protocol_name, subtask, failure_reason)
         else:
-            # Tier 3: Mutate code (last resort, sandboxed)
+            # Tier 3: Mutate code (last resort; not sandboxed)
             return await self._mutate_code_sandboxed(
                 protocol_name, failure_reason, loop
             )
