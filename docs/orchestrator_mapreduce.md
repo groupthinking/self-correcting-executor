@@ -366,17 +366,17 @@ The module implements a three-tier failure strategy:
 
 | Tier | Condition | Action |
 | :--- | :--- | :--- |
-| **Retry** | Subtask status is `FAILED`, `attempts < max_attempts` | Apply the attempt-based mutation tier and re-execute |
+| **Retry** | The verification gate failed, and the subtask status is `FAILED` with `attempts < max_attempts` | Apply the attempt-based mutation tier and re-execute |
 | **Escalate** | All retries exhausted, verification still failing | Log escalation, notify human (via MCP/Slack when configured) |
-| **Timeout** | Awaiting the subtask exceeds `subtask_timeout` seconds | Mark as FAILED and enter retry tier; the underlying protocol thread may continue |
+| **Timeout** | Awaiting the subtask exceeds `subtask_timeout` seconds | Mark as FAILED; it is retried only if the verification gate then fails (the default 80% gates can pass with timed-out subtasks). The underlying protocol thread may continue |
 
 `asyncio.wait_for()` bounds the wait for the executor result; it does not terminate an already-running thread. A timed-out protocol may still produce side effects, and a retry may overlap that work. Set timeouts inside blocking operations and make retryable protocols idempotent.
 
 `SafeMutator` adds `_retry`, `_previous_error`, and `_attempt` on the first retry. It adds or doubles a `timeout` input only when the failure text contains the literal substring `timeout` (case-insensitive). The orchestrator's own timeout error says `timed out`, so that path does not increase the input timeout; `subtask_timeout` also remains fixed. The second retry adds strategy-hint keys. Protocols without compatible parameters or `**kwargs` will reject these added keys; hints are not proof of a correction. With the default three total attempts, code mutation is never reached. Raising a subtask's `max_attempts` beyond three permits the code tier, which invokes the existing mutator and checks that the loaded module exposes a callable task. Despite its method name, this is **not a process sandbox, transactional rollback, or successful dry-run**; the legacy mutator can rewrite source files and Python imports can remain cached.
 
-Escalation is already active: `SlackEscalation` runs `manus-mcp-cli tool call slack_post_message --server slack --input ...` with the configured channel and a 30-second subprocess timeout. It catches CLI errors and logs locally; logging is not delivery proof. There is no `_escalate_to_human()` method to uncomment. A failed full `run()` can therefore attempt an external Slack call. The local demonstration uses successful controlled inputs; tests replace escalation with a failing assertion to detect any unexpected external attempt.
+Escalation is already active: `SlackEscalation` runs `manus-mcp-cli tool call slack_post_message --server slack --input ...` with the configured channel and a 30-second subprocess timeout. It catches CLI errors and logs locally; logging is not delivery proof. The alert's `Reason` is taken from the first verification round, not the final re-verification. There is no `_escalate_to_human()` method to uncomment. A failed full `run()` can therefore attempt an external Slack call. The local demonstration uses successful controlled inputs; tests replace escalation with a failing assertion to detect any unexpected external attempt.
 
-`asyncio.run()` normally waits for its default executor to finish during shutdown. A protocol that times out from the orchestrator's perspective may therefore still delay process exit. The timeout also excludes tracking, reduction, verification and persistence; this is not a deadline for the whole job.
+`asyncio.run()` waits for its default executor during shutdown (indefinitely on Python 3.10/3.11; up to 300 seconds on 3.12+, then it warns and continues). A protocol that times out from the orchestrator's perspective may therefore still delay process exit. The timeout also excludes tracking, reduction, verification and persistence; this is not a deadline for the whole job.
 
 ---
 
